@@ -1,0 +1,209 @@
+<!doctype html>
+<!--
+  PRD TEMPLATE — used by the `repo-audit-prd` skill.
+  HOW TO USE: copy this file, then replace every {{PLACEHOLDER}} and fill every
+  <!-- FILL: ... --> block with content derived from the actual repository.
+  Replace the example Mermaid diagrams with ones reflecting the real architecture.
+  Save as <project>-prd.html. It is fully self-contained (Mermaid via CDN) — no build.
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>{{PROJECT_NAME}} — PRD</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg:#080B14; --panel:#0E1220; --panel2:#141929; --border:#222a40;
+    --text:#E4E8F5; --muted:#8a93ad; --accent:#7C6FFF; --accent2:#00D4B8;
+    --yellow:#F6C453; --pink:#FF6B9D;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--text);
+    font:16px/1.6 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; }
+  .wrap { max-width:980px; margin:0 auto; padding:48px 24px; }
+  header.hero { text-align:center; padding:64px 24px 40px; }
+  .hero h1 { font-size:42px; margin:0 0 8px; letter-spacing:-1px; }
+  .hero p { color:var(--muted); font-size:18px; max-width:640px; margin:0 auto; }
+  .tags { display:flex; gap:8px; justify-content:center; flex-wrap:wrap; margin-top:20px; }
+  .tag { background:var(--panel2); border:1px solid var(--border); color:var(--muted);
+    padding:6px 14px; border-radius:999px; font-size:13px; }
+  .sec { background:var(--panel); border:1px solid var(--border); border-radius:16px;
+    padding:32px; margin-bottom:24px; }
+  .eyebrow { color:var(--accent); font-size:12px; font-weight:800; letter-spacing:2px;
+    text-transform:uppercase; }
+  .sec h2 { font-size:26px; margin:6px 0 18px; }
+  .sec h3 { font-size:18px; margin:22px 0 8px; }
+  code { background:var(--panel2); border:1px solid var(--border); border-radius:6px;
+    padding:2px 6px; font-size:13px; color:var(--accent2); }
+  table { width:100%; border-collapse:collapse; margin:12px 0; }
+  th,td { text-align:left; padding:10px 12px; border-bottom:1px solid var(--border); font-size:14px; }
+  th { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:1px; }
+  ul { padding-left:20px; } li { margin:6px 0; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+  .card { background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:18px; }
+  .badge { display:inline-block; font-size:11px; font-weight:800; letter-spacing:1px;
+    text-transform:uppercase; padding:3px 9px; border-radius:999px; margin-left:8px; vertical-align:middle; }
+  .built { background:rgba(52,211,153,.18); color:#34d399; border:1px solid rgba(52,211,153,.4); }
+  .planned { background:rgba(246,196,83,.16); color:var(--yellow); border:1px solid rgba(246,196,83,.4); }
+  .gap { background:rgba(255,107,157,.14); color:var(--pink); border:1px solid rgba(255,107,157,.4); }
+  .mermaid { background:var(--panel2); border:1px solid var(--border); border-radius:12px;
+    padding:20px; margin:14px 0; text-align:center; }
+  footer { text-align:center; color:var(--muted); padding:40px; font-size:14px; }
+  @media (max-width:680px){ .grid2{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <h1>{{PROJECT_NAME}}</h1>
+  <p>{{ONE_LINE_PITCH}}</p>
+  <div class="tags">
+    <!-- FILL: 3–5 quick-fact chips, e.g. stack, platform, cost model -->
+    <span class="tag">{{TAG_1}}</span>
+    <span class="tag">{{TAG_2}}</span>
+    <span class="tag">{{TAG_3}}</span>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- ── STATUS SNAPSHOT — the build-status spine ── -->
+  <section class="sec">
+    <div class="eyebrow">Status</div>
+    <h2>What's built vs. planned</h2>
+    <div class="grid2">
+      <div class="card">
+        <h3 style="margin-top:0">✓ Built &amp; working</h3>
+        <ul><!-- FILL: bullet the features that actually exist in the repo -->
+          <li>{{BUILT_ITEM}}</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">◗ Planned / known gaps</h3>
+        <ul><!-- FILL: honest list of what's not done yet -->
+          <li>{{PLANNED_ITEM}}</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── OVERVIEW ── -->
+  <section class="sec">
+    <div class="eyebrow">Section 01</div>
+    <h2>Overview</h2>
+    <!-- FILL: problem, who it's for, the core idea, why this approach -->
+    <p>{{OVERVIEW}}</p>
+  </section>
+
+  <!-- ── ARCHITECTURE ── -->
+  <section class="sec">
+    <div class="eyebrow">Section 02</div>
+    <h2>Architecture</h2>
+    <!-- FILL: replace with a flowchart of the REAL modules/services -->
+    <div class="mermaid">
+flowchart TD
+  U["User / Client"] --> A["{{ENTRY_POINT}}"]
+  A --> B["{{STATE_OR_ROUTING}}"]
+  B --> C["{{CORE_SERVICE}}"]
+  C --> D["{{DATA_LAYER}}"]
+  C --> E["{{EXTERNAL_API}}"]
+    </div>
+    <h3>Tech stack</h3>
+    <table>
+      <tr><th>Layer</th><th>Choice</th><th>Why</th></tr>
+      <!-- FILL: one row per real dependency/decision -->
+      <tr><td>{{LAYER}}</td><td>{{TOOL}}</td><td>{{RATIONALE}}</td></tr>
+    </table>
+  </section>
+
+  <!-- ── DATA MODEL ── -->
+  <section class="sec">
+    <div class="eyebrow">Section 03</div>
+    <h2>Data model</h2>
+    <!-- FILL: replace with an erDiagram of the real schema/tables/entities -->
+    <div class="mermaid">
+erDiagram
+  ENTITY_A ||--o{ ENTITY_B : has
+  ENTITY_A {
+    string id
+    string field
+  }
+    </div>
+  </section>
+
+  <!-- ── KEY FLOW ── -->
+  <section class="sec">
+    <div class="eyebrow">Section 04</div>
+    <h2>Key flow: {{FLOW_NAME}}</h2>
+    <!-- FILL: a sequenceDiagram of the most important flow (auth, request, etc.) -->
+    <div class="mermaid">
+sequenceDiagram
+  participant U as User
+  participant A as App
+  participant S as Service
+  U->>A: {{ACTION}}
+  A->>S: {{REQUEST}}
+  S-->>A: {{RESPONSE}}
+  A-->>U: {{RESULT}}
+    </div>
+  </section>
+
+  <!-- ── SECURITY & PRIVACY ── -->
+  <section class="sec">
+    <div class="eyebrow">Section 05</div>
+    <h2>Security &amp; privacy</h2>
+    <!-- FILL: secrets handling, auth, encryption, data residency, validation -->
+    <ul>
+      <li>{{SECURITY_POINT}}</li>
+    </ul>
+  </section>
+
+  <!-- ── ROADMAP ── -->
+  <section class="sec">
+    <div class="eyebrow">Section 06</div>
+    <h2>Roadmap</h2>
+    <!-- FILL: timeline of phases; badge each as built/planned -->
+    <div class="mermaid">
+timeline
+  title Delivery phases
+  Phase 1 : {{PHASE_1}}
+  Phase 2 : {{PHASE_2}}
+  Phase 3 : {{PHASE_3}}
+    </div>
+    <p>
+      <span class="badge built">✓ Built</span>
+      <span class="badge planned">◗ Planned</span>
+      <span class="badge gap">⚠ Known gap</span>
+    </p>
+  </section>
+
+  <!-- ── FUTURE IDEAS ── -->
+  <section class="sec">
+    <div class="eyebrow">Section 07</div>
+    <h2>Future ideas</h2>
+    <ul><!-- FILL: genuinely-not-built ideas, kept separate from the gaps above -->
+      <li>{{FUTURE_IDEA}}</li>
+    </ul>
+  </section>
+
+</div>
+
+<footer>
+  {{PROJECT_NAME}} — PRD · generated by the <code>repo-audit-prd</code> skill
+</footer>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    themeVariables: {
+      primaryColor: '#7C6FFF', primaryTextColor: '#E4E8F5',
+      primaryBorderColor: '#7C6FFF', lineColor: '#4a5068',
+      background: '#080B14', mainBkg: '#0E1220',
+      nodeBorder: '#7C6FFF', clusterBkg: '#141929'
+    }
+  })
+</script>
+</body>
+</html>
