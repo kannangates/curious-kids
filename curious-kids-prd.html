@@ -1,0 +1,2156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CuriousKids AI — PRD</title>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --purple:  #7C6FFF;
+  --teal:    #00D4B8;
+  --orange:  #FF7A3C;
+  --yellow:  #FFD000;
+  --pink:    #FF5C9E;
+  --green:   #3DDB7A;
+  --red:     #FF5C5C;
+  --bg:      #080B14;
+  --s1:      #0E1220;
+  --s2:      #141929;
+  --s3:      #1C2236;
+  --border:  rgba(255,255,255,0.08);
+  --txt:     #E4E8F5;
+  --muted:   #7A839E;
+  --r:       14px;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: var(--bg);
+  color: var(--txt);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+/* ─── TOP NAV ─── */
+.topnav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(8,11,20,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 0;
+  padding: 0 40px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.topnav::-webkit-scrollbar { display: none; }
+.nav-brand {
+  font-size: 15px; font-weight: 800; color: #fff;
+  white-space: nowrap; padding: 14px 24px 14px 0;
+  border-right: 1px solid var(--border);
+  margin-right: 8px; flex-shrink: 0;
+}
+.nav-brand span { color: var(--purple); }
+.topnav a {
+  color: var(--muted); text-decoration: none;
+  font-size: 12px; font-weight: 600;
+  padding: 16px 14px; white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  transition: color .15s, border-color .15s;
+  flex-shrink: 0;
+}
+.topnav a:hover { color: #fff; border-bottom-color: var(--purple); }
+
+/* ─── HERO ─── */
+.hero {
+  background: linear-gradient(160deg, #0d0820 0%, #080b14 60%);
+  padding: 80px 40px 72px;
+  text-align: center;
+  position: relative; overflow: hidden;
+}
+.hero::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(124,111,255,0.14) 0%, transparent 70%);
+  pointer-events: none;
+}
+.hero-pill {
+  display: inline-block;
+  background: rgba(124,111,255,0.12);
+  border: 1px solid rgba(124,111,255,0.35);
+  color: #a89fff;
+  font-size: 11px; font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+  padding: 5px 16px; border-radius: 100px; margin-bottom: 28px;
+}
+.hero h1 {
+  font-size: clamp(2.8rem, 5.5vw, 4.5rem);
+  font-weight: 900; letter-spacing: -1.5px; line-height: 1.1;
+  color: #fff; margin-bottom: 20px;
+}
+.hero h1 em { font-style: normal; color: var(--purple); }
+.hero-desc {
+  font-size: 1.1rem; color: var(--muted);
+  max-width: 600px; margin: 0 auto 40px;
+  line-height: 1.7;
+}
+.hero-tags {
+  display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+}
+.hero-tag {
+  background: var(--s2); border: 1px solid var(--border);
+  padding: 7px 16px; border-radius: 100px;
+  font-size: 12px; font-weight: 600; color: var(--muted);
+}
+.hero-tag b { color: var(--txt); }
+
+/* ─── WRAPPER ─── */
+.wrap { max-width: 1060px; margin: 0 auto; padding: 0 40px; }
+
+/* ─── SECTION ─── */
+.sec { padding: 72px 0 56px; border-bottom: 1px solid var(--border); }
+.sec:last-child { border-bottom: none; }
+.sec-eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase;
+  color: var(--purple); margin-bottom: 10px;
+}
+.sec-eyebrow::before {
+  content: ''; display: block;
+  width: 20px; height: 2px; background: var(--purple); border-radius: 1px;
+}
+.sec-title {
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-weight: 800; letter-spacing: -0.5px; color: #fff;
+  line-height: 1.2; margin-bottom: 12px;
+}
+.sec-sub {
+  font-size: 15px; color: var(--muted);
+  max-width: 620px; margin-bottom: 44px; line-height: 1.7;
+}
+
+/* ─── GRID HELPERS ─── */
+.g2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.g3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+.g4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+@media (max-width: 860px) {
+  .g4 { grid-template-columns: 1fr 1fr; }
+  .g3 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 600px) {
+  .g2, .g3, .g4 { grid-template-columns: 1fr; }
+  .wrap { padding: 0 20px; }
+  .topnav { padding: 0 20px; }
+  .hero { padding: 56px 20px 48px; }
+}
+
+/* ─── CARDS ─── */
+.card {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 24px;
+  transition: border-color .2s, transform .2s;
+}
+.card:hover { border-color: rgba(124,111,255,0.35); transform: translateY(-2px); }
+.card-top { border-top: 3px solid; }
+.card-top.p { border-top-color: var(--purple); }
+.card-top.t { border-top-color: var(--teal); }
+.card-top.o { border-top-color: var(--orange); }
+.card-top.y { border-top-color: var(--yellow); }
+.card-top.g { border-top-color: var(--green); }
+.card-top.pk { border-top-color: var(--pink); }
+.card-top.r { border-top-color: var(--red); }
+
+.card-ico {
+  width: 44px; height: 44px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; margin-bottom: 14px;
+}
+.ic-p  { background: rgba(124,111,255,.14); }
+.ic-t  { background: rgba(0,212,184,.12); }
+.ic-o  { background: rgba(255,122,60,.12); }
+.ic-y  { background: rgba(255,208,0,.12); }
+.ic-g  { background: rgba(61,219,122,.12); }
+.ic-pk { background: rgba(255,92,158,.12); }
+.ic-r  { background: rgba(255,92,92,.12); }
+
+.card h3 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 6px; }
+.card p  { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* ─── DIAGRAM BOX ─── */
+.diagram-box {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r); padding: 32px 24px;
+  overflow-x: auto; margin-bottom: 28px;
+}
+.diagram-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--muted);
+  text-align: center; margin-bottom: 24px;
+}
+.mermaid { display: flex; justify-content: center; }
+
+/* ─── TABLE ─── */
+.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.tbl thead th {
+  text-align: left; padding: 11px 16px;
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  background: var(--s2);
+}
+.tbl tbody td {
+  padding: 13px 16px;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--txt); vertical-align: top;
+}
+.tbl tbody tr:last-child td { border-bottom: none; }
+.tbl tbody tr:hover td { background: rgba(255,255,255,0.02); }
+.tbl-wrap {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden;
+}
+
+.badge {
+  display: inline-block; padding: 2px 9px; border-radius: 100px;
+  font-size: 11px; font-weight: 700;
+}
+.b-g  { background: rgba(61,219,122,.12); color: #3DDB7A; }
+.b-y  { background: rgba(255,208,0,.12);  color: #FFD000; }
+.b-o  { background: rgba(255,122,60,.12); color: #FF7A3C; }
+.b-p  { background: rgba(124,111,255,.12);color: #a89fff; }
+.b-t  { background: rgba(0,212,184,.12);  color: #00D4B8; }
+
+/* ─── PHONES ─── */
+.phones {
+  display: flex; gap: 32px; justify-content: center;
+  flex-wrap: wrap; margin: 40px 0;
+}
+.phone {
+  width: 268px; flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+/* ── PHONE CHROME — bright white device body ── */
+.phone-frame {
+  width: 268px; height: 530px;
+  background: #E2E2E2; border-radius: 38px;
+  border: 2.5px solid #C8C8C8;
+  overflow: hidden; position: relative;
+  box-shadow: 0 24px 56px rgba(0,0,0,0.28), 0 4px 12px rgba(0,0,0,0.12),
+              inset 0 1px 0 rgba(255,255,255,0.9);
+}
+.phone-notch {
+  position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+  width: 88px; height: 24px;
+  background: #1C1C1C; border-radius: 0 0 14px 14px;
+  z-index: 5; border-bottom: 1px solid #333;
+}
+.phone-screen { width: 100%; height: 100%; overflow: hidden; }
+.phone-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--muted);
+}
+
+/* ── HOME SCREEN — bright morning sky ── */
+.scr-home {
+  height: 100%;
+  background: linear-gradient(165deg, #FDE8FF 0%, #EAE6FF 45%, #E0FFF4 100%);
+  padding: 44px 16px 16px;
+  display: flex; flex-direction: column; align-items: center;
+}
+.kid-hello {
+  font-size: 10px; font-weight: 800; color: #8B72CC;
+  background: rgba(255,255,255,0.65); padding: 3px 10px;
+  border-radius: 100px; margin-bottom: 4px; letter-spacing: 0.5px;
+}
+.kid-greet {
+  font-size: 15px; font-weight: 900; color: #2D2580;
+  margin-bottom: 12px; text-align: center;
+}
+.leo-orb {
+  width: 88px; height: 88px;
+  background: radial-gradient(circle at 30% 30%, #FFE566, #FF9800);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 46px; margin-bottom: 8px;
+  box-shadow: 0 8px 28px rgba(255,152,0,0.45),
+              0 0 0 5px rgba(255,220,100,0.25),
+              0 0 0 10px rgba(255,220,100,0.1);
+  animation: bob 3s ease-in-out infinite;
+}
+@keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-7px)} }
+.leo-says {
+  background: #fff;
+  border: 2px solid #DDD5FF;
+  border-radius: 16px 16px 16px 4px;
+  padding: 9px 14px; font-size: 11px;
+  color: #4A3B96; font-weight: 700;
+  text-align: center; margin-bottom: 14px; max-width: 200px;
+  box-shadow: 0 4px 14px rgba(120,100,220,0.15);
+}
+.hbtn {
+  width: 100%; padding: 13px 16px; border-radius: 18px;
+  border: none; font-family: 'Inter', sans-serif;
+  font-size: 13px; font-weight: 800; cursor: pointer;
+  display: flex; align-items: center; gap: 9px; margin-bottom: 9px;
+  justify-content: center;
+  box-shadow: 0 5px 0 rgba(0,0,0,0.18); /* chunky pressed-button feel */
+  letter-spacing: 0.2px;
+}
+.hb1 { background: linear-gradient(135deg,#7C6FFF,#5E48F0); color: #fff; }
+.hb2 { background: linear-gradient(135deg,#FF6B6B,#FF4030); color: #fff; }
+.hb3 { background: linear-gradient(135deg,#00C98A,#00A06E); color: #fff; }
+.hb4 { background: linear-gradient(135deg,#FFB800,#FF8C00); color: #fff; }
+
+/* ── CHAT SCREEN — warm light lavender ── */
+.scr-chat {
+  height: 100%;
+  background: #F4F1FF;
+  display: flex; flex-direction: column; padding-top: 38px;
+}
+.chat-hdr {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px;
+  background: #fff;
+  border-bottom: 2px solid #EAE4FF;
+}
+.ch-av { font-size: 26px; }
+.ch-name { font-size: 13px; font-weight: 800; color: #2D2580; }
+.ch-st   { font-size: 10px; color: #00B87A; font-weight: 700; }
+.chat-msgs {
+  flex: 1; padding: 12px 12px;
+  display: flex; flex-direction: column; gap: 9px; overflow: hidden;
+  background: #F4F1FF;
+}
+.bbl {
+  padding: 10px 13px; border-radius: 16px;
+  font-size: 11.5px; line-height: 1.5; font-weight: 600;
+  max-width: 84%;
+}
+.bbl-ai {
+  align-self: flex-start;
+  background: #fff;
+  border: 2px solid #DDD5FF;
+  color: #3D3080;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 8px rgba(100,80,200,0.1);
+}
+.bbl-kid {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #FF7A5C, #FF5A85);
+  border: none;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 3px 10px rgba(255,90,100,0.3);
+}
+.msg-lbl {
+  font-size: 9px; font-weight: 800; letter-spacing: 1px;
+  text-transform: uppercase; margin-bottom: 3px;
+}
+.lbl-ai  { color: #7C6FFF; }
+.lbl-kid { color: #FF6B4A; text-align: right; }
+.msg-ai  { align-self: flex-start; }
+.msg-kid { align-self: flex-end; display: flex; flex-direction: column; align-items: flex-end; }
+.chat-bar {
+  display: flex; gap: 8px; align-items: center;
+  padding: 10px 13px;
+  background: #fff;
+  border-top: 2px solid #EAE4FF;
+}
+.chat-pill {
+  flex: 1; background: #F0ECFF;
+  border: 2px solid #DDD5FF; border-radius: 100px;
+  padding: 9px 14px; font-size: 11px; color: #9B8FC8; font-weight: 600;
+}
+.mic-pill {
+  width: 42px; height: 42px; border-radius: 50%;
+  background: linear-gradient(135deg,#7C6FFF,#5E48F0);
+  border: none; font-size: 18px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 0 #3D2FCC, 0 6px 16px rgba(124,111,255,.4);
+  cursor: pointer; flex-shrink: 0;
+}
+
+/* ── CAMERA SCREEN ── */
+.scr-cam {
+  height: 100%; background: #000;
+  display: flex; flex-direction: column;
+}
+.cam-view {
+  flex: 1; position: relative;
+  background: linear-gradient(160deg, #0f1a0f, #0f0f1a);
+  display: flex; align-items: center; justify-content: center;
+}
+.cam-obj { font-size: 76px; filter: drop-shadow(0 0 20px rgba(255,255,255,.3)); }
+.cam-corner { position: absolute; inset: 0; }
+.cam-corner::before,.cam-corner::after {
+  content: ''; position: absolute;
+  width: 52px; height: 52px; border: 3px solid #A0F0E0;
+}
+.cam-corner::before { top: 18px; left: 18px; border-right: none; border-bottom: none; border-radius: 8px 0 0 0; }
+.cam-corner::after  { bottom: 18px; right: 18px; border-left: none; border-top: none; border-radius: 0 0 8px 0; }
+/* ── Camera result — bright white card ── */
+.cam-result {
+  background: #fff;
+  padding: 14px 14px 16px;
+  border-top: 3px solid #EAE4FF;
+}
+.cam-obj-name { font-size: 17px; font-weight: 900; color: #2D2580; margin-bottom: 8px; }
+.lang-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
+.lpill {
+  font-size: 10px; font-weight: 700;
+  padding: 3px 9px; border-radius: 100px;
+}
+/* Each language gets a distinct bright color */
+.lpill:nth-child(1) { background: #E8F0FF; color: #3D5CCC; border: 1.5px solid #C0D0FF; }
+.lpill:nth-child(2) { background: #FFF0E8; color: #CC5500; border: 1.5px solid #FFD0AA; }
+.lpill:nth-child(3) { background: #E8FFF2; color: #007A44; border: 1.5px solid #A0FFCC; }
+.lpill:nth-child(4) { background: #FFF0FC; color: #AA0088; border: 1.5px solid #FFB8F4; }
+.fun-box {
+  background: #FFFBDE;
+  border: 1.5px solid #FFE566;
+  border-radius: 10px;
+  padding: 8px 10px; font-size: 11px;
+  color: #7A6000; font-weight: 600;
+}
+
+/* ─── CODE ─── */
+.code {
+  background: #050810; border: 1px solid rgba(255,255,255,.07);
+  border-radius: var(--r); padding: 22px 24px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px; line-height: 1.75; overflow-x: auto;
+  margin: 14px 0;
+}
+.kw  { color: #ff7b72; }
+.str { color: #79c0ff; }
+.fn  { color: #d2a8ff; }
+.cm  { color: #6e7681; }
+.num { color: #79c0ff; }
+.key { color: #ffa657; }
+
+/* ─── PROMPT BOX ─── */
+.prompt {
+  background: rgba(124,111,255,.06);
+  border: 1px solid rgba(124,111,255,.25);
+  border-radius: var(--r); padding: 22px 24px; margin: 16px 0;
+  position: relative;
+}
+.prompt::before {
+  content: attr(data-label);
+  position: absolute; top: -10px; left: 18px;
+  background: var(--purple); color: #fff;
+  font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;
+  padding: 2px 10px; border-radius: 100px;
+}
+.prompt p {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12.5px; line-height: 1.75; color: var(--txt);
+}
+
+/* ─── CONVO ─── */
+.convo { display: flex; flex-direction: column; gap: 12px; margin: 20px 0; }
+.cm-row { display: flex; gap: 10px; align-items: flex-start; }
+.cm-row.kid { flex-direction: row-reverse; }
+.cm-av { font-size: 22px; flex-shrink: 0; margin-top: 2px; }
+.cm-inner { display: flex; flex-direction: column; gap: 3px; max-width: 68%; }
+.cm-row.kid .cm-inner { align-items: flex-end; }
+.cm-who { font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+.who-ai  { color: var(--purple); }
+.who-kid { color: var(--orange); }
+.cm-bbl {
+  padding: 10px 14px; border-radius: 14px;
+  font-size: 13.5px; line-height: 1.5; color: var(--txt);
+}
+.cm-row.ai  .cm-bbl { background: rgba(124,111,255,.1); border: 1px solid rgba(124,111,255,.2); border-bottom-left-radius: 3px; }
+.cm-row.kid .cm-bbl { background: rgba(255,122,60,.1); border: 1px solid rgba(255,122,60,.2); border-bottom-right-radius: 3px; }
+
+/* ─── SCHEMA ─── */
+.schema-wrap {
+  background: var(--s1); border: 1px solid var(--border);
+  border-radius: var(--r); overflow: hidden; margin-bottom: 24px;
+}
+.schema-head {
+  background: var(--s2); padding: 12px 20px;
+  font-size: 13px; font-weight: 700; color: #fff;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 8px;
+}
+.schema-head code {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px; color: var(--teal);
+}
+.schema-head .badge { margin-left: auto; }
+.schema-tbl { width: 100%; border-collapse: collapse; }
+.schema-tbl th {
+  text-align: left; padding: 9px 16px;
+  font-size: 11px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase;
+  color: var(--muted); border-bottom: 1px solid var(--border);
+}
+.schema-tbl td {
+  padding: 10px 16px; font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-family: 'JetBrains Mono', monospace;
+}
+.schema-tbl td:first-child { color: #79c0ff; }
+.schema-tbl td:nth-child(2) { color: #ffa657; }
+.schema-tbl td:nth-child(3) { color: var(--muted); font-family: 'Inter', sans-serif; font-size: 12px; }
+.schema-tbl tr:last-child td { border-bottom: none; }
+.schema-note {
+  padding: 10px 16px; font-size: 12px;
+  color: var(--orange); background: rgba(255,122,60,.05);
+  border-top: 1px solid rgba(255,122,60,.15);
+  font-style: italic;
+}
+
+/* ─── ROADMAP ─── */
+.timeline { position: relative; padding-left: 56px; }
+.timeline::before {
+  content: ''; position: absolute; left: 22px; top: 4px; bottom: 4px;
+  width: 2px; background: var(--border); border-radius: 1px;
+}
+.tl-item { position: relative; padding-bottom: 44px; }
+.tl-item:last-child { padding-bottom: 0; }
+.tl-dot {
+  position: absolute; left: -42px; top: 0;
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 20px; border: 3px solid var(--bg); z-index: 1;
+}
+.d1 { background: linear-gradient(135deg,#7C6FFF,#A855F7); }
+.d2 { background: linear-gradient(135deg,#FF8C00,#FFD000); }
+.d3 { background: linear-gradient(135deg,#00D4B8,#3DDB7A); }
+.d4 { background: linear-gradient(135deg,#FF5C5C,#FF5C9E); }
+.tl-phase { font-size: 10px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 3px; }
+.ph1 { color: var(--purple); } .ph2 { color: var(--yellow); } .ph3 { color: var(--teal); } .ph4 { color: var(--pink); }
+.tl-status { display: inline-block; font-size: 10px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; padding: 3px 9px; border-radius: 999px; margin-left: 8px; vertical-align: middle; }
+.st-built { background: rgba(52,211,153,0.18); color: #34d399; border: 1px solid rgba(52,211,153,0.4); }
+.st-progress { background: rgba(251,191,36,0.16); color: #fbbf24; border: 1px solid rgba(251,191,36,0.4); }
+.tl-title { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 3px; }
+.tl-weeks { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+.tl-tasks { display: flex; flex-direction: column; gap: 6px; }
+.tl-task {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: 13.5px; color: var(--muted);
+}
+.tl-task::before { content: '→'; color: var(--purple); font-weight: 700; flex-shrink: 0; line-height: 1.65; }
+
+/* ─── FLOW STEPS ─── */
+.flow-steps { display: flex; flex-direction: column; gap: 0; }
+.fstep {
+  display: flex; gap: 16px; align-items: flex-start;
+  padding: 14px 0; border-bottom: 1px solid var(--border);
+}
+.fstep:last-child { border-bottom: none; }
+.fnum {
+  width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(124,111,255,.15); border: 2px solid rgba(124,111,255,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: #a89fff;
+}
+.fstep h4 { font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 3px; }
+.fstep p  { font-size: 13px; color: var(--muted); margin: 0; }
+
+/* ─── PERF BARS ─── */
+.pbar { margin-bottom: 14px; }
+.pbar-lbl { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 13px; font-weight: 600; }
+.pbar-val { color: var(--green); }
+.pbar-track { height: 6px; background: rgba(255,255,255,.07); border-radius: 3px; overflow: hidden; }
+.pbar-fill  { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--purple), var(--teal)); }
+
+/* ─── COST TABLE ─── */
+.cost-row {
+  display: flex; align-items: center; gap: 16px;
+  padding: 13px 0; border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.cost-row:last-child { border-bottom: none; }
+.cost-ico { font-size: 18px; flex-shrink: 0; width: 28px; text-align: center; }
+.cost-name { flex: 1; font-weight: 600; color: var(--txt); }
+.cost-val  { font-size: 13px; font-weight: 700; min-width: 72px; text-align: right; }
+.free { color: var(--green); }
+.key  { color: var(--yellow); }
+
+/* ─── SAFETY ─── */
+.safety-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.safety-card {
+  background: rgba(61,219,122,.04); border: 1px solid rgba(61,219,122,.15);
+  border-radius: var(--r); padding: 16px;
+}
+.safety-card h4 { font-size: 13px; font-weight: 700; color: var(--green); margin-bottom: 5px; }
+.safety-card p  { font-size: 12.5px; color: var(--muted); }
+
+/* ─── HIGHLIGHT ─── */
+.hl {
+  background: rgba(255,208,0,.05); border: 1px solid rgba(255,208,0,.2);
+  border-radius: var(--r); padding: 18px 22px; margin: 18px 0;
+  font-size: 14px; color: var(--txt); line-height: 1.65;
+}
+.hl b { color: var(--yellow); }
+
+/* ─── FOOTER ─── */
+footer {
+  text-align: center; padding: 56px 40px;
+  border-top: 1px solid var(--border);
+}
+footer .f-icon { font-size: 36px; margin-bottom: 10px; }
+footer h3 { font-size: 18px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+footer p  { font-size: 13px; color: var(--muted); }
+
+h4 { font-size: 15px; font-weight: 700; color: #fff; margin: 24px 0 10px; }
+strong { color: var(--txt); }
+code { font-family: 'JetBrains Mono', monospace; color: var(--teal); font-size: 92%; }
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="nav-brand">🦁 <span>CuriousKids</span> AI — PRD</div>
+  <a href="#status">Status</a>
+  <a href="#overview">Overview</a>
+  <a href="#techstack">Tech Stack</a>
+  <a href="#architecture">Architecture</a>
+  <a href="#memory">Memory</a>
+  <a href="#ui">UI Mockups</a>
+  <a href="#voice">Voice</a>
+  <a href="#camera">Camera</a>
+  <a href="#prompts">AI Prompts</a>
+  <a href="#safety">Safety</a>
+  <a href="#schema">DB Schema</a>
+  <a href="#conversations">Conversations</a>
+  <a href="#pwa">PWA</a>
+  <a href="#roadmap">Roadmap</a>
+  <a href="#performance">Performance</a>
+  <a href="#deployment">Deployment</a>
+  <a href="#future">Future</a>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-pill">Product Requirements Document · v1.0 · 2026</div>
+  <h1>🦁 <em>CuriousKids</em> AI</h1>
+  <p class="hero-desc">A zero-cost, voice-first AI companion for young children — the AI adapts to each child's age (set in their profile). Built to turn "why" questions into magical learning moments — no backend, no recurring cost, fully local-first.</p>
+  <div class="hero-tags">
+    <div class="hero-tag">Age <b>4+ · adaptive</b></div>
+    <div class="hero-tag">Dev Cost <b>$0 / month</b></div>
+    <div class="hero-tag">AI <b>Gemini Flash (parent key)</b></div>
+    <div class="hero-tag">Platform <b>Installable PWA</b></div>
+    <div class="hero-tag">Data <b>Local-first · IndexedDB</b></div>
+    <div class="hero-tag">Host <b>Cloudflare Pages</b></div>
+    <div class="hero-tag">Solo Dev <b>Friendly</b></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  IMPLEMENTATION NOTES / CHANGELOG                      -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="status" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Status Snapshot</div>
+  <div class="sec-title">Implementation Notes &amp; Changelog</div>
+  <p class="sec-sub">This document is a living spec. The whole MVP (Phases 1–4) plus several "future" ideas are now actually built and running. Quick status as of the latest build:</p>
+
+  <div class="g2" style="margin-bottom: 20px;">
+    <div class="card" style="border-left: 4px solid #34d399;">
+      <h3 style="margin-top:0;">✓ Built &amp; running</h3>
+      <ul style="margin:0; padding-left: 18px; line-height: 1.9; color: var(--muted); font-size: 14px;">
+        <li><b>Phase 1</b> — Voice chat with Leo, Google sign-in, Gemini client, IndexedDB, PWA shell</li>
+        <li><b>Phase 2</b> — Interest memory, session summaries, Word Explorer, 5-layer safety</li>
+        <li><b>Phase 3</b> — Camera (Gemini Vision), quizzes, XP + 4 levels, Discoveries gallery, Parent Dashboard</li>
+        <li><b>Phase 4</b> — Mascot personalities, daily time limit, sound FX, offline polish, PWA install (Lighthouse 96 / 100 / 100 / 100)</li>
+        <li><b>Multi-child profiles</b> — switcher + "Add another child"</li>
+        <li><b>Open age</b> — stepper (no 4–6 cap); AI adapts to the saved age</li>
+        <li><b>Configurable AI models</b> — chat &amp; vision model pickers + "load my key's models"</li>
+        <li><b>Key validation</b> at entry + friendly invalid-key handling</li>
+        <li><b>"Welcome back" one-tap re-auth</b> after refresh (sub is memory-only)</li>
+        <li><b>Bedtime Story Mode</b> 🌙 · <b>Weekly Parent Report</b> 📊 · <b>Word Matching Game</b> 🎮 · <b>Puzzle Mode</b> 🧩</li>
+        <li><b>Parent PIN lock</b> 🔒 (keypad gate on Settings &amp; Dashboard)</li>
+        <li><b>Telugu</b> selectable in onboarding · <b>Camera on/off toggle</b></li>
+        <li><b>Code-split bundle</b> — every screen lazy-loaded on demand</li>
+      </ul>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--yellow);">
+      <h3 style="margin-top:0;">◗ Not yet built</h3>
+      <p style="font-size:12px; color:var(--pink); font-weight:700; margin:0 0 4px;">Outstanding (process / QA)</p>
+      <ul style="margin:0 0 10px; padding-left: 18px; line-height: 1.8; color: var(--muted); font-size: 14px;">
+        <li>Lighthouse re-run per release</li>
+        <li>Real beta testing with 4–6 year olds + parent feedback</li>
+      </ul>
+      <p style="font-size:12px; color:var(--muted); font-weight:700; margin:0 0 4px;">Future ideas</p>
+      <ul style="margin:0; padding-left: 18px; line-height: 1.8; color: var(--muted); font-size: 14px;">
+        <li>Draw &amp; Learn · more languages · Tauri desktop · "Leo Sings!"</li>
+      </ul>
+      <p style="font-size:12px; color:var(--muted); margin-top:12px;">No feature/security gaps remain. Full detail in <a href="#future" style="color:var(--purple);">Section 16</a>; look for <span class="tl-status st-built">✓ Built</span> badges throughout.</p>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 1 — OVERVIEW                                  -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="overview" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 01</div>
+  <div class="sec-title">Product Overview</div>
+  <p class="sec-sub">CuriousKids AI is a personalized childhood companion — it listens, speaks, sees, and remembers. Designed specifically for children who learn best by asking endless questions.</p>
+
+  <div class="g4">
+    <div class="card card-top p">
+      <div class="card-ico ic-p">🎙️</div>
+      <h3>Voice First</h3>
+      <p>Child speaks naturally. Leo responds with warm speech. No typing or reading required.</p>
+    </div>
+    <div class="card card-top o">
+      <div class="card-ico ic-o">📷</div>
+      <h3>Camera Mode</h3>
+      <p>Point at any object. AI names it, translates it, shares fun facts, and asks mini-quizzes.</p>
+    </div>
+    <div class="card card-top t">
+      <div class="card-ico ic-t">🌍</div>
+      <h3>Multilingual</h3>
+      <p>Explores object names in Kannada, Hindi, Tamil, and more. Cultural vocabulary discovery.</p>
+    </div>
+    <div class="card card-top g">
+      <div class="card-ico ic-g">💾</div>
+      <h3>Remembers</h3>
+      <p>Tracks interests, topics loved, vocabulary learned. Fully local — no cloud required.</p>
+    </div>
+    <div class="card card-top y">
+      <div class="card-ico ic-y">🦁</div>
+      <h3>Leo — Mascot</h3>
+      <p>Leo the lion cub — emotionally consistent, always encouraging, never scary.</p>
+    </div>
+    <div class="card card-top pk">
+      <div class="card-ico ic-pk">🔒</div>
+      <h3>Child Safe</h3>
+      <p>Hardcoded safety rails. Age-appropriate only. No adult topics. Short, kind answers.</p>
+    </div>
+    <div class="card card-top r">
+      <div class="card-ico ic-r">💰</div>
+      <h3>Zero Dev Cost</h3>
+      <p>Runs entirely frontend. Free Cloudflare hosting. Parent provides Gemini API key.</p>
+    </div>
+    <div class="card card-top p">
+      <div class="card-ico ic-p">📦</div>
+      <h3>Installable PWA</h3>
+      <p>Installs like a native app. Works offline for core features. No app store needed.</p>
+    </div>
+  </div>
+
+  <div class="hl" style="margin-top: 32px;">
+    <b>Core Design Philosophy:</b> The app must feel like a magical talking toy — not an educational tool that happens to speak. Every interaction starts with wonder, ends with delight, and leaves the child wanting one more question answered.
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 2 — TECH STACK                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="techstack" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 02</div>
+  <div class="sec-title">Recommended Tech Stack</div>
+  <p class="sec-sub">Chosen for zero cost, solo-dev maintainability, and excellent offline PWA support. No backend, no server, no bills.</p>
+
+  <div class="tbl-wrap">
+    <table class="tbl">
+      <thead>
+        <tr><th>Layer</th><th>Technology</th><th>Why This Choice</th><th>Cost</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><strong>Frontend</strong></td><td>React 18 + Vite</td><td>Fast builds, excellent PWA plugin, huge ecosystem, no SSR overhead</td><td><span class="badge b-g">Free</span></td></tr>
+        <tr><td><strong>Styling</strong></td><td>Tailwind CSS v3</td><td>Rapid prototyping, utility classes, tiny prod bundle, easy theming</td><td><span class="badge b-g">Free</span></td></tr>
+        <tr><td><strong>Language</strong></td><td>TypeScript 5</td><td>Type-safe DB schema, API shapes, state — prevents runtime bugs</td><td><span class="badge b-g">Free</span></td></tr>
+        <tr><td><strong>AI Model</strong></td><td>Gemini 2.0 Flash</td><td>Multimodal (text + image), very cheap, fast, huge context window</td><td><span class="badge b-y">Parent key</span></td></tr>
+        <tr><td><strong>Voice Input</strong></td><td>Web Speech API (STT)</td><td>Browser-native, zero cost, no API key, good accuracy in multiple languages</td><td><span class="badge b-g">Free</span></td></tr>
+        <tr><td><strong>Voice Output</strong></td><td>SpeechSynthesis API (TTS)</td><td>Browser-native TTS, supports en-IN, kn-IN, hi-IN voices, no cost</td><td><span class="badge b-g">Free</span></td></tr>
+        <tr><td><strong>Local DB</strong></td><td>Dexie.js (IndexedDB)</td><td>50MB+ persistent storage, async, typed, versioned migrations — no SQLite WASM overhead</td><td><span class="badge b-g">Free</span></td></tr>
+        <tr><td><strong>Camera / Vision</strong></td><td>getUserMedia + Gemini Vision</td><td>No dedicated vision API — Gemini Flash handles image understanding at near-zero cost</td><td><span class="badge b-y">Parent key</span></td></tr>
+        <tr><td><strong>State</strong></td><td>Zustand</td><td>Minimal boilerplate, perfect for session + profile state, small bundle</td><td><span class="badge b-g">Free</span></td></tr>
+        <tr><td><strong>Auth</strong></td><td>Google Sign-In (GSI)</td><td>Free OAuth, parent signs in once, child profile tied to Google ID locally</td><td><span class="badge b-g">Free</span></td></tr>
+        <tr><td><strong>PWA</strong></td><td>Vite PWA Plugin (Workbox)</td><td>Auto service worker, precaching, offline strategy — zero config needed</td><td><span class="badge b-g">Free</span></td></tr>
+        <tr><td><strong>Animations</strong></td><td>Framer Motion</td><td>Spring physics for mascot, entrance animations, celebrate effects for kids</td><td><span class="badge b-g">Free</span></td></tr>
+        <tr><td><strong>Hosting</strong></td><td>Cloudflare Pages</td><td>Unlimited bandwidth, 200+ edge nodes, free SSL, free forever tier</td><td><span class="badge b-g">Free</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="hl">
+    <b>Why NOT Next.js?</b> Next.js server features create infrastructure cost. Since all AI calls go directly from the browser to Gemini, Vite + static hosting is the perfect match. Zero server, zero cold starts, zero bills for the developer.
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 3 — ARCHITECTURE                              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="architecture" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 03</div>
+  <div class="sec-title">System Architecture</div>
+  <p class="sec-sub">Local-first, serverless, privacy-preserving. All AI calls go directly from the browser to Gemini. No backend proxy needed.</p>
+
+  <div class="diagram-box">
+    <div class="diagram-label">Figure 1 — High-Level System Overview</div>
+    <div class="mermaid">
+graph TB
+  subgraph DEVICE["📱 Child Device — Browser / Installed PWA"]
+    direction TB
+    UI["🎨 React UI\nGiant buttons · Mascot · Animations"]
+    VOICE["🎙️ Web Speech API\nSTT + TTS — zero cost"]
+    CAM["📷 Camera Mode\ngetUserMedia + frame capture"]
+    STATE["⚡ Zustand\nSession + Profile State"]
+    IDB["💾 Dexie.js / IndexedDB\n50MB+ local persistent storage"]
+    SW["🔧 Service Worker\nWorkbox — offline cache"]
+    GEMINI_CLIENT["🤖 Gemini API Client\nDirect browser → Gemini calls"]
+    SAFETY["🛡️ Safety Filter\nPre + post response checks"]
+  end
+
+  subgraph CLOUD["☁️ External Services — Minimal"]
+    GEMINI["Google Gemini 2.0 Flash\nText + Vision · Parent's key"]
+    GAUTH["Google Sign-In\nParent OAuth · Child name collected here"]
+    GDRIVE["Google Drive API\ndrive.appdata scope · Free\nChild profile + session summaries sync"]
+  end
+
+  subgraph HOSTING["🌐 Cloudflare Pages — Free"]
+    STATIC["Static Bundle\nHTML + JS + CSS + Assets"]
+  end
+
+  UI <--> VOICE
+  UI <--> CAM
+  UI <--> STATE
+  STATE <--> IDB
+  UI --> GEMINI_CLIENT
+  CAM --> GEMINI_CLIENT
+  GEMINI_CLIENT --> SAFETY
+  SAFETY --> UI
+  GEMINI_CLIENT -->|"HTTPS · Parent API Key"| GEMINI
+  STATIC --> SW
+  SW -.->|"Cache first"| UI
+  UI --> GAUTH
+  GAUTH -->|"OAuth token + child name"| STATE
+  STATE -->|"Sync on session end"| GDRIVE
+  GDRIVE -.->|"Restore on new device"| STATE
+
+  classDef device fill:#0E1220,stroke:#7C6FFF,stroke-width:2px,color:#E4E8F5
+  classDef cloud  fill:#0a1a2a,stroke:#00D4B8,stroke-width:1px,color:#E4E8F5
+  classDef host   fill:#0a1e0a,stroke:#3DDB7A,stroke-width:1px,color:#E4E8F5
+  class UI,VOICE,CAM,STATE,IDB,SW,GEMINI_CLIENT,SAFETY device
+  class GEMINI,GAUTH,GDRIVE cloud
+  class STATIC host
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="diagram-label">Figure 2 — Voice Conversation Sequence</div>
+    <div class="mermaid">
+sequenceDiagram
+  participant C  as 👶 Child
+  participant STT as 🎙️ Speech API
+  participant APP as ⚡ App State
+  participant DB  as 💾 IndexedDB
+  participant AI  as 🤖 Gemini Flash
+  participant SPK as 🔊 TTS Speaker
+
+  C  ->> STT: Speaks question
+  STT ->> APP: Final transcript
+  APP ->> DB:  Load profile + top interests + last 2 summaries
+  DB  -->> APP: Child context (~180 tokens)
+  APP ->> AI:  System prompt + context + question
+  AI  -->> APP: Streamed response
+  APP ->> APP: Safety post-filter
+  APP ->> SPK: Speak response
+  SPK ->> C:   🦁 Leo responds!
+  APP ->> DB:  Update interest tags + session log
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="diagram-label">Figure 3 — Camera Object Recognition Flow</div>
+    <div class="mermaid">
+flowchart LR
+  A["👶 Child taps\nCamera button"] --> B{"Show consent\ndialog"}
+  B -->|Cancel| A
+  B -->|Approved| C["📸 Capture frame\n640×480 as base64"]
+  C --> D["🤖 Gemini Vision\nAPI call with prompt"]
+  D --> E{"Valid\nresponse?"}
+  E -->|No / Unclear| F["Leo: 'Hmm,\nlet me try again!'"]
+  F --> A
+  E -->|Yes| G["Parse JSON:\nname · emoji · translations\nfun fact · quiz question"]
+  G --> H["🎨 Show result card\nname + flags + translations"]
+  H --> I["🔊 Leo speaks name\n+ fun fact aloud"]
+  I --> J["🎯 Mini quiz:\n'Say it in Kannada!'"]
+  J --> K["💾 Save to\nlearnedObjects DB"]
+  K --> L["🎉 Celebrate!\nConfetti + stars"]
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 4 — MEMORY                                    -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="memory" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 04</div>
+  <div class="sec-title">Local-First Memory Architecture</div>
+  <p class="sec-sub">No full conversations stored permanently. A lightweight summarized profile grows over time — like a child's learning journal, not a surveillance log.</p>
+
+  <div class="g2" style="margin-bottom: 32px;">
+    <div>
+      <h4>Storage Option Comparison</h4>
+      <div class="card" style="margin-bottom: 12px; border-left: 3px solid var(--red); border-top: none;">
+        <h3 style="color: var(--red);">❌ localStorage — Rejected</h3>
+        <p>5MB limit, synchronous (blocks UI), no structured queries, easily cleared by the browser, no versioning or migrations. Completely unsuitable.</p>
+      </div>
+      <div class="card" style="margin-bottom: 12px; border-left: 3px solid var(--orange); border-top: none;">
+        <h3 style="color: var(--orange);">⚠️ SQLite (WASM) — Overkill</h3>
+        <p>~3MB WASM download, complex setup, requires Origin Private Filesystem API (fragmented browser support), overkill for this use case.</p>
+      </div>
+      <div class="card" style="border-left: 3px solid var(--green); border-top: none;">
+        <h3 style="color: var(--green);">✅ IndexedDB + Dexie.js — Winner</h3>
+        <p>Built into every browser, 50MB+ quota, async non-blocking, structured data, versioned migrations, TypeScript-first, zero bundle cost.</p>
+      </div>
+    </div>
+    <div>
+      <h4>5 Memory Layers</h4>
+      <div class="flow-steps">
+        <div class="fstep">
+          <div class="fnum">1</div>
+          <div>
+            <h4>Child Profile (permanent)</h4>
+            <p>Name, age, mascot, preferred languages. Written once during onboarding.</p>
+          </div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">2</div>
+          <div>
+            <h4>Interest Tags (auto-updated)</h4>
+            <p>Weighted topics: <code>{ tigers: 9, birds: 6, space: 3 }</code>. Decays 0.1/day. Max 10.</p>
+          </div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">3</div>
+          <div>
+            <h4>Session Summaries (7-day rolling)</h4>
+            <p>Gemini writes a 2-sentence summary per session. Only 7 kept; old ones auto-deleted.</p>
+          </div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">4</div>
+          <div>
+            <h4>Learned Objects (max 200, LRU)</h4>
+            <p>Object name + translations + emoji. Used for "You already know tiger!" moments.</p>
+          </div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">5</div>
+          <div>
+            <h4>Vocabulary Cache (per language)</h4>
+            <p>Word → translation pairs cached locally. Grows as child explores. Works offline.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram-box">
+    <div class="diagram-label">Figure 4 — Token-Efficient Context Building per Request</div>
+    <div class="mermaid">
+graph LR
+  subgraph DB["💾 What is stored in IndexedDB"]
+    P["👶 Profile\n~200 bytes"]
+    I["🏷️ Interests\n~300 bytes"]
+    S["📝 7 Session Summaries\n≈ 1 KB max"]
+    O["📦 200 Learned Objects\n≈ 10 KB max"]
+  end
+
+  subgraph SENT["🤖 What gets sent to Gemini per request"]
+    CTX["System prompt · 600 tok\nProfile · 50 tok\nTop 3 interests · 30 tok\nLast 2 summaries · 100 tok\nChild question · 30 tok\n─────────────────────\n≈ 810 tokens total"]
+  end
+
+  subgraph DISCARDED["🚫 Never stored"]
+    CONV["Full conversation history"]
+    RAW["Raw AI responses\n(only summary saved)"]
+  end
+
+  DB --> SENT
+  CONV -.->|"Discarded after session"| DISCARDED
+  RAW  -.->|"Never persisted"| DISCARDED
+
+  classDef db   fill:#0E1220,stroke:#7C6FFF,color:#E4E8F5
+  classDef sent fill:#0a1e0a,stroke:#3DDB7A,color:#E4E8F5
+  classDef disc fill:#1e0a0a,stroke:#FF5C5C,color:#E4E8F5
+  class P,I,S,O db
+  class CTX sent
+  class CONV,RAW disc
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 5 — UI MOCKUPS                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="ui" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 05</div>
+  <div class="sec-title">UI / UX Concept &amp; Mockups</div>
+  <p class="sec-sub">Designed for young children: giant buttons, high contrast, emoji-rich, minimal text, voice-first. Discoverable by tapping. Designed to feel magical.</p>
+
+  <div class="phones">
+
+    <!-- Screen 1: Home -->
+    <div class="phone">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="scr-home">
+            <div class="kid-hello">Welcome back 👋</div>
+            <div class="kid-greet">Good morning, Aarav!</div>
+            <div class="leo-orb">🦁</div>
+            <div class="leo-says">"Want to discover something amazing today?"</div>
+            <button class="hbtn hb1">🎙️ &nbsp;Talk to Leo</button>
+            <button class="hbtn hb2">📷 &nbsp;What is This?</button>
+            <button class="hbtn hb3">🌍 &nbsp;Word Explorer</button>
+            <button class="hbtn hb4">⭐ &nbsp;My Discoveries</button>
+          </div>
+        </div>
+      </div>
+      <div class="phone-label">Home Screen</div>
+    </div>
+
+    <!-- Screen 2: Chat -->
+    <div class="phone">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="scr-chat">
+            <div class="chat-hdr">
+              <div class="ch-av">🦁</div>
+              <div>
+                <div class="ch-name">Leo the Lion Cub</div>
+                <div class="ch-st">● Listening…</div>
+              </div>
+            </div>
+            <div class="chat-msgs">
+              <div class="msg-ai">
+                <div class="msg-lbl lbl-ai">LEO</div>
+                <div class="bbl bbl-ai">Roarr! 🦁 You loved tigers yesterday! Want to learn about lions today? They're my cousins! 😄</div>
+              </div>
+              <div class="msg-kid">
+                <div class="msg-lbl lbl-kid">AARAV</div>
+                <div class="bbl bbl-kid">How many teeth does a tiger have?</div>
+              </div>
+              <div class="msg-ai">
+                <div class="msg-lbl lbl-ai">LEO</div>
+                <div class="bbl bbl-ai">WOW! 🐯 Tigers have <b style="color:#FFD000">30 teeth</b>! Their long ones are called FANGS! Can you count to 30? 🦷</div>
+              </div>
+              <div class="msg-kid">
+                <div class="msg-lbl lbl-kid">AARAV</div>
+                <div class="bbl bbl-kid">What is tiger in Kannada?</div>
+              </div>
+              <div class="msg-ai">
+                <div class="msg-lbl lbl-ai">LEO</div>
+                <div class="bbl bbl-ai">In Kannada, tiger is <b style="color:#FFD000">ಹುಲಿ (Huli)</b>! Say with me: <em>Hoo-lee!</em> 🎉</div>
+              </div>
+            </div>
+            <div class="chat-bar">
+              <div class="chat-pill">Tap mic to speak…</div>
+              <button class="mic-pill">🎙️</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-label">Conversation Screen</div>
+    </div>
+
+    <!-- Screen 3: Camera -->
+    <div class="phone">
+      <div class="phone-frame">
+        <div class="phone-notch"></div>
+        <div class="phone-screen">
+          <div class="scr-cam">
+            <div class="cam-view">
+              <div class="cam-corner"></div>
+              <div class="cam-obj">🍎</div>
+            </div>
+            <div class="cam-result">
+              <div class="cam-obj-name">🍎 Apple</div>
+              <div class="lang-row">
+                <div class="lpill">EN: Apple</div>
+                <div class="lpill">KN: ಸೇಬು (Sebu)</div>
+                <div class="lpill">HI: सेब (Seb)</div>
+                <div class="lpill">TA: ஆப்பிள்</div>
+              </div>
+              <div class="fun-box">🌟 Apples float in water because they're 25% air! 🎈</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="phone-label">Camera / Object Mode</div>
+    </div>
+
+  </div>
+
+  <h4>UX Design Principles</h4>
+  <div class="g3">
+    <div class="card"><div class="card-ico ic-y">👆</div><h3>Giant Touch Targets</h3><p>All interactive elements are minimum 64×64px. Child fingers are imprecise — no tiny links or small menus anywhere.</p></div>
+    <div class="card"><div class="card-ico ic-p">🌈</div><h3>Color-Coded Actions</h3><p>Each mode uses a unique bright color. Children learn by color before text — consistent color mapping across every screen.</p></div>
+    <div class="card"><div class="card-ico ic-g">🔊</div><h3>Audio for Everything</h3><p>Every tap plays a soft chime. Leo speaks all content. The child never needs to read — voice is the complete interface.</p></div>
+    <div class="card"><div class="card-ico ic-pk">🎉</div><h3>Celebrate Every Win</h3><p>Confetti, stars, and cheerful sounds on every correct answer. Warm encouragement (never shame) on wrong ones.</p></div>
+    <div class="card"><div class="card-ico ic-o">🦁</div><h3>Leo is Always Present</h3><p>Leo is always visible, always reacting. Idle bounce animation. Never disappears. Feels like a real friend, not an interface.</p></div>
+    <div class="card"><div class="card-ico ic-t">🔐</div><h3>Parent Layer</h3><p>API key, model, time-limit, camera, sound and Drive controls live in a dedicated parent area — now protected by an optional <b>4-digit Parent PIN</b> gate. The child sees only Leo's magical world.</p></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 6 — VOICE                                     -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="voice" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 06</div>
+  <div class="sec-title">Voice Interaction Architecture</div>
+  <p class="sec-sub">The entire app is operable without typing. Voice is the primary interface; text transcript is secondary and collapsed by default.</p>
+
+  <div class="diagram-box">
+    <div class="diagram-label">Figure 5 — Full Voice Pipeline (STT → AI → TTS)</div>
+    <div class="mermaid">
+flowchart TD
+  A["👶 Child taps mic\nor long-presses screen"] --> B["Web Speech API\nrecognition.start()"]
+  B --> C{"Speech\ndetected?"}
+  C -->|"Silence 2 sec"| D["Auto-stop\nShow waveform animation"]
+  C -->|"Speaking"| E["Stream interim\ntranscript to UI"]
+  D --> F["recognition.stop()\nFinal transcript ready"]
+  E --> F
+  F --> G{"Transcript\n≥ 2 words?"}
+  G -->|No| H["Leo: 'I didn't catch\nthat! Try again? 😊'"]
+  G -->|Yes| I["Build context-aware\nGemini prompt"]
+  H --> A
+  I --> J["Stream Gemini Flash\nresponse tokens"]
+  J --> K["Safety post-filter\ncheck output"]
+  K --> L["SpeechSynthesis API\nspeak response aloud"]
+  L --> M["🦁 Leo mouth animation\nsyncs with speech"]
+  M --> N["Transcript shown\ncollapsed by default"]
+  N --> O{"Child replies\nwithin 30 sec?"}
+  O -->|Yes| A
+  O -->|No| P["Leo idle prompt:\n'Ready for more fun?' 🌟"]
+    </div>
+  </div>
+
+  <div class="g2" style="margin-top: 28px;">
+    <div>
+      <h4>Speech Recognition Config</h4>
+      <div class="code">
+<span class="kw">const</span> recognition = <span class="kw">new</span> <span class="key">SpeechRecognition</span>()
+recognition.continuous      = <span class="num">false</span>
+recognition.interimResults  = <span class="num">true</span>
+recognition.maxAlternatives = <span class="num">3</span>
+
+<span class="cm">// Language from child profile</span>
+<span class="kw">const</span> LANG_MAP = {
+  en: <span class="str">'en-IN'</span>,
+  kn: <span class="str">'kn-IN'</span>,
+  hi: <span class="str">'hi-IN'</span>,
+  ta: <span class="str">'ta-IN'</span>,
+}
+recognition.lang = LANG_MAP[profile.primaryLang]
+      </div>
+    </div>
+    <div>
+      <h4>Speech Synthesis Config</h4>
+      <div class="code">
+<span class="kw">const</span> <span class="fn">speak</span> = (text: <span class="key">string</span>) => {
+  <span class="kw">const</span> utt = <span class="kw">new</span> <span class="key">SpeechSynthesisUtterance</span>(text)
+  utt.rate   = <span class="num">0.85</span>  <span class="cm">// Slower — easier for kids</span>
+  utt.pitch  = <span class="num">1.1</span>   <span class="cm">// Higher — sounds warmer</span>
+  utt.volume = <span class="num">0.9</span>
+  utt.voice  = <span class="fn">getBestVoice</span>(<span class="str">'en-IN'</span>)
+  <span class="cm">// Prefers: Google UK English Female</span>
+  window.speechSynthesis.<span class="fn">speak</span>(utt)
+}
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 7 — CAMERA                                    -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="camera" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 07</div>
+  <div class="sec-title">Camera Mode Architecture</div>
+  <p class="sec-sub">Child points camera at any object — Leo identifies, teaches, translates, and quizzes. Photos are never stored. Privacy by design.</p>
+
+  <div class="g2" style="margin-bottom: 28px;">
+    <div class="card card-top o">
+      <div class="card-ico ic-o">🔐</div>
+      <h3>Privacy by Design</h3>
+      <p>Frame captured as base64 → camera stream released <em>before</em> the network call → sent to Gemini → image buffer discarded. <strong>No image ever written to disk, IndexedDB, or Drive.</strong> A consent explainer is shown on first use (remembered per-child in localStorage), and a 4 MB payload guard blocks oversized captures.</p>
+    </div>
+    <div class="card card-top g">
+      <div class="card-ico ic-g">💰</div>
+      <h3>Cost Model</h3>
+      <p>Gemini Flash Vision ≈ <strong>$0.0001 per scan</strong>. 10 camera uses per day = $0.001/day = ~$0.03/month. Parent's key, parent's usage — effectively negligible for any typical child session.</p>
+    </div>
+  </div>
+
+  <h4>Camera Implementation</h4>
+  <div class="code">
+<span class="cm">// Step 1 — Consent shown once per child, then start rear camera</span>
+<span class="kw">const</span> <span class="fn">startCamera</span> = <span class="kw">async</span> (retry = <span class="kw">false</span>) => {
+  <span class="kw">const</span> constraints = retry
+    ? { video: <span class="kw">true</span> }                              <span class="cm">// fallback if facingMode unsupported</span>
+    : { video: { facingMode: <span class="str">'environment'</span> } }
+  <span class="kw">try</span> {
+    streamRef.current = <span class="kw">await</span> navigator.mediaDevices.<span class="fn">getUserMedia</span>(constraints)
+    <span class="cm">// re-attached via useEffect once &lt;video&gt; is rendered (avoids null-ref race)</span>
+  } <span class="kw">catch</span> (err) {
+    <span class="kw">if</span> (err.name === <span class="str">'OverconstrainedError'</span> && !retry) <span class="kw">return</span> <span class="fn">startCamera</span>(<span class="kw">true</span>)
+    <span class="cm">// NotAllowedError / NotFoundError → friendly Leo error screen</span>
+  }
+}
+
+<span class="cm">// Step 2 — Capture, RELEASE stream first, then analyze, then discard</span>
+<span class="kw">const</span> <span class="fn">captureAndAnalyze</span> = <span class="kw">async</span> () => {
+  canvas.width = video.videoWidth || <span class="num">640</span>
+  canvas.height = video.videoHeight || <span class="num">480</span>
+  canvas.getContext(<span class="str">'2d'</span>).<span class="fn">drawImage</span>(video, <span class="num">0</span>, <span class="num">0</span>, canvas.width, canvas.height)
+  streamRef.current.<span class="fn">getTracks</span>().<span class="fn">forEach</span>(t => t.<span class="fn">stop</span>())  <span class="cm">// ← released before network</span>
+  <span class="kw">const</span> base64 = canvas.<span class="fn">toDataURL</span>(<span class="str">'image/jpeg'</span>, <span class="num">0.7</span>).<span class="fn">split</span>(<span class="str">','</span>)[<span class="num">1</span>]
+  <span class="kw">if</span> (base64.length > <span class="num">4</span> * <span class="num">1024</span> * <span class="num">1024</span>) <span class="kw">return</span> <span class="fn">tooBigError</span>()  <span class="cm">// 4MB guard</span>
+  <span class="kw">return</span> <span class="kw">await</span> geminiClient.<span class="fn">analyzeImage</span>(base64, <span class="fn">buildCameraPrompt</span>(langs))
+}
+  </div>
+
+  <h4>Gemini Vision Prompt</h4>
+  <p style="color:var(--muted); font-size:13px; margin:-6px 0 14px;">Built dynamically from the child's enabled languages. The client strips markdown fences, validates every field, and falls back to plain-text display if the model returns non-JSON.</p>
+  <div class="prompt" data-label="CAMERA MODE PROMPT — buildCameraPrompt(languages)">
+    <p>
+Look at this image and identify the main object or subject a child would find interesting.<br><br>
+Respond with ONLY this JSON format:<br>
+{<br>
+&nbsp;&nbsp;"objectName": "simple English name (e.g., 'elephant', 'red apple', 'butterfly')",<br>
+&nbsp;&nbsp;"emoji": "a single relevant emoji",<br>
+&nbsp;&nbsp;"funFact": "One amazing, age-appropriate fact in simple words a 5-year-old understands (max 2 sentences)",<br>
+&nbsp;&nbsp;"question": "An open-ended question to make the child curious",<br>
+&nbsp;&nbsp;"translations": { "en": "English word", "kn": "word in Kannada", "hi": "word in Hindi" }<br>
+}<br><br>
+Languages to include: English, Kannada, Hindi.<br>
+Tune ALL text to the child's age (open-ended, taken from their profile).
+    </p>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 8 — AI PROMPTS                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="prompts" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 08</div>
+  <div class="sec-title">AI Prompt Engineering System</div>
+  <p class="sec-sub">The system prompt is Leo's personality. Carefully engineered to be warm, educational, child-safe, and dynamically personalized from local memory.</p>
+
+  <h4>Master System Prompt</h4>
+  <div class="prompt" data-label="MASTER SYSTEM PROMPT">
+    <p>
+You are Leo, a warm and playful lion cub who is best friends with {childName}, who is {childAge} years old.<br><br>
+YOUR PERSONALITY:<br>
+— Endlessly curious, enthusiastic, and encouraging<br>
+— Celebrate every question the child asks ("WOW what a great question!")<br>
+— Speak in short, simple sentences a 5-year-old understands<br>
+— Use 1–2 emojis per response. Use animal sounds (Roarr! Hehe!)<br>
+— NEVER say anything scary, sad, violent, or confusing<br>
+— Always end with one follow-up question to keep curiosity alive<br><br>
+CHILD CONTEXT (from memory):<br>
+— Name: {childName} | Age: {childAge}<br>
+— Favourite topics: {topInterests}<br>
+— Languages to include: {languages}<br>
+— Recent learning: {lastTwoSessionSummaries}<br><br>
+RESPONSE RULES:<br>
+1. Max 3 short sentences per response<br>
+2. Include one translation when child asks about object names<br>
+3. One fun fact if contextually relevant<br>
+4. Never mention death, violence, adult content, politics, religion conflicts<br>
+5. If unsure: "Let's find out together!" — never "I don't know"<br>
+6. Always speak as Leo. Never break character.<br><br>
+SAFETY OVERRIDE: If any question touches adult topics, respond ONLY with:<br>
+"That's a question for your parents! Let's explore something fun — what animals do you like? 🦁"
+    </p>
+  </div>
+
+  <div class="g2" style="margin-top: 24px;">
+    <div>
+      <h4>Translation Prompt</h4>
+      <div class="prompt" data-label="TRANSLATION MODE">
+        <p>
+Child asked: "What is {word} in {language}?"<br><br>
+As Leo, respond with:<br>
+1. The word in native script<br>
+2. Pronunciation in parentheses<br>
+3. A fun memory trick to remember it<br>
+4. One related word bonus<br><br>
+Max 40 words total. Keep it playful.
+        </p>
+      </div>
+    </div>
+    <div>
+      <h4>Session Summary — Auto-Triggered (Child Never Ends Manually)</h4>
+      <div class="hl" style="margin-bottom: 14px;">
+        <b>How session end is detected:</b> A 5-year-old will never consciously "end" a session — they'll just put the phone down, switch apps, or walk away. The app detects session end automatically using four browser events, whichever fires first:
+        <ul style="margin-top: 10px; padding-left: 20px; line-height: 2;">
+          <li><code>visibilitychange</code> → <code>document.hidden === true</code> — child switches app or locks phone</li>
+          <li><code>pagehide</code> — PWA moved to background on iOS/Android</li>
+          <li><code>beforeunload</code> — browser tab or window closes</li>
+          <li><strong>Inactivity timer</strong> — 90 seconds of no speech or taps → summary triggered silently</li>
+        </ul>
+        <br>All four events call the same <code>triggerSessionSummary()</code> function, which is <strong>debounced</strong> so it only runs once per session. If the child resumes within 5 minutes, the session continues and no summary is written yet.
+      </div>
+      <div class="prompt" data-label="AUTO-TRIGGERED SESSION SUMMARY PROMPT">
+        <p>
+Topics explored this session: {topicList}<br>
+Duration: {durationMinutes} minutes<br><br>
+Write a memory summary in JSON. Be warm and specific:<br>
+{<br>
+&nbsp;"summary": "2 sentence warm summary of what was explored",<br>
+&nbsp;"newInterests": ["tigers", "teeth", "Kannada"],<br>
+&nbsp;"topicsToRevisit": ["how tigers hunt"],<br>
+&nbsp;"emotionalNote": "Very excited about animal facts"<br>
+}<br><br>
+This is stored locally and used for tomorrow's personalised greeting.<br>
+Keep summary under 200 characters. Only return valid JSON.
+        </p>
+      </div>
+      <div class="code">
+<span class="cm">// Four triggers → one debounced handler</span>
+<span class="kw">const</span> triggerSummary = <span class="fn">debounce</span>(<span class="fn">generateSessionSummary</span>, <span class="num">1000</span>)
+
+document.<span class="fn">addEventListener</span>(<span class="str">'visibilitychange'</span>, () => {
+  <span class="kw">if</span> (document.hidden) triggerSummary()
+})
+window.<span class="fn">addEventListener</span>(<span class="str">'pagehide'</span>, triggerSummary)
+window.<span class="fn">addEventListener</span>(<span class="str">'beforeunload'</span>, triggerSummary)
+
+<span class="cm">// Inactivity: reset on every speech/tap event</span>
+<span class="kw">let</span> idleTimer = <span class="fn">setTimeout</span>(triggerSummary, <span class="num">90_000</span>)
+<span class="kw">const</span> resetIdle = () => {
+  <span class="fn">clearTimeout</span>(idleTimer)
+  idleTimer = <span class="fn">setTimeout</span>(triggerSummary, <span class="num">90_000</span>)
+}
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 9 — SAFETY                                    -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="safety" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 09</div>
+  <div class="sec-title">Child Safety Architecture</div>
+  <p class="sec-sub">Safety is baked into every layer using a defense-in-depth approach — prompt level, API level, and post-processing filters all work together.</p>
+
+  <div class="diagram-box">
+    <div class="diagram-label">Figure 6 — Five-Layer Safety System</div>
+    <div class="mermaid">
+flowchart LR
+  Q["👶 Child\nquestion"] --> L1
+
+  subgraph L1["Layer 1 — Input Filter"]
+    I1["Keyword\nblocklist check"]
+    I2{"Flagged?"}
+    I1 --> I2
+  end
+
+  subgraph L2["Layer 2 — Prompt Engineering"]
+    P1["Hardcoded Leo\npersona in system prompt"]
+    P2["Age + context\ninjected per request"]
+  end
+
+  subgraph L3["Layer 3 — Gemini API Settings"]
+    G1["HARM_CATEGORY_SEXUALLY_EXPLICIT: BLOCK_LOW_AND_ABOVE\nHARM_CATEGORY_DANGEROUS: BLOCK_LOW_AND_ABOVE\nHARM_CATEGORY_HATE_SPEECH: BLOCK_LOW_AND_ABOVE"]
+  end
+
+  subgraph L4["Layer 4 — Output Filter"]
+    O1["Response length check\n≤ 100 words"]
+    O2["Adult keyword scan\non response text"]
+  end
+
+  subgraph L5["Layer 5 — UI"]
+    U1["Safe response\ndisplayed + spoken"]
+    U2["Leo deflects to\nsafe fun topic"]
+  end
+
+  I2 -->|Safe| L2 --> L3 --> L4 --> U1
+  I2 -->|Flagged| U2
+
+  classDef safe fill:#0a1e0a,stroke:#3DDB7A,color:#E4E8F5
+  classDef warn fill:#1e0a0a,stroke:#FF5C5C,color:#E4E8F5
+  class L1,L2,L3,L4,L5,I1,P1,P2,G1,O1,O2 safe
+  class U2 warn
+    </div>
+  </div>
+
+  <div class="safety-grid" style="margin-top: 24px;">
+    <div class="safety-card"><h4>No Adult Topics</h4><p>Input blocklist + system prompt prevents violence, adult content, political controversies, and harmful subjects.</p></div>
+    <div class="safety-card"><h4>Short Answers Only</h4><p>Max 3 sentences enforced via prompt. Children cannot be led down complex or harmful rabbit holes.</p></div>
+    <div class="safety-card"><h4>No Internet Browsing</h4><p>Leo cannot browse URLs or access real-time web content. All knowledge from Gemini's trained model only.</p></div>
+    <div class="safety-card"><h4>Minimal Data to AI</h4><p>Only first name and age sent to Gemini. No location, no photos stored, no persistent conversation logs.</p></div>
+    <div class="safety-card"><h4>Parent PIN Lock <span class="tl-status st-built">✓ Built</span></h4><p>An optional 4-digit PIN (SHA-256 hashed → <code>parentPinHash</code>) gates Settings &amp; the Dashboard via a tablet-friendly keypad. Set/remove it in Settings; unlock is remembered per visit.</p></div>
+    <div class="safety-card"><h4>Encouraging Tone Only</h4><p>Leo never says "Wrong!" All deflections are warm: "Interesting idea! Let's explore this instead..."</p></div>
+    <div class="safety-card"><h4>Camera Consent Flow</h4><p>Every camera session shows a plain-language consent dialog. No background recording ever.</p></div>
+    <div class="safety-card"><h4>Offline Safe Mode</h4><p>Without connectivity, Leo uses cached content. Children never see error screens — Leo explains warmly.</p></div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 10 — DB SCHEMA                                -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="schema" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 10</div>
+  <div class="sec-title">IndexedDB Schema Design</div>
+  <p class="sec-sub">Five tables. No conversation logs stored permanently. Everything is summarized, bounded, and auto-pruned to stay lean and private.</p>
+
+  <div class="schema-wrap">
+    <div class="schema-head"><code>childProfiles</code> <span class="badge b-p">Core · Permanent</span></div>
+    <table class="schema-tbl">
+      <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+      <tr><td>id</td><td>string (UUID)</td><td>Auto-generated primary key</td></tr>
+      <tr><td>googleId</td><td>string</td><td>Parent's Google sub claim</td></tr>
+      <tr><td>name</td><td>string</td><td>Child's first name only</td></tr>
+      <tr><td>age</td><td>number</td><td>4, 5, or 6</td></tr>
+      <tr><td>mascotChoice</td><td>'lion' | 'owl' | 'bunny'</td><td>Default: lion (Leo)</td></tr>
+      <tr><td>preferredLanguages</td><td>string[]</td><td>e.g. ['en', 'kn', 'hi']</td></tr>
+      <tr><td>createdAt</td><td>number (timestamp)</td><td></td></tr>
+      <tr><td>lastActiveAt</td><td>number (timestamp)</td><td>Used for personalized greetings</td></tr>
+    </table>
+  </div>
+
+  <div class="schema-wrap">
+    <div class="schema-head"><code>interestTags</code> <span class="badge b-t">Auto-updated · Weighted</span></div>
+    <table class="schema-tbl">
+      <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+      <tr><td>profileId</td><td>string</td><td>FK to childProfiles</td></tr>
+      <tr><td>tag</td><td>string</td><td>'tigers', 'space', 'birds'</td></tr>
+      <tr><td>weight</td><td>number (0–10)</td><td>Decays 0.1/day automatically. Max 10.</td></tr>
+      <tr><td>lastMentioned</td><td>number (timestamp)</td><td>Used for decay calculation</td></tr>
+    </table>
+  </div>
+
+  <div class="schema-wrap">
+    <div class="schema-head"><code>sessionSummaries</code> <span class="badge b-y">7-day rolling window</span></div>
+    <table class="schema-tbl">
+      <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+      <tr><td>id</td><td>string</td><td></td></tr>
+      <tr><td>profileId</td><td>string</td><td></td></tr>
+      <tr><td>date</td><td>string (ISO date)</td><td>'2024-03-15'</td></tr>
+      <tr><td>summary</td><td>string (max 200 chars)</td><td>AI-generated 2-sentence summary</td></tr>
+      <tr><td>topicsExplored</td><td>string[]</td><td></td></tr>
+      <tr><td>newInterests</td><td>string[]</td><td></td></tr>
+      <tr><td>emotionalNote</td><td>string?</td><td>Optional mood note from AI</td></tr>
+    </table>
+    <div class="schema-note">⚠️ AUTO-PRUNED: Only last 7 days kept. Records older than 7 days are automatically deleted on app startup.</div>
+  </div>
+
+  <div class="schema-wrap">
+    <div class="schema-head"><code>learnedObjects</code> <span class="badge b-o">Max 200 · LRU eviction</span></div>
+    <table class="schema-tbl">
+      <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+      <tr><td>id</td><td>string</td><td></td></tr>
+      <tr><td>profileId</td><td>string</td><td></td></tr>
+      <tr><td>objectName</td><td>string</td><td>'Apple', 'Tiger'</td></tr>
+      <tr><td>emoji</td><td>string</td><td>'🍎', '🐯'</td></tr>
+      <tr><td>translations</td><td>Record&lt;string, string&gt;</td><td>JSON: { kn: "ಸೇಬು (Sebu)", hi: "सेब" }</td></tr>
+      <tr><td>learnedAt</td><td>number (timestamp)</td><td></td></tr>
+      <tr><td>timesRevisited</td><td>number</td><td>Tracks engagement depth</td></tr>
+    </table>
+    <div class="schema-note">⚠️ BOUNDED: Maximum 200 objects. When full, least recently visited record is evicted (LRU policy).</div>
+  </div>
+
+  <div class="schema-wrap">
+    <div class="schema-head"><code>appSettings</code> <span class="badge b-g">Encrypted · Parent only</span></div>
+    <table class="schema-tbl">
+      <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+      <tr><td>apiKeyEncrypted</td><td>string (base64)</td><td>AES-GCM encrypted. Key derived from Google <code>sub</code> + APP_SALT via PBKDF2. Also synced to Drive.</td></tr>
+      <tr><td>parentPinHash</td><td>string (SHA-256)</td><td>Child-UI lock only — prevents child tapping into settings. No role in key encryption.</td></tr>
+      <tr><td>sessionTimeLimit</td><td>number (minutes)</td><td>Default: 30</td></tr>
+      <tr><td>enabledLanguages</td><td>string[]</td><td></td></tr>
+      <tr><td>cameraEnabled</td><td>boolean</td><td>Default: true</td></tr>
+      <tr><td>onboardingVersion</td><td>string</td><td>Tracks if re-onboarding is needed</td></tr>
+      <tr><td>chatModel</td><td>string (optional)</td><td>Parent-selectable reasoning model. Falls back to <code>gemini-2.0-flash</code>. Non-indexed — no migration.</td></tr>
+      <tr><td>visionModel</td><td>string (optional)</td><td>Parent-selectable camera model. Falls back to <code>gemini-2.0-flash</code>. Non-indexed — no migration.</td></tr>
+    </table>
+    <div class="schema-note">🗝️ XP/level totals and daily usage minutes live in <code>localStorage</code> (per-profile keys), and the active child id is tracked there too — deliberately kept out of IndexedDB so they need no schema version bumps.</div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 11 — CONVERSATIONS                            -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="conversations" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 11</div>
+  <div class="sec-title">Example Conversation Flows</div>
+  <p class="sec-sub">Illustrating Leo's warm, personalized, educational style across the core interaction patterns.</p>
+
+  <div class="g2">
+    <div>
+      <h4>Flow 1 — Curiosity Question</h4>
+      <div class="convo">
+        <div class="cm-row kid">
+          <div class="cm-av">👦</div>
+          <div class="cm-inner"><div class="cm-who who-kid">Aarav</div><div class="cm-bbl">Why do birds fly?</div></div>
+        </div>
+        <div class="cm-row ai">
+          <div class="cm-av">🦁</div>
+          <div class="cm-inner"><div class="cm-who who-ai">Leo</div><div class="cm-bbl">Roarr! Great question! 🐦 Birds fly to find food and travel to warm places — just like you run fast when playing tag! Their wings push the air down to lift them up! Do you know which bird cannot fly at all?</div></div>
+        </div>
+        <div class="cm-row kid">
+          <div class="cm-av">👦</div>
+          <div class="cm-inner"><div class="cm-who who-kid">Aarav</div><div class="cm-bbl">Penguin!</div></div>
+        </div>
+        <div class="cm-row ai">
+          <div class="cm-av">🦁</div>
+          <div class="cm-inner"><div class="cm-who who-ai">Leo</div><div class="cm-bbl">YES! 🎉🎊 You are SO smart! Penguins can't fly but they swim AMAZINGLY fast underwater using their wings like flippers! 🐧 Want to learn what penguins eat?</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h4>Flow 2 — Language Translation</h4>
+      <div class="convo">
+        <div class="cm-row kid">
+          <div class="cm-av">👦</div>
+          <div class="cm-inner"><div class="cm-who who-kid">Aarav</div><div class="cm-bbl">What is apple in Kannada?</div></div>
+        </div>
+        <div class="cm-row ai">
+          <div class="cm-av">🦁</div>
+          <div class="cm-inner"><div class="cm-who who-ai">Leo</div><div class="cm-bbl">Ooh! In Kannada, apple is <strong>ಸೇಬು — Sebu!</strong> 🍎 Say it with me: "Say-boo!" It sounds like saying "say" then "boo!" Can you try? 😄</div></div>
+        </div>
+        <div class="cm-row kid">
+          <div class="cm-av">👦</div>
+          <div class="cm-inner"><div class="cm-who who-kid">Aarav</div><div class="cm-bbl">Sebu! Now in Hindi?</div></div>
+        </div>
+        <div class="cm-row ai">
+          <div class="cm-av">🦁</div>
+          <div class="cm-inner"><div class="cm-who who-ai">Leo</div><div class="cm-bbl">You're learning SO fast! 🌟 In Hindi it's <strong>सेब — Seb!</strong> Just like Sebu but shorter. Isn't it cool that one fruit has so many beautiful names? What food shall we learn next? 🍌</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h4 style="margin-top: 32px;">Flow 3 — Emotional Continuity Morning Greeting</h4>
+  <div class="convo" style="max-width: 600px;">
+    <div class="cm-row ai">
+      <div class="cm-av">🦁</div>
+      <div class="cm-inner"><div class="cm-who who-ai">Leo — personalised from IndexedDB memory</div><div class="cm-bbl">Roarrr! 🌅 Good morning Aarav! Yesterday you discovered that tigers have 30 teeth! I was thinking — do YOU know how many teeth you have? 🦷 Shall we keep exploring animals today, or find something totally new? 🌟</div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 12 — PWA                                      -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="pwa" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 12</div>
+  <div class="sec-title">PWA Strategy</div>
+  <p class="sec-sub">The app installs like a native app. Children see only Leo's full-screen world — never a browser URL bar, never an app store.</p>
+
+  <div class="g3" style="margin-bottom: 28px;">
+    <div class="card card-top p">
+      <div class="card-ico ic-p">🔧</div>
+      <h3>Service Worker Strategy</h3>
+      <p><strong>StaleWhileRevalidate</strong> for app shell. <strong>CacheFirst</strong> for static assets. <strong>NetworkOnly</strong> for Gemini API calls — never cache AI responses.</p>
+    </div>
+    <div class="card card-top g">
+      <div class="card-ico ic-g">📲</div>
+      <h3>Install Flow</h3>
+      <p>Parent visits URL once. Browser prompts "Add to Home Screen." App icon (Leo's face) appears. Child taps Leo — full screen, no URL bar, no browser chrome.</p>
+    </div>
+    <div class="card card-top t">
+      <div class="card-ico ic-t">📡</div>
+      <h3>Offline Experience</h3>
+      <p>App shell loads instantly offline. Leo shows cached vocabulary and learned words. No error screens — Leo says <em>"I need wifi for magic!"</em></p>
+    </div>
+  </div>
+
+  <div class="g2">
+    <div>
+      <h4>Web App Manifest</h4>
+      <div class="code">
+{
+  <span class="key">"name"</span>: <span class="str">"CuriousKids AI — Leo"</span>,
+  <span class="key">"short_name"</span>: <span class="str">"Leo"</span>,
+  <span class="key">"start_url"</span>: <span class="str">"/"</span>,
+  <span class="key">"display"</span>: <span class="str">"standalone"</span>,
+  <span class="key">"orientation"</span>: <span class="str">"portrait"</span>,
+  <span class="key">"background_color"</span>: <span class="str">"#080B14"</span>,
+  <span class="key">"theme_color"</span>: <span class="str">"#7C6FFF"</span>,
+  <span class="key">"categories"</span>: [<span class="str">"education"</span>, <span class="str">"kids"</span>],
+  <span class="key">"icons"</span>: [
+    { <span class="key">"src"</span>: <span class="str">"/icons/leo-192.png"</span>,
+      <span class="key">"sizes"</span>: <span class="str">"192x192"</span> },
+    { <span class="key">"src"</span>: <span class="str">"/icons/leo-512.png"</span>,
+      <span class="key">"sizes"</span>: <span class="str">"512x512"</span>,
+      <span class="key">"purpose"</span>: <span class="str">"maskable"</span> }
+  ]
+}
+      </div>
+    </div>
+    <div>
+      <h4>API Key Security — Google Sub as Encryption Factor</h4>
+      <div class="hl" style="margin-bottom: 14px; font-size: 13px;">
+        <b>Encryption model change:</b> The Gemini key is no longer encrypted with a 4-digit PIN (10,000 brute-force attempts = milliseconds). Instead, the AES-GCM key is derived from the user's Google <code>sub</code> — the stable, globally unique ID in their ID token. This ties decryptability directly to possessing a valid Google session. <b>Security = as strong as the user's Google account</b> (typically 2FA).
+      </div>
+      <div class="flow-steps">
+        <div class="fstep">
+          <div class="fnum">1</div>
+          <div><h4>Onboarding: child name + age → Gemini key</h4><p>After Google Sign-In, Leo asks the child's name (large input) and <b>age (4 / 5 / 6)</b> — age feeds age-appropriate AI responses — then a parent enters their Gemini API key. Every step has a Back button; no PIN required here.</p></div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">2</div>
+          <div><h4>Validate, then encrypt with sub-derived key</h4><p>The key is <b>verified live</b> against Google's models endpoint before saving — an invalid key is rejected on the spot, not hours later. Then <code>PBKDF2(sub + APP_SALT, 100k iterations)</code> → AES-GCM key; ciphertext stored in IndexedDB <em>and</em> synced to Drive. Raw key never persisted.</p></div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">3</div>
+          <div><h4>New device: auto-restore from Drive</h4><p>Sign in with Google → <code>sub</code> extracted from fresh ID token → key derived → ciphertext fetched from Drive → decrypted in-memory. Zero friction for the parent.</p></div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">4</div>
+          <div><h4>PIN is a child-mode lock only <span class="tl-status st-built">✓ Built</span></h4><p>The optional 4-digit PIN's only job is to block children from tapping into parent settings — it has no role in key encryption or recovery. Setup + keypad gate now ship.</p></div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">5</div>
+          <div><h4>Runtime: decrypt → use → wipe</h4><p>API call needed → derive key from cached <code>sub</code> → decrypt → call Gemini → wipe plaintext key from memory. Never held longer than one request cycle.</p></div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">6</div>
+          <div><h4>Returning visit: one-tap "Welcome back"</h4><p>Because <code>sub</code> lives in memory only (never persisted), a page refresh loses it. The profile reloads from IndexedDB, then a friendly <b>"Welcome back, {name}! Tap to continue"</b> screen recovers the session with a single Google token tap — re-deriving the key. No re-onboarding, no data loss.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONFIGURABLE MODELS -->
+  <h4 style="margin-top: 36px;">⚙️ Configurable AI Models <span class="tl-status st-built">✓ Built</span></h4>
+  <p style="color: var(--muted); font-size: 14px; margin-bottom: 16px; max-width: 720px;">
+    Parent Settings exposes the two Gemini models the app uses, so a retired or newer model can be swapped in <b>without a code change</b> — important for longevity as Google rotates model versions.
+  </p>
+  <div class="g2" style="margin-bottom: 8px;">
+    <div class="card">
+      <div class="card-ico ic-p">🧠</div>
+      <h3>Reasoning model</h3>
+      <p>Powers voice chat &amp; Word Explorer. Defaults to <code>gemini-2.0-flash</code>. Stored as an optional <code>chatModel</code> field on the settings record.</p>
+    </div>
+    <div class="card">
+      <div class="card-ico ic-o">📷</div>
+      <h3>Vision model</h3>
+      <p>Powers the camera "What Is This?" mode. Defaults to <code>gemini-2.0-flash</code>. Stored as an optional <code>visionModel</code> field.</p>
+    </div>
+  </div>
+  <div class="hl" style="margin-bottom: 8px; font-size: 13px;">
+    <b>"Load models my key supports"</b> calls the Drive-free <code>models.list</code> endpoint with the parent's key and populates an autocomplete of only the models that support <code>generateContent</code> — so parents never guess an invalid name. Both fields are <b>non-indexed</b>, so they were added with <b>no Dexie version bump</b>; an unset value transparently falls back to the default.
+  </div>
+
+  <!-- GOOGLE DRIVE SYNC -->
+  <h4 style="margin-top: 36px;">☁️ Google Drive Sync — Default for All Signed-In Users</h4>
+  <p style="color: var(--muted); font-size: 14px; margin-bottom: 20px; max-width: 680px;">
+    When a parent signs in with Google, Drive sync is enabled automatically — no extra toggle or opt-in required. The child's name is captured during the very first sign-in screen and tied to the Google account. This unlocks multi-device restore and lays the groundwork for future multi-child profiles.
+  </p>
+
+  <div class="hl">
+    <b>Key insight — <code>drive.appdata</code> scope:</b> The app requests the <code>https://www.googleapis.com/auth/drive.appdata</code> OAuth scope. This creates a hidden app-private folder in the parent's Google Drive that is invisible in the Drive UI but fully backed up by Google. No storage quota impact for typical usage. Completely free. No server infrastructure needed — calls go directly from the browser to the Google Drive REST API.
+  </div>
+
+  <div class="g2" style="margin-top: 20px;">
+    <div>
+      <h4>Onboarding Flow (First Sign-In)</h4>
+      <div class="flow-steps">
+        <div class="fstep">
+          <div class="fnum">1</div>
+          <div><h4>Parent taps "Sign in with Google"</h4><p>Standard Google OAuth. App requests <code>drive.appdata</code> + <code>openid</code> + <code>profile</code> scopes in a single consent screen.</p></div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">2</div>
+          <div><h4>"What's your child's name?" screen</h4><p>Large friendly input. Leo asks: <em>"Hi! What shall I call my new friend?"</em> Name stored in profile and used in all AI prompts.</p></div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">3</div>
+          <div>
+            <h4>Check Drive for existing profile</h4>
+            <p>On every sign-in, app checks <code>appdata/curiouskie-{childName}.json</code> in Drive using the OAuth access token.</p>
+            <div style="margin-top: 10px; display: flex; gap: 12px; flex-wrap: wrap;">
+              <div style="flex:1; min-width:200px; background: rgba(61,219,122,.07); border:1px solid rgba(61,219,122,.2); border-radius:10px; padding:12px; font-size:12.5px;">
+                <strong style="color:var(--green);">✅ Profile found in Drive</strong><br>
+                Restore profile + encrypted key → derive decryption key from <code>sub</code> → decrypt Gemini key in-memory → Leo loads immediately with full memory. <strong>Zero friction.</strong>
+              </div>
+              <div style="flex:1; min-width:200px; background: rgba(255,122,60,.07); border:1px solid rgba(255,122,60,.2); border-radius:10px; padding:12px; font-size:12.5px;">
+                <strong style="color:var(--orange);">🆕 No profile found (new user)</strong><br>
+                Leo appears and asks: <em>"What's my new friend's name?"</em> → then: <em>"Ask a grown-up to paste the magic key!"</em> → key entered → encrypted + saved locally and to Drive. <strong>One-time setup, never again.</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">4</div>
+          <div><h4>Sync on every session end (silent)</h4><p>Same <code>triggerSessionSummary()</code> that writes to IndexedDB also pushes the full snapshot — including updated encrypted key if changed — to Drive. Child never sees or feels this happen.</p></div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <h4>What Gets Synced to Drive</h4>
+      <div class="schema-wrap">
+        <div class="schema-head"><code>curiouskie-{childName}.json</code> <span class="badge b-g">≈ 18 KB max per child</span></div>
+        <table class="schema-tbl">
+          <tr><th>Field</th><th>Notes</th></tr>
+          <tr><td>profile</td><td>Child name, age, mascot, languages</td></tr>
+          <tr><td>interestTags</td><td>Top 20 weighted tags only</td></tr>
+          <tr><td>sessionSummaries</td><td>Last 7 summaries (≤ 1 KB)</td></tr>
+          <tr><td>learnedObjects</td><td>Last 100 objects (≤ 5 KB)</td></tr>
+          <tr><td>apiKeyEncrypted</td><td>AES-GCM ciphertext — only decryptable with matching Google <code>sub</code>. Useless without a valid Google session.</td></tr>
+          <tr><td>syncedAt</td><td>ISO timestamp — latest-wins conflict resolution</td></tr>
+        </table>
+        <div class="schema-note">🔐 The raw API key is never in Drive — only its ciphertext. The decryption key is derived live from the Google <code>sub</code> claim and never stored anywhere.</div>
+      </div>
+
+      <div class="code" style="margin-top: 14px;">
+<span class="cm">// Derive AES-GCM key from Google sub — runs in WebCrypto, never leaves browser</span>
+<span class="kw">const</span> <span class="fn">deriveKeyFromSub</span> = <span class="kw">async</span> (sub: <span class="key">string</span>) => {
+  <span class="kw">const</span> APP_SALT = <span class="str">'curiouskie-v1'</span> <span class="cm">// public constant, not secret</span>
+  <span class="kw">const</span> encoder = <span class="kw">new</span> <span class="key">TextEncoder</span>()
+  <span class="kw">const</span> keyMaterial = <span class="kw">await</span> crypto.subtle.<span class="fn">importKey</span>(
+    <span class="str">'raw'</span>, encoder.<span class="fn">encode</span>(sub), <span class="str">'PBKDF2'</span>, <span class="num">false</span>, [<span class="str">'deriveKey'</span>]
+  )
+  <span class="kw">return</span> crypto.subtle.<span class="fn">deriveKey</span>(
+    { name: <span class="str">'PBKDF2'</span>, salt: encoder.<span class="fn">encode</span>(APP_SALT),
+      iterations: <span class="num">100_000</span>, hash: <span class="str">'SHA-256'</span> },
+    keyMaterial,
+    { name: <span class="str">'AES-GCM'</span>, length: <span class="num">256</span> },
+    <span class="num">false</span>, [<span class="str">'encrypt'</span>, <span class="str">'decrypt'</span>]
+  )
+}
+
+<span class="cm">// On new device: sub from fresh Google token → derive key → decrypt from Drive</span>
+<span class="kw">const</span> <span class="fn">restoreApiKey</span> = <span class="kw">async</span> (sub: <span class="key">string</span>, ciphertext: <span class="key">string</span>) => {
+  <span class="kw">const</span> aesKey   = <span class="kw">await</span> <span class="fn">deriveKeyFromSub</span>(sub)
+  <span class="kw">const</span> { iv, data } = <span class="fn">parseCiphertext</span>(ciphertext)
+  <span class="kw">const</span> plaintext = <span class="kw">await</span> crypto.subtle.<span class="fn">decrypt</span>({ name: <span class="str">'AES-GCM'</span>, iv }, aesKey, data)
+  <span class="kw">return</span> <span class="kw">new</span> <span class="key">TextDecoder</span>().<span class="fn">decode</span>(plaintext) <span class="cm">// ← Gemini key, used once then discarded</span>
+}
+      </div>
+
+      <h4 style="margin-top: 20px;">Multi-Child Profiles <span class="tl-status st-built">✓ Built</span></h4>
+      <div class="card" style="border-left: 3px solid var(--teal);">
+        <p>Each child profile is a separate JSON file in <code>drive.appdata</code> (e.g. <code>curiouskie-aarav.json</code>, <code>curiouskie-priya.json</code>), so the sync architecture supported multiple children from day one. The UI now ships: Parent Settings has a <b>"Children"</b> switcher and an <b>"＋ Add another child"</b> button that re-runs onboarding (skipping sign-in &amp; the shared API-key step). The active child is remembered in <code>localStorage</code> and restored on load.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="code" style="margin-top: 16px;">
+<span class="cm">// Drive sync — runs silently after session summary is written</span>
+<span class="kw">const</span> <span class="fn">syncProfileToDrive</span> = <span class="kw">async</span> (accessToken: <span class="key">string</span>) => {
+  <span class="kw">const</span> snapshot = <span class="kw">await</span> <span class="fn">buildSyncSnapshot</span>() <span class="cm">// reads IndexedDB</span>
+  <span class="kw">const</span> fileName = <span class="str">`curiouskie-${profile.name.toLowerCase()}.json`</span>
+
+  <span class="cm">// Check if file already exists in appdata</span>
+  <span class="kw">const</span> existing = <span class="kw">await</span> <span class="fn">findDriveFile</span>(accessToken, fileName)
+
+  <span class="kw">if</span> (existing) {
+    <span class="cm">// PATCH — update existing file</span>
+    <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">`https://www.googleapis.com/upload/drive/v3/files/${existing.id}`</span>, {
+      method: <span class="str">'PATCH'</span>,
+      headers: { Authorization: <span class="str">`Bearer ${accessToken}`</span> },
+      body: <span class="fn">JSON.stringify</span>(snapshot),
+    })
+  } <span class="kw">else</span> {
+    <span class="cm">// POST — create new file in appdata folder</span>
+    <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart'</span>, {
+      method: <span class="str">'POST'</span>,
+      headers: { Authorization: <span class="str">`Bearer ${accessToken}`</span> },
+      body: <span class="fn">buildMultipartBody</span>({ name: fileName, parents: [<span class="str">'appDataFolder'</span>] }, snapshot),
+    })
+  }
+}
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 13 — ROADMAP                                  -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="roadmap" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 13</div>
+  <div class="sec-title">MVP Roadmap</div>
+  <p class="sec-sub">Four phases — each independently shippable. Designed for a single developer working part-time over 12 weeks.</p>
+
+  <div class="timeline">
+    <div class="tl-item">
+      <div class="tl-dot d1">🏗️</div>
+      <div class="tl-phase ph1">Phase 1 — Foundation <span class="tl-status st-built">✓ Built</span></div>
+      <div class="tl-title">Core Shell + Voice Chat</div>
+      <div class="tl-weeks">Weeks 1–3 · Core infrastructure</div>
+      <div class="tl-tasks">
+        <div class="tl-task">Vite + React + TypeScript + Tailwind project scaffold</div>
+        <div class="tl-task">PWA manifest + Workbox service worker configuration</div>
+        <div class="tl-task">Dexie.js database setup with typed schema and migrations</div>
+        <div class="tl-task">Google Sign-In integration for parent authentication</div>
+        <div class="tl-task">Child profile creation flow — name, age, language prefs</div>
+        <div class="tl-task">Parent settings: API key input with AES-GCM encryption + PIN</div>
+        <div class="tl-task">Gemini API client with hardcoded safety settings</div>
+        <div class="tl-task">Web Speech STT + TTS integration with language mapping</div>
+        <div class="tl-task">Leo mascot component with idle bounce animation (Framer Motion)</div>
+        <div class="tl-task">Basic conversation screen — voice in, Leo responds with speech</div>
+        <div class="tl-task">Deploy to Cloudflare Pages via GitHub Actions CI</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot d2">✨</div>
+      <div class="tl-phase ph2">Phase 2 — Intelligence + Memory <span class="tl-status st-built">✓ Built</span></div>
+      <div class="tl-title">Personalization + Language Features</div>
+      <div class="tl-weeks">Weeks 4–6 · Smart memory layer</div>
+      <div class="tl-tasks">
+        <div class="tl-task">Session memory: interest tag tracking with weighted scoring</div>
+        <div class="tl-task">Daily session summary generation (runs automatically on close)</div>
+        <div class="tl-task">Personalized morning greeting using last session summary</div>
+        <div class="tl-task">"You liked tigers yesterday!" emotional continuity hooks</div>
+        <div class="tl-task">Multilingual translation mode — dedicated Word Explorer screen</div>
+        <div class="tl-task">Learned words gallery — child's personal vocabulary collection</div>
+        <div class="tl-task">Full safety layer: input blocklist + output validator + UI deflection</div>
+        <div class="tl-task">Multi-language TTS voice mapping for Kannada, Hindi, Tamil</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot d3">📷</div>
+      <div class="tl-phase ph3">Phase 3 — Camera + Gamification <span class="tl-status st-built">✓ Built</span></div>
+      <div class="tl-title">Vision AI + Quizzes + Rewards</div>
+      <div class="tl-weeks">Weeks 7–9 · Magical feature layer</div>
+      <div class="tl-tasks">
+        <div class="tl-task">Camera screen: getUserMedia (rear camera) + first-run consent dialog + iOS-safe playsInline video</div>
+        <div class="tl-task">Frame captured to canvas at native res, JPEG 0.7, stream released instantly — image never stored to disk/IndexedDB/Drive</div>
+        <div class="tl-task">Gemini Vision with JSON parse + markdown-fence stripping + field validation + raw-text fallback on non-JSON</div>
+        <div class="tl-task">Object result card — name + emoji + fun fact + per-language translation pills</div>
+        <div class="tl-task">"Teach me more" → deep-links into voice chat (/chat?q=) pre-filled with the discovered object</div>
+        <div class="tl-task">Mini quiz — "How do you say X in Kannada?" (translation) or first-letter quiz, with shuffled options</div>
+        <div class="tl-task">XP system (localStorage, no DB bump): photo +5, word +10, quiz +15, chat session +3</div>
+        <div class="tl-task">4 levels — Explorer ⭐ / Adventurer 🌟 / Scholar 💫 / Champion 🏆 — with star-burst celebration overlay + level-up badge</div>
+        <div class="tl-task">My Discoveries gallery — tabbed (All / Words / Animals / Objects) with bottom-sheet detail modal</div>
+        <div class="tl-task">Parent dashboard (/parent-dashboard) — XP progress bar, top interests, recent sessions, learned count, last backup</div>
+      </div>
+    </div>
+
+    <div class="tl-item">
+      <div class="tl-dot d4">🚀</div>
+      <div class="tl-phase ph4">Phase 4 — Polish + Ship <span class="tl-status st-built">✓ Built</span></div>
+      <div class="tl-title">Production Ready</div>
+      <div class="tl-weeks">Weeks 10–12 · Quality + delight</div>
+      <div class="tl-tasks">
+        <div class="tl-task">Distinct mascot personalities injected into the system prompt — Leo (brave/bouncy), Ollie (wise/gentle), Benny (soft/giggly)</div>
+        <div class="tl-task">Offline experience — warm cached fallback responses, offline pills, cached vocabulary lookups in Word Explorer</div>
+        <div class="tl-task">Daily session time limit enforced via a TimeGuard wrapper + gentle "Time's Up" screen with parent +5/+15 min override</div>
+        <div class="tl-task">Synthesised sound effects (Web Audio API, zero asset bytes) — tap, success, rising celebration, soft "oops" — with parent mute toggle</div>
+        <div class="tl-task">Loading + error states across screens with Leo character messaging</div>
+        <div class="tl-task">PWA hardened — single plugin-owned manifest, SVG app/maskable icons, Workbox precache + StaleWhileRevalidate shell for offline install</div>
+        <div class="tl-task">Lighthouse audit run on the production build — Performance 96, Accessibility 100, Best Practices 100, SEO 100 (all categories ≥ 90 target met)</div>
+        <div class="tl-task">Pending: beta testing with real 4–6 year olds and parent feedback round</div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 14 — PERFORMANCE                              -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="performance" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 14</div>
+  <div class="sec-title">Performance Strategy</div>
+  <p class="sec-sub">Children lose interest in 2–3 seconds of waiting. Every optimization targets perceived speed and delight, not just raw metrics.</p>
+
+  <div class="g2">
+    <div>
+      <h4>Audited Lighthouse Scores <span style="font-size:11px; color:var(--muted); font-weight:600;">(production build, headless Chrome)</span></h4>
+      <div class="pbar"><div class="pbar-lbl"><span>Performance</span><span class="pbar-val">96</span></div><div class="pbar-track"><div class="pbar-fill" style="width:96%"></div></div></div>
+      <div class="pbar"><div class="pbar-lbl"><span>Accessibility</span><span class="pbar-val">100</span></div><div class="pbar-track"><div class="pbar-fill" style="width:100%"></div></div></div>
+      <div class="pbar"><div class="pbar-lbl"><span>Best Practices</span><span class="pbar-val">100</span></div><div class="pbar-track"><div class="pbar-fill" style="width:100%"></div></div></div>
+      <div class="pbar"><div class="pbar-lbl"><span>SEO</span><span class="pbar-val">100</span></div><div class="pbar-track"><div class="pbar-fill" style="width:100%"></div></div></div>
+      <h4 style="margin-top:18px;">Measured Web Vitals</h4>
+      <div class="pbar"><div class="pbar-lbl"><span>First Contentful Paint</span><span class="pbar-val">1.7 s</span></div><div class="pbar-track"><div class="pbar-fill" style="width:88%"></div></div></div>
+      <div class="pbar"><div class="pbar-lbl"><span>Largest Contentful Paint</span><span class="pbar-val">1.9 s</span></div><div class="pbar-track"><div class="pbar-fill" style="width:90%"></div></div></div>
+      <div class="pbar"><div class="pbar-lbl"><span>Total Blocking Time</span><span class="pbar-val">10 ms</span></div><div class="pbar-track"><div class="pbar-fill" style="width:99%"></div></div></div>
+      <div class="pbar"><div class="pbar-lbl"><span>Cumulative Layout Shift</span><span class="pbar-val">0</span></div><div class="pbar-track"><div class="pbar-fill" style="width:100%"></div></div></div>
+    </div>
+    <div>
+      <h4>Key Optimizations</h4>
+      <div class="flow-steps">
+        <div class="fstep">
+          <div class="fnum">⚡</div>
+          <div><h4>Stream Gemini Responses</h4><p>Use Gemini streaming API. Leo starts speaking sentence 1 before full response arrives. Zero perceived wait time.</p></div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">🖼️</div>
+          <div><h4>Camera at 640×480 Only</h4><p>Sufficient for object identification, reduces base64 payload by 75% vs full 1080p capture.</p></div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">💾</div>
+          <div><h4>Preload Profile on Wake</h4><p>On app open, immediately load child profile from IndexedDB. Greeting ready before network call.</p></div>
+        </div>
+        <div class="fstep">
+          <div class="fnum">🎭</div>
+          <div><h4>Optimistic UI Always</h4><p>Show Leo "thinking" animation instantly on speech end. The child never sees a blank screen.</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 15 — DEPLOYMENT                               -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="deployment" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 15</div>
+  <div class="sec-title">Zero-Cost Deployment Strategy</div>
+  <p class="sec-sub">Developer cost: $0/month. The only cost is the parent's own Gemini API usage — negligible at child-scale volume.</p>
+
+  <div class="g3" style="margin-bottom: 28px;">
+    <div class="card card-top p">
+      <div class="card-ico ic-p">🌐</div>
+      <h3>Cloudflare Pages</h3>
+      <p>Free tier: unlimited bandwidth, unlimited sites, 500 builds/month, global CDN (200+ edges), automatic HTTPS. Connect GitHub → auto-deploy on push.</p>
+    </div>
+    <div class="card card-top g">
+      <div class="card-ico ic-g">🔑</div>
+      <h3>Google Sign-In</h3>
+      <p>Google OAuth via GSI JS library. No backend required. Token verified client-side. Completely free at any scale.</p>
+    </div>
+    <div class="card card-top y">
+      <div class="card-ico ic-y">🤖</div>
+      <h3>Gemini API (Parent Key)</h3>
+      <p>Gemini Flash: ~$0.0001/text call, ~$0.0001/image scan. Active child (20 exchanges/day) ≈ $0.002/day = <strong>~$0.50/month max.</strong></p>
+    </div>
+  </div>
+
+  <div class="tbl-wrap">
+    <div style="padding: 16px 20px; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 1px;">Full Cost Breakdown</div>
+    <div style="padding: 6px 20px 6px;">
+      <div class="cost-row"><div class="cost-ico">🌐</div><div class="cost-name">Cloudflare Pages hosting</div><div class="cost-val free">$0 / mo</div></div>
+      <div class="cost-row"><div class="cost-ico">💾</div><div class="cost-name">Database (IndexedDB — lives on user's device)</div><div class="cost-val free">$0 / mo</div></div>
+      <div class="cost-row"><div class="cost-ico">🔐</div><div class="cost-name">Authentication (Google Sign-In OAuth)</div><div class="cost-val free">$0 / mo</div></div>
+      <div class="cost-row"><div class="cost-ico">🎙️</div><div class="cost-name">Voice STT + TTS (Web Speech APIs)</div><div class="cost-val free">$0 / mo</div></div>
+      <div class="cost-row"><div class="cost-ico">☁️</div><div class="cost-name">Google Drive API — profile sync (<code>drive.appdata</code> scope, ≤ 15 KB/child)</div><div class="cost-val free">$0 / mo</div></div>
+      <div class="cost-row"><div class="cost-ico">🔧</div><div class="cost-name">Backend server / API proxy</div><div class="cost-val free">None needed</div></div>
+      <div class="cost-row" style="border-top: 1px solid rgba(255,255,255,.1);"><div class="cost-ico">🤖</div><div class="cost-name">Gemini AI + Vision (parent's own API key)</div><div class="cost-val key">~$0.50 / mo</div></div>
+      <div class="cost-row" style="background: rgba(61,219,122,.04); border-radius: 8px; margin: 4px 0;"><div class="cost-ico">💰</div><div class="cost-name"><strong>Developer total infrastructure cost</strong></div><div class="cost-val free"><strong>$0 / month</strong></div></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!--  SECTION 16 — FUTURE                                   -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div id="future" class="wrap">
+<div class="sec">
+  <div class="sec-eyebrow">Section 16</div>
+  <div class="sec-title">Known Gaps &amp; Future Ideas</div>
+  <p class="sec-sub">Phases 1–4 plus Bedtime Story, Weekly Report, Word Match, Puzzle, multi-child profiles, open age and configurable models are all shipped. This section is the <b>honest list of what's still missing</b> in today's build, followed by zero-cost ideas for later.</p>
+
+  <!-- ── RECENTLY CLOSED GAPS (now built) ── -->
+  <div class="hl" style="margin-bottom: 24px;">
+    <b>Previously-listed gaps are now closed <span class="tl-status st-built">✓ Built</span>:</b>
+    🔒 <b>Parent PIN lock</b> (setup + keypad gate on Settings &amp; Dashboard) ·
+    🌐 <b>Telugu</b> selectable in onboarding ·
+    📷 <b>Camera on/off toggle</b> (enforced in the camera screen) ·
+    ⚡ <b>Code-splitting</b> — every screen is now its own lazy-loaded chunk; the main bundle dropped under Vite's size warning.
+  </div>
+
+  <!-- ── REMAINING GAPS (process, not code) ── -->
+  <h4 style="margin-bottom: 16px; color: var(--pink); font-weight:800; font-size:13px; letter-spacing:1px; text-transform:uppercase;">⚠️ Still outstanding</h4>
+  <div class="hl" style="margin-bottom: 36px;">
+    Process &amp; QA, not code: a fresh <b>Lighthouse re-run per release</b>, and <b>real beta testing with 4–6 year olds</b> + a parent feedback round. No known feature/security gaps remain in the build.
+  </div>
+
+  <!-- ── RECENTLY SHIPPED — shown in depth ── -->
+  <h4 style="margin-bottom: 16px; color: #34d399; font-weight:800; font-size:13px; letter-spacing:1px; text-transform:uppercase;">✓ Recently shipped — in depth</h4>
+
+  <!-- ── FEATURED: Bedtime Story Mode ── -->
+  <div class="card" style="margin-bottom: 20px; border-left: 4px solid var(--yellow); padding: 28px 28px 24px;">
+    <div style="display:flex; align-items:flex-start; gap:20px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:240px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+          <div class="card-ico ic-y" style="margin:0; flex-shrink:0;">🌙</div>
+          <div>
+            <div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#34d399;margin-bottom:2px;">✓ Built — shipped</div>
+            <h3 style="font-size:17px; margin:0;">Bedtime Story Mode</h3>
+          </div>
+        </div>
+        <p style="margin-bottom:14px;">Each night, Leo generates a brand-new personalised bedtime story. It stars the child by name, includes their favourite animals and objects from that day's session, and uses recently learned vocabulary words — making every story feel tailor-made. The story is read aloud by Leo in a soft, slow voice. No screen-staring needed — child just listens.</p>
+        <div class="flow-steps" style="margin-top:0;">
+          <div class="fstep" style="padding:10px 0;">
+            <div class="fnum">1</div>
+            <div><h4 style="font-size:13px;">Triggered by parent tapping "Bedtime" mode</h4><p>Or auto-appears after session time limit at 7–9 PM window (parent configurable).</p></div>
+          </div>
+          <div class="fstep" style="padding:10px 0;">
+            <div class="fnum">2</div>
+            <div><h4 style="font-size:13px;">Gemini builds story from today's memory</h4><p>Reads top interests + learned objects from IndexedDB. Injects them naturally into a ~5-minute story arc.</p></div>
+          </div>
+          <div class="fstep" style="padding:10px 0; border:none;">
+            <div class="fnum">3</div>
+            <div><h4 style="font-size:13px;">Leo reads it in slow, warm TTS</h4><p>Speech rate drops to 0.75, pitch softens. Screen dims to a gentle starfield. One tap pauses. Child falls asleep to Leo's voice.</p></div>
+          </div>
+        </div>
+      </div>
+      <div style="min-width:220px; flex-shrink:0;">
+        <div class="prompt" data-label="BEDTIME STORY PROMPT" style="margin-top:0;">
+          <p style="font-size:12px;">
+            Tell a short bedtime story (5 minutes, ~400 words) for {childName}, age {childAge}.<br><br>
+            Include these naturally:<br>
+            — Favourite animal: {topAnimal}<br>
+            — Word learned today: {newWord}<br>
+            — Setting: a cozy magical world<br><br>
+            Tone: soft, warm, slightly sleepy.<br>
+            End with: "And {childName} closed their eyes, knowing tomorrow Leo would be waiting with another adventure…"<br><br>
+            No scary moments. No cliffhangers. Max 400 words.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── FEATURED: Weekly Parent Report ── -->
+  <div class="card" style="margin-bottom: 32px; border-left: 4px solid var(--teal); padding: 28px 28px 24px;">
+    <div style="display:flex; align-items:flex-start; gap:20px; flex-wrap:wrap;">
+      <div style="flex:1; min-width:240px;">
+        <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+          <div class="card-ico ic-t" style="margin:0; flex-shrink:0;">📊</div>
+          <div>
+            <div style="font-size:11px;font-weight:800;letter-spacing:2px;text-transform:uppercase;color:#34d399;margin-bottom:2px;">✓ Built — shipped</div>
+            <h3 style="font-size:17px; margin:0;">Weekly Parent Report</h3>
+          </div>
+        </div>
+        <p style="margin-bottom:14px;">Every Sunday, the app generates a warm, readable summary card for the parent — showing what the child discovered, which languages they explored, how many new words they learned, and what topics fascinated them most that week. Everything comes from local IndexedDB — no server, no API call needed to generate the report itself.</p>
+        <div class="g2" style="margin-top:4px; gap:12px;">
+          <div class="safety-card" style="border-color:rgba(0,212,184,.2); background:rgba(0,212,184,.04);">
+            <h4 style="color:var(--teal);">📚 Words Learned</h4>
+            <p>Count + list of new vocabulary. Broken down by language (English, Kannada, Hindi…).</p>
+          </div>
+          <div class="safety-card" style="border-color:rgba(0,212,184,.2); background:rgba(0,212,184,.04);">
+            <h4 style="color:var(--teal);">🏷️ Top Interests This Week</h4>
+            <p>The top 3 interest tags by weight — "Tigers 🐯, Space 🚀, Birds 🐦"</p>
+          </div>
+          <div class="safety-card" style="border-color:rgba(0,212,184,.2); background:rgba(0,212,184,.04);">
+            <h4 style="color:var(--teal);">🕐 Session Time</h4>
+            <p>Total minutes per day this week. Helps parents see engagement patterns at a glance.</p>
+          </div>
+          <div class="safety-card" style="border-color:rgba(0,212,184,.2); background:rgba(0,212,184,.04);">
+            <h4 style="color:var(--teal);">🌟 Big Discovery</h4>
+            <p>One highlight moment pulled from session summaries — "Aarav learned tigers have 30 teeth!"</p>
+          </div>
+        </div>
+      </div>
+      <div style="min-width:220px; flex-shrink:0;">
+        <h4 style="margin-top:0;">How It Works (Zero Cost)</h4>
+        <div class="flow-steps">
+          <div class="fstep" style="padding:10px 0;">
+            <div class="fnum">1</div>
+            <div><h4 style="font-size:13px;">Sunday trigger</h4><p>A <code>setTimeout</code> checks on app open if it's been 7 days since last report. No cron job, no server.</p></div>
+          </div>
+          <div class="fstep" style="padding:10px 0;">
+            <div class="fnum">2</div>
+            <div><h4 style="font-size:13px;">Read all 7 session summaries from IndexedDB</h4><p>Aggregate interests, word count, session durations. Pure local computation.</p></div>
+          </div>
+          <div class="fstep" style="padding:10px 0;">
+            <div class="fnum">3</div>
+            <div><h4 style="font-size:13px;">Optional: Gemini writes a warm narrative line</h4><p>Single small API call to turn raw stats into a friendly parent-readable sentence. Only if online.</p></div>
+          </div>
+          <div class="fstep" style="padding:10px 0; border:none;">
+            <div class="fnum">4</div>
+            <div><h4 style="font-size:13px;">Display in-app + optional share</h4><p>Beautiful card in the parent dashboard. Parent can screenshot or share as image. No PDF generation needed.</p></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── REMAINING FUTURE IDEAS (genuinely not built) ── -->
+  <h4 style="margin-bottom: 16px; color: var(--muted); font-weight:700; font-size:13px; letter-spacing:1px; text-transform:uppercase;">More ideas for later versions</h4>
+  <div class="g3">
+    <div class="card"><div class="card-ico ic-p">🎨</div><h3>Draw &amp; Learn</h3><p>Child draws on screen. Leo identifies the drawing and teaches about it — creative and language learning combined in one loop.</p></div>
+    <div class="card"><div class="card-ico ic-o">🌍</div><h3>More Languages</h3><p>Today (all selectable): English, Kannada, Hindi, Tamil &amp; Telugu. Later: Malayalam, Marathi, French, Spanish as on-demand packs.</p></div>
+    <div class="card"><div class="card-ico ic-p">🖥️</div><h3>Tauri Desktop App</h3><p>Wrap the PWA in Tauri for native Windows/Mac — better camera permissions, OS-level TTS for richer voice quality.</p></div>
+    <div class="card"><div class="card-ico ic-g">🎵</div><h3>Leo Sings!</h3><p>Leo turns vocabulary words into simple, catchy songs. "The Apple Song" — Sebu, Seb, Apple — sung to a simple tune. Earworm learning.</p></div>
+  </div>
+</div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-icon">🦁</div>
+  <h3>CuriousKids AI — PRD v1.1</h3>
+  <p>A zero-cost, voice-first, AI-powered childhood companion · Ages 4+ (AI adapts to each child's age)</p>
+  <p style="margin-top: 6px; opacity: .45;">Designed for a solo developer · Gemini Flash + Web APIs · Cloudflare Pages</p>
+</footer>
+
+<script>
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: '#7C6FFF',
+    primaryTextColor: '#E4E8F5',
+    primaryBorderColor: '#7C6FFF',
+    lineColor: '#4a5068',
+    secondaryColor: '#0E1220',
+    tertiaryColor: '#141929',
+    background: '#080B14',
+    mainBkg: '#0E1220',
+    nodeBorder: '#7C6FFF',
+    clusterBkg: '#141929',
+    clusterBorder: '#2a3050',
+    titleColor: '#E4E8F5',
+    edgeLabelBackground: '#0E1220',
+    actorBkg: '#0E1220',
+    actorBorder: '#7C6FFF',
+    actorTextColor: '#E4E8F5',
+    actorLineColor: '#4a5068',
+    signalColor: '#E4E8F5',
+    signalTextColor: '#E4E8F5',
+    labelBoxBkgColor: '#0E1220',
+    labelBoxBorderColor: '#7C6FFF',
+    labelTextColor: '#E4E8F5',
+    loopTextColor: '#E4E8F5',
+    noteBorderColor: '#FFD000',
+    noteBkgColor: '#141900',
+    noteTextColor: '#E4E8F5',
+    activationBorderColor: '#7C6FFF',
+    activationBkgColor: '#0E1220',
+    sequenceNumberColor: '#E4E8F5',
+    fontFamily: 'Inter, sans-serif',
+    fontSize: '13px',
+  },
+  flowchart: { htmlLabels: true, curve: 'basis', padding: 24 },
+  sequence: { actorMargin: 60, messageMargin: 28, mirrorActors: false, useMaxWidth: true },
+  securityLevel: 'loose',
+});
+</script>
+</body>
+</html>
