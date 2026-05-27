@@ -1,0 +1,11 @@
+# Cloudflare deployment config.
+# Used by the "Workers Builds" flow (npx wrangler deploy). Serves the built
+# static site (./dist) as a single-page app — no server-side Worker code.
+# (If you use the Cloudflare *Pages* flow instead, this file is ignored and
+# the public/_redirects file handles SPA routing.)
+name = "curious-kids"
+compatibility_date = "2026-05-01"
+
+[assets]
+directory = "./dist"
+not_found_handling = "single-page-application"
