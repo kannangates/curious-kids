@@ -368,7 +368,7 @@ export function OnboardingScreen() {
               animate="center"
               exit="exit"
               transition={{ duration: 0.3, ease: 'easeInOut' }}
-              className="flex-1 flex flex-col"
+              className="flex-1 min-h-0 flex flex-col"
             >
               {/* ── Step 1: Sign In ─────────────────────────────────────── */}
               {step === 1 && (
@@ -416,7 +416,7 @@ export function OnboardingScreen() {
 
               {/* ── Step 2: Child Name ──────────────────────────────────── */}
               {step === 2 && (
-                <div className="flex-1 flex flex-col items-center justify-center gap-6">
+                <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-6 py-4">
                   <LeoMascot size="md" mood="happy" />
                   <div className="text-center">
                     <h2 className="text-3xl font-extrabold text-lavender-700">
@@ -494,7 +494,7 @@ export function OnboardingScreen() {
 
               {/* ── Step 3: API Key ─────────────────────────────────────── */}
               {step === 3 && (
-                <div className="flex-1 flex flex-col items-center justify-center gap-5">
+                <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-5 py-4">
                   <div className="text-center">
                     <span className="text-6xl">🔑</span>
                     <h2 className="text-2xl font-extrabold text-leo-700 mt-2">
@@ -553,7 +553,7 @@ export function OnboardingScreen() {
 
               {/* ── Step 4: Languages ───────────────────────────────────── */}
               {step === 4 && (
-                <div className="flex-1 flex flex-col items-center justify-center gap-5">
+                <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-5 py-4">
                   <div className="text-center">
                     <span className="text-6xl">🌍</span>
                     <h2 className="text-2xl font-extrabold text-mint-700 mt-2">
@@ -611,7 +611,7 @@ export function OnboardingScreen() {
 
               {/* ── Step 5: Mascot chooser ───────────────────────────────── */}
               {step === 5 && (
-                <div className="flex-1 flex flex-col items-center justify-center gap-5">
+                <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-5 py-4">
                   <div className="text-center">
                     <h2 className="text-2xl font-extrabold text-lavender-700">
                       Choose your friend! 🎉
