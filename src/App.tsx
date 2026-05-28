@@ -54,6 +54,7 @@ import { resolveActiveProfile, setActiveProfileId } from './lib/profiles'
 import { TimeUpScreen } from './components/TimeUpScreen'
 import { WelcomeBackScreen } from './components/WelcomeBackScreen'
 import { ParentGate } from './components/ParentGate'
+import { DebugOverlay } from './components/DebugOverlay'
 
 // Shared loading fallback for lazily-loaded screens
 function LeoLoading() {
@@ -181,6 +182,7 @@ export default function App() {
   }, [setProfile])
 
   return (
+    <>
     <Suspense fallback={<LeoLoading />}>
     <Routes>
       {/* Onboarding — no auth required */}
@@ -274,5 +276,8 @@ export default function App() {
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
     </Suspense>
+    {/* Visible on every screen — shows captured errors / warnings */}
+    <DebugOverlay />
+    </>
   )
 }

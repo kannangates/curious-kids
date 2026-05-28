@@ -3,7 +3,12 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import App from './App'
+import { installGlobalErrorCapture } from './lib/debugLog'
 import './index.css'
+
+// Capture uncaught errors / rejections / console.error|warn into the in-app
+// debug log BEFORE React mounts, so even early crashes are recorded.
+installGlobalErrorCapture()
 
 // Set VITE_GOOGLE_CLIENT_ID in your .env file
 // See .env.example for the format

@@ -9,6 +9,7 @@ import { encryptApiKey } from '../lib/crypto'
 import { validateApiKey } from '../lib/gemini'
 import { checkDriveForProfile } from '../lib/drive'
 import { setActiveProfileId } from '../lib/profiles'
+import { logEvent } from '../lib/debugLog'
 import { LeoMascot } from '../components/LeoMascot'
 import { SafeArea } from '../components/SafeArea'
 
@@ -109,29 +110,51 @@ export function OnboardingScreen() {
   const login = useGoogleLogin({
     scope: 'openid profile email https://www.googleapis.com/auth/drive.appdata',
     onSuccess: async (tokenResponse) => {
+      logEvent('info', '[Onboarding] Google onSuccess fired', {
+        hasAccessToken: !!tokenResponse.access_token,
+        scope: tokenResponse.scope,
+        expires_in: tokenResponse.expires_in,
+      })
       setIsLoading(true)
       setError(null)
       try {
         const accessToken = tokenResponse.access_token
+        if (!accessToken) throw new Error('No access_token in tokenResponse')
+
         // Fetch user info to get sub (stable user ID)
-        const userInfo = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${accessToken}` }
-        }).then(r => r.json()) as { sub?: string }
+        })
+        logEvent('info', `[Onboarding] userinfo HTTP ${res.status}`)
+        const userInfo = await res.json() as { sub?: string; error?: string }
         const sub = userInfo.sub
-        if (!sub) throw new Error('Could not read Google user ID')
+        if (!sub) {
+          logEvent('error', '[Onboarding] userinfo response missing sub', userInfo)
+          throw new Error('Could not read Google user ID')
+        }
 
         setGoogleSubLocal(sub)
         setGoogleTokenLocal(accessToken)
         setGoogleToken(accessToken)
         setGoogleSub(sub)
+        logEvent('info', '[Onboarding] sub + token saved → advancing to step 2')
         goToStep(2)
       } catch (err) {
+        logEvent('error', '[Onboarding] sign-in pipeline failed', err)
         setError(`Sign-in failed: ${err instanceof Error ? err.message : String(err)}`)
       } finally {
         setIsLoading(false)
       }
     },
-    onError: () => setError('Sign-in failed. Please try again.')
+    onError: (err) => {
+      logEvent('error', '[Onboarding] useGoogleLogin onError', err)
+      setError('Sign-in failed. Please try again.')
+    },
+    onNonOAuthError: (err) => {
+      // Popup blocked, popup closed, FedCM disabled, etc. — common on mobile
+      logEvent('error', '[Onboarding] useGoogleLogin onNonOAuthError', err)
+      setError('Google sign-in was blocked or cancelled. Check pop-up settings and try again.')
+    }
   })
 
   // ── Step 2: Child name validation ──────────────────────────────────────────

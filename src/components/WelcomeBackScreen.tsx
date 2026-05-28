@@ -3,6 +3,7 @@ import { useGoogleLogin } from '@react-oauth/google'
 import { motion } from 'framer-motion'
 import type { ChildProfile } from '../db/index'
 import { useAppStore } from '../store/app'
+import { logEvent } from '../lib/debugLog'
 import { LeoMascot } from './LeoMascot'
 import { SafeArea } from './SafeArea'
 
@@ -30,23 +31,41 @@ export function WelcomeBackScreen({ profile }: WelcomeBackScreenProps) {
   const login = useGoogleLogin({
     scope: 'openid profile email https://www.googleapis.com/auth/drive.appdata',
     onSuccess: async (tokenResponse) => {
+      logEvent('info', '[WelcomeBack] Google onSuccess fired', {
+        hasAccessToken: !!tokenResponse.access_token,
+        scope: tokenResponse.scope,
+      })
       setIsLoading(true)
       setError(null)
       try {
         const accessToken = tokenResponse.access_token
-        const info = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        if (!accessToken) throw new Error('No access_token in tokenResponse')
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
           headers: { Authorization: `Bearer ${accessToken}` }
-        }).then(r => r.json()) as { sub?: string }
-        if (!info.sub) throw new Error('Could not read your Google account')
-        // Setting the sub flips the gate in RequireAuth and renders the app
+        })
+        logEvent('info', `[WelcomeBack] userinfo HTTP ${res.status}`)
+        const info = await res.json() as { sub?: string }
+        if (!info.sub) {
+          logEvent('error', '[WelcomeBack] userinfo response missing sub', info)
+          throw new Error('Could not read your Google account')
+        }
         setGoogleToken(accessToken)
         setGoogleSub(info.sub)
+        logEvent('info', '[WelcomeBack] sub + token saved → unlocking app')
       } catch (err) {
+        logEvent('error', '[WelcomeBack] sign-in pipeline failed', err)
         setError(`Couldn't continue: ${err instanceof Error ? err.message : String(err)}`)
         setIsLoading(false)
       }
     },
-    onError: () => setError('Sign-in was cancelled. Tap to try again.')
+    onError: (err) => {
+      logEvent('error', '[WelcomeBack] useGoogleLogin onError', err)
+      setError('Sign-in was cancelled. Tap to try again.')
+    },
+    onNonOAuthError: (err) => {
+      logEvent('error', '[WelcomeBack] useGoogleLogin onNonOAuthError', err)
+      setError('Sign-in was blocked or cancelled. Check pop-up settings and try again.')
+    }
   })
 
   return (
