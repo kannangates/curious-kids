@@ -10,27 +10,28 @@
     --safe-area-inset-right: env(safe-area-inset-right, 0px);
   }
 
+  /* App-shell layout: html/body/#root are locked to the viewport so the page
+     itself NEVER scrolls. Each screen's SafeArea fills the viewport exactly,
+     and inner containers handle their own scrolling (overflow-y-auto). */
   html {
     height: 100%;
-    /* Prevent overscroll bounce on iOS */
+    overflow: hidden;
     overscroll-behavior: none;
   }
 
   body {
-    @apply min-h-screen;
+    height: 100%;
+    overflow: hidden;
     background-color: #F4F1FF;
     font-family: 'Nunito', 'Inter', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /* Prevent text size adjustment on orientation change */
     -webkit-text-size-adjust: 100%;
     overscroll-behavior: none;
   }
 
   #root {
     height: 100%;
-    min-height: 100vh;
-    min-height: 100dvh;
   }
 
   /* Hide scrollbar on touch UIs */

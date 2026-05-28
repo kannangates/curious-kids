@@ -27,7 +27,7 @@ export function SafeArea({
         ${skipTop ? '' : 'pt-safe'}
         ${skipBottom ? '' : 'pb-safe'}
         pl-safe pr-safe
-        min-h-dvh h-dvh
+        h-dvh
         ${className}
       `}
     >
