@@ -1,21 +1,53 @@
-import { useEffect, useState, lazy, Suspense, type ReactNode } from 'react'
+import { useEffect, useState, lazy, Suspense, type ReactNode, type ComponentType } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { db } from './db/index'
 import { useAppStore } from './store/app'
 // Eager: first-paint screens
 import { OnboardingScreen } from './screens/OnboardingScreen'
 import { HomeScreen } from './screens/HomeScreen'
+
+/**
+ * lazy() wrapper that survives stale-chunk errors after a deploy.
+ *
+ * When a new build ships, asset hashes change. If the user is holding an old
+ * index.html (cached HTML or stale service worker), the chunk URLs it points
+ * at no longer exist — request → 404 → SPA fallback returns index.html → the
+ * browser refuses to parse it as a JS module ("Expected a JavaScript-or-Wasm
+ * module script but the server responded with a MIME type of 'text/html'"),
+ * leaving a blank screen until the user manually refreshes.
+ *
+ * On any such failure we trigger a single reload (gated by sessionStorage so
+ * we never loop) to fetch the new index.html with the correct hashes.
+ */
+function lazyRetry<T extends ComponentType<any>>(
+  loader: () => Promise<{ default: T }>
+) {
+  return lazy(() =>
+    loader().catch(err => {
+      const FLAG = 'ck_chunk_reloaded_at'
+      const last = Number(sessionStorage.getItem(FLAG) || '0')
+      // Reload at most once per 30s to avoid an infinite loop if the chunk really is gone
+      if (Date.now() - last > 30_000) {
+        sessionStorage.setItem(FLAG, String(Date.now()))
+        window.location.reload()
+        // Block until the reload happens; React shouldn't render an error briefly
+        return new Promise<{ default: T }>(() => { /* never resolves */ })
+      }
+      throw err
+    })
+  )
+}
+
 // Lazy: everything else is loaded on demand to keep the initial bundle small.
-// (Screens are named exports, so map them to a default for React.lazy.)
-const ChatScreen = lazy(() => import('./screens/ChatScreen').then(m => ({ default: m.ChatScreen })))
-const CameraScreen = lazy(() => import('./screens/CameraScreen').then(m => ({ default: m.CameraScreen })))
-const WordExplorerScreen = lazy(() => import('./screens/WordExplorerScreen').then(m => ({ default: m.WordExplorerScreen })))
-const DiscoveriesScreen = lazy(() => import('./screens/DiscoveriesScreen').then(m => ({ default: m.DiscoveriesScreen })))
-const BedtimeStoryScreen = lazy(() => import('./screens/BedtimeStoryScreen').then(m => ({ default: m.BedtimeStoryScreen })))
-const WordGameScreen = lazy(() => import('./screens/WordGameScreen').then(m => ({ default: m.WordGameScreen })))
-const PuzzleScreen = lazy(() => import('./screens/PuzzleScreen').then(m => ({ default: m.PuzzleScreen })))
-const ParentSettingsScreen = lazy(() => import('./screens/ParentSettingsScreen').then(m => ({ default: m.ParentSettingsScreen })))
-const ParentDashboardScreen = lazy(() => import('./screens/ParentDashboardScreen').then(m => ({ default: m.ParentDashboardScreen })))
+const ChatScreen = lazyRetry(() => import('./screens/ChatScreen').then(m => ({ default: m.ChatScreen })))
+const CameraScreen = lazyRetry(() => import('./screens/CameraScreen').then(m => ({ default: m.CameraScreen })))
+const WordExplorerScreen = lazyRetry(() => import('./screens/WordExplorerScreen').then(m => ({ default: m.WordExplorerScreen })))
+const DiscoveriesScreen = lazyRetry(() => import('./screens/DiscoveriesScreen').then(m => ({ default: m.DiscoveriesScreen })))
+const BedtimeStoryScreen = lazyRetry(() => import('./screens/BedtimeStoryScreen').then(m => ({ default: m.BedtimeStoryScreen })))
+const WordGameScreen = lazyRetry(() => import('./screens/WordGameScreen').then(m => ({ default: m.WordGameScreen })))
+const PuzzleScreen = lazyRetry(() => import('./screens/PuzzleScreen').then(m => ({ default: m.PuzzleScreen })))
+const ParentSettingsScreen = lazyRetry(() => import('./screens/ParentSettingsScreen').then(m => ({ default: m.ParentSettingsScreen })))
+const ParentDashboardScreen = lazyRetry(() => import('./screens/ParentDashboardScreen').then(m => ({ default: m.ParentDashboardScreen })))
 import { useSessionLimit } from './hooks/useSessionLimit'
 import { grantBonusMinutes } from './lib/usage'
 import { resolveActiveProfile, setActiveProfileId } from './lib/profiles'

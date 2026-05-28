@@ -66,6 +66,27 @@ export function ParentGate({ children }: ParentGateProps) {
   }
   const backspace = () => setPin(p => p.slice(0, -1))
 
+  // Physical-keyboard support — digits + Backspace work while locked
+  useEffect(() => {
+    if (status !== 'locked') return
+    function onKey(e: KeyboardEvent) {
+      // Don't hijack keys when the user is typing in another field (none here, but defensive)
+      if (e.metaKey || e.ctrlKey || e.altKey) return
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        e.preventDefault()
+        setPin(p => p.slice(0, -1))
+        return
+      }
+      if (e.key.length === 1 && e.key >= '0' && e.key <= '9') {
+        e.preventDefault()
+        // Functional update — always sees the latest pin, no stale-closure risk
+        setPin(p => (p.length < 4 ? p + e.key : p))
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [status])
+
   if (status === 'loading') {
     return (
       <SafeArea className="bg-lavender-50 flex items-center justify-center">
