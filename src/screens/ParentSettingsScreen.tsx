@@ -10,7 +10,7 @@ import { validateApiKey, listAvailableModels } from '../lib/gemini'
 import { buildSyncSnapshot, saveToDrive, TokenExpiredError } from '../lib/drive'
 import { isSfxMuted, setSfxMuted, playSuccess } from '../lib/audio'
 import { getVoicesForLang, getPreferredVoiceURI, setPreferredVoiceURI, previewVoice, stopSpeaking } from '../lib/voice'
-import { listProfiles, setActiveProfileId, deleteProfile } from '../lib/profiles'
+import { listProfiles, setActiveProfileId, deleteProfile, resetMemoryForProfile } from '../lib/profiles'
 import { markParentUnlocked } from '../components/ParentGate'
 import { SafeArea } from '../components/SafeArea'
 
@@ -23,11 +23,16 @@ export function ParentSettingsScreen() {
   const [children, setChildren] = useState<ChildProfile[]>([])
   const [settings, setSettings] = useState<AppSettings | null>(null)
 
-  // Edit-active-child fields
+  // Edit-active-child fields (form collapsed by default — opens on Edit click)
+  const [editOpen, setEditOpen] = useState(false)
   const [editName, setEditName] = useState('')
   const [editAge, setEditAge] = useState(5)
   const [editMascot, setEditMascot] = useState<MascotChoice>('lion')
   const [editLangs, setEditLangs] = useState<string[]>(['en'])
+
+  // Memory reset
+  const [resetWindow, setResetWindow] = useState<'1' | '7' | '30' | 'all'>('7')
+  const [isResetting, setIsResetting] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle')
@@ -386,6 +391,7 @@ export function ParentSettingsScreen() {
       await db.appSettings.update('main', { enabledLanguages: langs }).catch(() => { /* non-fatal */ })
       setProfile(updated)
       setChildren(await listProfiles())
+      setEditOpen(false)
       showSuccess('Profile saved! ✅')
     } catch (err) {
       showError(`Failed to save: ${err instanceof Error ? err.message : String(err)}`)
@@ -398,6 +404,31 @@ export function ParentSettingsScreen() {
     if (code === 'en') return // English always on
     setEditLangs(prev => prev.includes(code) ? prev.filter(l => l !== code) : [...prev, code])
   }, [])
+
+  // ── Reset memory (interests, sessions, discoveries) within a window ─────
+
+  const handleResetMemory = useCallback(async () => {
+    if (!profile) return
+    const days: number | null = resetWindow === 'all' ? null : Number(resetWindow)
+    const label =
+      resetWindow === '1'   ? "today's"
+      : resetWindow === '7' ? "the last 7 days of"
+      : resetWindow === '30' ? "the last 30 days of"
+      : 'ALL of'
+    const confirmed = window.confirm(
+      `Reset ${label} memory for ${profile.name}? Interests, session summaries, and discoveries from this period will be erased. The child profile and stars/XP stay safe.`
+    )
+    if (!confirmed) return
+    setIsResetting(true)
+    try {
+      const r = await resetMemoryForProfile(profile.id, days)
+      showSuccess(`Memory reset — cleared ${r.interests} interests, ${r.summaries} sessions, ${r.objects} discoveries.`)
+    } catch (err) {
+      showError(`Failed to reset memory: ${err instanceof Error ? err.message : String(err)}`)
+    } finally {
+      setIsResetting(false)
+    }
+  }, [profile, resetWindow, showSuccess, showError])
 
   // ── Delete a child ──────────────────────────────────────────────────────
 
@@ -470,23 +501,8 @@ export function ParentSettingsScreen() {
           </motion.div>
         )}
 
-        {/* Profile info */}
-        {profile && (
-          <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100">
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider mb-2">Child Profile</p>
-            <div className="flex items-center gap-3">
-              <span className="text-4xl">
-                {profile.mascotChoice === 'lion' ? '🦁' : profile.mascotChoice === 'owl' ? '🦉' : '🐰'}
-              </span>
-              <div>
-                <p className="text-xl font-extrabold text-gray-800">{profile.name}</p>
-                <p className="text-sm text-gray-400">
-                  Age {profile.age} · {profile.preferredLanguages.join(', ')}
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Profile card now lives below as a collapsed "Edit" panel —
+            removed the duplicate read-only summary here. */}
 
         {/* View Dashboard */}
         <button
@@ -554,12 +570,33 @@ export function ParentSettingsScreen() {
           </button>
         </div>
 
-        {/* Edit active child */}
+        {/* Edit active child — collapsed by default, opens on "Edit" click */}
         {profile && (
           <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100 flex flex-col gap-4">
-            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Edit {profile.name}</p>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-2xl flex-shrink-0">
+                  {profile.mascotChoice === 'lion' ? '🦁' : profile.mascotChoice === 'owl' ? '🦉' : '🐰'}
+                </span>
+                <div className="min-w-0">
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider truncate">{profile.name}'s Profile</p>
+                  <p className="text-xs text-gray-500 font-medium truncate">
+                    Age {profile.age} · {profile.preferredLanguages.join(', ').toUpperCase()}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setEditOpen(o => !o)}
+                className="text-sm font-extrabold text-lavender-600 bg-lavender-50 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0"
+                aria-expanded={editOpen}
+              >
+                {editOpen ? 'Close' : 'Edit ✎'}
+              </button>
+            </div>
 
             {/* Name */}
+            {editOpen && (<>
+
             <div>
               <label className="text-sm font-bold text-gray-600">Name</label>
               <input
@@ -635,6 +672,7 @@ export function ParentSettingsScreen() {
             >
               {isSaving ? 'Saving...' : 'Save Profile'}
             </button>
+            </>)}
           </div>
         )}
 
@@ -940,6 +978,39 @@ export function ParentSettingsScreen() {
             )}
           </button>
         </div>
+
+        {/* Reset memory (interests, sessions, discoveries) within a time window */}
+        {profile && (
+          <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100 flex flex-col gap-3">
+            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Reset Memory</p>
+            <p className="text-sm text-gray-500 font-medium -mt-1">
+              Clears {profile.name}'s interests, session summaries and discoveries from the chosen window. The profile and stars/XP stay safe.
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {([
+                ['1',   'Today'],
+                ['7',   '7 days'],
+                ['30',  '30 days'],
+                ['all', 'All time'],
+              ] as const).map(([val, label]) => (
+                <button
+                  key={val}
+                  onClick={() => setResetWindow(val)}
+                  className={`py-2 rounded-2xl text-sm font-extrabold border-2 active:scale-95 ${resetWindow === val ? 'bg-lavender-100 border-lavender-400 text-lavender-700' : 'bg-white border-gray-200 text-gray-500'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => void handleResetMemory()}
+              disabled={isResetting}
+              className="w-full py-3 font-bold text-white bg-gradient-to-r from-coral-400 to-coral-600 rounded-2xl disabled:opacity-50 active:scale-95"
+            >
+              {isResetting ? 'Resetting...' : '🧹 Reset Memory'}
+            </button>
+          </div>
+        )}
 
         {/* Danger zone */}
         {profile && (

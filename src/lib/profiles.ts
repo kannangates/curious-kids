@@ -82,6 +82,56 @@ export async function deleteProfile(profileId: string): Promise<ChildProfile[]> 
 }
 
 /**
+ * Resets a child's "memory" within a time window. `days = null` clears
+ * everything; otherwise only entries from the last N days are removed.
+ *
+ * Memory = the three AI-context tables: interestTags, sessionSummaries,
+ * learnedObjects. The child PROFILE, XP and parent settings are untouched.
+ */
+export async function resetMemoryForProfile(
+  profileId: string,
+  days: number | null
+): Promise<{ interests: number; summaries: number; objects: number }> {
+  const cutoffMs = days == null ? null : Date.now() - days * 24 * 60 * 60 * 1000
+  const after = (iso: string) => cutoffMs == null || new Date(iso).getTime() >= cutoffMs
+
+  let interests = 0, summaries = 0, objects = 0
+
+  await db.transaction(
+    'rw',
+    [db.interestTags, db.sessionSummaries, db.learnedObjects],
+    async () => {
+      // interestTags: filter by lastMentioned
+      const tags = await db.interestTags.where('profileId').equals(profileId).toArray()
+      const tagsToDelete = tags.filter(t => after(t.lastMentioned))
+      if (tagsToDelete.length > 0) {
+        const ids = tagsToDelete.map(t => t.id!).filter(Boolean)
+        await db.interestTags.bulkDelete(ids)
+        interests = tagsToDelete.length
+      }
+
+      // sessionSummaries: filter by date
+      const sums = await db.sessionSummaries.where('profileId').equals(profileId).toArray()
+      const sumsToDelete = sums.filter(s => after(s.date))
+      if (sumsToDelete.length > 0) {
+        await db.sessionSummaries.bulkDelete(sumsToDelete.map(s => s.id))
+        summaries = sumsToDelete.length
+      }
+
+      // learnedObjects: filter by learnedAt
+      const objs = await db.learnedObjects.where('profileId').equals(profileId).toArray()
+      const objsToDelete = objs.filter(o => after(o.learnedAt))
+      if (objsToDelete.length > 0) {
+        await db.learnedObjects.bulkDelete(objsToDelete.map(o => o.id))
+        objects = objsToDelete.length
+      }
+    }
+  )
+
+  return { interests, summaries, objects }
+}
+
+/**
  * Resolves which profile should be active on app load:
  * the stored active id if it still exists, else the most-recently-active one.
  */
