@@ -143,6 +143,10 @@ export function CameraScreen() {
   const [geminiClient, setGeminiClient] = useState<GeminiClient | null>(null)
   const [clientError, setClientError] = useState<string | null>(null)
   const [cameraOff, setCameraOff] = useState(false)
+  // Counter that increments on every successful getUserMedia. Drives the
+  // attach effect so the live stream is bound to <video> regardless of
+  // whether render or getUserMedia finishes first — and re-fires on retake.
+  const [streamVersion, setStreamVersion] = useState(0)
 
   // XP celebration state
   const [xpVisible, setXpVisible] = useState(false)
@@ -163,15 +167,18 @@ export function CameraScreen() {
     }
   }, [])
 
-  // ── Attach stream to <video> once it's rendered ───────────────────────────
-  // getUserMedia may resolve before React mounts the <video> element, leaving
-  // videoRef.current null at attach time. This effect re-attaches when the
-  // camera phase renders, guaranteeing the live feed is shown.
+  // ── Attach stream to <video>. Either phase or the stream can become
+  // ready first — depending on phase alone missed the race (effect fired
+  // before getUserMedia resolved and never re-fired). The streamVersion
+  // counter ticks on every new acquisition, guaranteeing this effect runs
+  // whenever a fresh stream is available.
   useEffect(() => {
-    if (phase === 'camera' && videoRef.current && streamRef.current) {
+    if (phase === 'camera' && streamRef.current && videoRef.current) {
       videoRef.current.srcObject = streamRef.current
+      // autoPlay sometimes silently stalls; force a play() to be safe
+      videoRef.current.play().catch(() => { /* non-fatal */ })
     }
-  }, [phase])
+  }, [phase, streamVersion])
 
   // ── Init Gemini client ────────────────────────────────────────────────────
 
@@ -227,8 +234,13 @@ export function CameraScreen() {
         return
       }
       streamRef.current = stream
+      // Bump the version — this guarantees the attach effect re-runs even if
+      // <video> hadn't mounted yet when getUserMedia resolved, and it fires
+      // again on retakes (re-attach after release without manual reset).
+      setStreamVersion(v => v + 1)
       if (videoRef.current) {
         videoRef.current.srcObject = stream
+        videoRef.current.play().catch(() => { /* non-fatal */ })
       }
     } catch (err) {
       if (!isMountedRef.current) return

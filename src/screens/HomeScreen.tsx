@@ -29,16 +29,15 @@ function NavCard({ emoji, label, sublabel, gradient, onClick, delay = 0 }: NavCa
       transition={{ delay, duration: 0.4, ease: 'easeOut' }}
       whileTap={{ scale: 0.95 }}
       className={`
-        flex flex-col items-center justify-center gap-1
-        rounded-3xl p-4 shadow-md
+        flex flex-col items-center justify-center gap-0.5
+        rounded-2xl p-2.5 shadow-md
         ${gradient}
         active:shadow-sm transition-shadow
-        min-h-[100px]
       `}
     >
-      <span className="text-4xl leading-none">{emoji}</span>
-      <p className="font-extrabold text-white text-base leading-tight">{label}</p>
-      <p className="font-semibold text-white/80 text-xs">{sublabel}</p>
+      <span className="text-2xl leading-none">{emoji}</span>
+      <p className="font-extrabold text-white text-sm leading-tight">{label}</p>
+      <p className="font-semibold text-white/80 text-[11px] leading-tight">{sublabel}</p>
     </motion.button>
   )
 }
@@ -177,7 +176,7 @@ export function HomeScreen() {
         </div>
 
         {/* Mascot + speech bubble */}
-        <div className="flex flex-col items-center mb-6">
+        <div className="flex flex-col items-center mb-3">
           {/* Speech bubble */}
           <motion.div
             initial={{ opacity: 0, y: -10, scale: 0.9 }}
@@ -202,14 +201,14 @@ export function HomeScreen() {
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
           >
-            <LeoMascot size="lg" mood="happy" />
+            <LeoMascot size="md" mood="happy" />
           </motion.div>
 
           <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5 }}
-            className="mt-2 text-lg font-extrabold text-lavender-600"
+            className="mt-1 text-sm font-extrabold text-lavender-600"
           >
             {mascotName}
           </motion.p>
