@@ -1,8 +1,8 @@
-import { motion } from 'framer-motion'
+﻿import { motion } from 'motion/react'
 import { useAppStore } from '../store/app'
 import type { MascotChoice } from '../db/index'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface LeoMascotProps {
   size?: 'sm' | 'md' | 'lg'
@@ -10,7 +10,7 @@ interface LeoMascotProps {
   speaking?: boolean
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Constants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const SIZE_MAP = {
   sm: {
@@ -30,7 +30,7 @@ const SIZE_MAP = {
   }
 }
 
-// ─── Mascot faces (custom SVGs, identical across platforms) ───────────────
+// â”€â”€â”€ Mascot faces (custom SVGs, identical across platforms) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function LionFace() {
   return (
@@ -132,12 +132,12 @@ const MASCOT_RING: Record<MascotChoice, string> = {
 
 const MOOD_OVERLAY: Record<string, string | null> = {
   happy: null,
-  thinking: '💭',
+  thinking: 'ðŸ’­',
   excited: null,
-  sleeping: '💤'
+  sleeping: 'ðŸ’¤'
 }
 
-// ─── Animation variants ───────────────────────────────────────────────────────
+// â”€â”€â”€ Animation variants â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const bobVariants = {
   animate: {
@@ -182,7 +182,7 @@ const excitedVariants = {
   }
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function LeoMascot({ size = 'md', mood = 'happy', speaking = false }: LeoMascotProps) {
   const profile = useAppStore(s => s.profile)
@@ -221,7 +221,7 @@ export function LeoMascot({ size = 'md', mood = 'happy', speaking = false }: Leo
             variants={mood === 'excited' ? excitedVariants : {}}
             animate={mood === 'excited' ? 'animate' : undefined}
           >
-            {/* Main mascot circle — SVG face fills it for a consistent happy look */}
+            {/* Main mascot circle â€” SVG face fills it for a consistent happy look */}
             <div
               className={`
                 relative flex items-center justify-center rounded-full overflow-hidden

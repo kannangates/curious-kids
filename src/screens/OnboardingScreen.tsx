@@ -1,7 +1,7 @@
-import { useState, useCallback } from 'react'
+﻿import { useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useGoogleLogin } from '@react-oauth/google'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { db, safeDbWrite } from '../db/index'
 import type { MascotChoice } from '../db/index'
 import { useAppStore } from '../store/app'
@@ -14,11 +14,11 @@ import { logEvent } from '../lib/debugLog'
 import { LeoMascot } from '../components/LeoMascot'
 import { SafeArea } from '../components/SafeArea'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 type OnboardingStep = 1 | 2 | 3 | 4 | 5
 
-// ─── Progress dots ────────────────────────────────────────────────────────────
+// â”€â”€â”€ Progress dots â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ProgressDots({ step, total }: { step: number; total: number }) {
   return (
@@ -41,7 +41,7 @@ function ProgressDots({ step, total }: { step: number; total: number }) {
   )
 }
 
-// ─── Screen transitions ───────────────────────────────────────────────────────
+// â”€â”€â”€ Screen transitions â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const slideVariants = {
   enter: (direction: number) => ({
@@ -58,7 +58,7 @@ const slideVariants = {
   })
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// â”€â”€â”€ Main component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function OnboardingScreen() {
   const navigate = useNavigate()
@@ -74,7 +74,7 @@ export function OnboardingScreen() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Step 1 — Google auth (seeded from store when adding another child)
+  // Step 1 â€” Google auth (seeded from store when adding another child)
   const [googleSub, setGoogleSubLocal] = useState(addMode ? (storeSub ?? '') : '')
   const [googleToken, setGoogleTokenLocal] = useState(addMode ? (storeToken ?? '') : '')
 
@@ -83,19 +83,19 @@ export function OnboardingScreen() {
   const [driveProfiles, setDriveProfiles] = useState<DriveProfile[]>([])
   const [restoreMode, setRestoreMode] = useState(false)
 
-  // Step 2 — Child name + age (no upper cap — the AI adapts to whatever age)
+  // Step 2 â€” Child name + age (no upper cap â€” the AI adapts to whatever age)
   const [childName, setChildName] = useState('')
   const [childAge, setChildAge] = useState<number>(5)
   const MIN_AGE = 2
   const MAX_AGE = 15
 
-  // Step 3 — API key
+  // Step 3 â€” API key
   const [apiKey, setApiKey] = useState('')
 
-  // Step 4 — Languages
+  // Step 4 â€” Languages
   const [selectedLangs, setSelectedLangs] = useState<string[]>(['en'])
 
-  // Step 5 — Mascot
+  // Step 5 â€” Mascot
   const [mascot, setMascot] = useState<MascotChoice>('lion')
 
   const goToStep = useCallback((nextStep: OnboardingStep, dir = 1) => {
@@ -111,7 +111,7 @@ export function OnboardingScreen() {
     return (s - 1) as OnboardingStep
   }, [addMode])
 
-  // ── Step 1: Google Sign-In ──────────────────────────────────────────────────
+  // â”€â”€ Step 1: Google Sign-In â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const login = useGoogleLogin({
     scope: 'openid profile email https://www.googleapis.com/auth/drive.appdata',
@@ -160,7 +160,7 @@ export function OnboardingScreen() {
           logEvent('warn', '[Onboarding] downloadAppSettings failed', settingsErr)
         }
 
-        // Look for existing children in this Google account's Drive backup —
+        // Look for existing children in this Google account's Drive backup â€”
         // if any, drop into the restore chooser instead of a fresh name step.
         try {
           const found = await listDriveChildProfiles(accessToken)
@@ -187,13 +187,13 @@ export function OnboardingScreen() {
       setError('Sign-in failed. Please try again.')
     },
     onNonOAuthError: (err) => {
-      // Popup blocked, popup closed, FedCM disabled, etc. — common on mobile
+      // Popup blocked, popup closed, FedCM disabled, etc. â€” common on mobile
       logEvent('error', '[Onboarding] useGoogleLogin onNonOAuthError', err)
       setError('Google sign-in was blocked or cancelled. Check pop-up settings and try again.')
     }
   })
 
-  // ── Restore from Drive (multi-device recovery) ────────────────────────────
+  // â”€â”€ Restore from Drive (multi-device recovery) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   // Writes ALL found Drive profiles back into IndexedDB so the Children
   // switcher in Settings has them, then sets the picked one as active.
 
@@ -215,7 +215,7 @@ export function OnboardingScreen() {
             if (dp.learnedObjects.length > 0) await db.learnedObjects.bulkPut(dp.learnedObjects)
           }
           // appSettings: take the API key from the chosen profile (all
-          // children share one parent's key — they're identical anyway)
+          // children share one parent's key â€” they're identical anyway)
           if (selected.apiKeyEncrypted) {
             const current = await db.appSettings.get('main')
             await db.appSettings.put({
@@ -242,7 +242,7 @@ export function OnboardingScreen() {
     }
   }, [driveProfiles, navigate, setProfile])
 
-  // ── Step 2: Child name validation ──────────────────────────────────────────
+  // â”€â”€ Step 2: Child name validation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handleNameNext = useCallback(async () => {
     const trimmed = childName.trim()
@@ -300,14 +300,14 @@ export function OnboardingScreen() {
       }
       goToStep(addMode ? 4 : 3)
     } catch {
-      // Drive check failed — proceed anyway
+      // Drive check failed â€” proceed anyway
       goToStep(addMode ? 4 : 3)
     } finally {
       setIsLoading(false)
     }
   }, [childName, googleToken, googleSub, goToStep, navigate, setProfile, addMode])
 
-  // ── Step 3: API key ─────────────────────────────────────────────────────────
+  // â”€â”€ Step 3: API key â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handleApiKeyNext = useCallback(async () => {
     const trimmed = apiKey.trim()
@@ -328,7 +328,7 @@ export function OnboardingScreen() {
     setIsLoading(true)
     setError(null)
     try {
-      // Verify the key actually works before saving — avoids a confusing
+      // Verify the key actually works before saving â€” avoids a confusing
       // "key not valid" failure later inside the chat/camera screens.
       const check = await validateApiKey(trimmed)
       if (!check.ok) {
@@ -363,7 +363,7 @@ export function OnboardingScreen() {
     }
   }, [apiKey, googleSub, goToStep])
 
-  // ── Step 4: Languages ───────────────────────────────────────────────────────
+  // â”€â”€ Step 4: Languages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const toggleLang = useCallback((lang: string) => {
     if (lang === 'en') return // English always on
@@ -382,7 +382,7 @@ export function OnboardingScreen() {
     goToStep(5)
   }, [selectedLangs, goToStep])
 
-  // ── Step 5: Mascot → create profile ────────────────────────────────────────
+  // â”€â”€ Step 5: Mascot â†’ create profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handleFinish = useCallback(async () => {
     if (!googleSub) {
@@ -430,28 +430,28 @@ export function OnboardingScreen() {
     }
   }, [googleSub, childName, childAge, mascot, selectedLangs, navigate, setProfile])
 
-  // ─── Language options ───────────────────────────────────────────────────────
+  // â”€â”€â”€ Language options â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const LANGUAGE_OPTIONS = [
-    { code: 'en', label: 'English', flag: '🇬🇧', native: 'English', alwaysOn: true },
-    { code: 'kn', label: 'Kannada', flag: '🇮🇳', native: 'ಕನ್ನಡ', alwaysOn: false },
-    { code: 'hi', label: 'Hindi', flag: '🇮🇳', native: 'हिन्दी', alwaysOn: false },
-    { code: 'ta', label: 'Tamil', flag: '🇮🇳', native: 'தமிழ்', alwaysOn: false },
-    { code: 'te', label: 'Telugu', flag: '🇮🇳', native: 'తెలుగు', alwaysOn: false }
+    { code: 'en', label: 'English', flag: 'ðŸ‡¬ðŸ‡§', native: 'English', alwaysOn: true },
+    { code: 'kn', label: 'Kannada', flag: 'ðŸ‡®ðŸ‡³', native: 'à²•à²¨à³à²¨à²¡', alwaysOn: false },
+    { code: 'hi', label: 'Hindi', flag: 'ðŸ‡®ðŸ‡³', native: 'à¤¹à¤¿à¤¨à¥à¤¦à¥€', alwaysOn: false },
+    { code: 'ta', label: 'Tamil', flag: 'ðŸ‡®ðŸ‡³', native: 'à®¤à®®à®¿à®´à¯', alwaysOn: false },
+    { code: 'te', label: 'Telugu', flag: 'ðŸ‡®ðŸ‡³', native: 'à°¤à±†à°²à±à°—à±', alwaysOn: false }
   ]
 
   const MASCOT_OPTIONS: { choice: MascotChoice; emoji: string; name: string; desc: string }[] = [
-    { choice: 'lion', emoji: '🦁', name: 'Leo', desc: 'Brave & curious!' },
-    { choice: 'owl', emoji: '🦉', name: 'Ollie', desc: 'Wise & gentle!' },
-    { choice: 'bunny', emoji: '🐰', name: 'Benny', desc: 'Playful & fun!' }
+    { choice: 'lion', emoji: 'ðŸ¦', name: 'Leo', desc: 'Brave & curious!' },
+    { choice: 'owl', emoji: 'ðŸ¦‰', name: 'Ollie', desc: 'Wise & gentle!' },
+    { choice: 'bunny', emoji: 'ðŸ°', name: 'Benny', desc: 'Playful & fun!' }
   ]
 
-  // ─── Render ─────────────────────────────────────────────────────────────────
+  // â”€â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   return (
     <SafeArea className="bg-gradient-to-br from-lavender-50 via-white to-leo-50 overflow-hidden">
       <div className="flex flex-col flex-1 px-4 py-2 max-w-sm mx-auto w-full">
-        {/* Back navigation — never returns to sign-in when adding another child */}
+        {/* Back navigation â€” never returns to sign-in when adding another child */}
         <div className="h-8 flex items-center">
           {step > (addMode ? 2 : 1) && (
             <button
@@ -460,7 +460,7 @@ export function OnboardingScreen() {
               className="flex items-center gap-1 text-lavender-500 font-bold text-sm active:scale-95 disabled:opacity-40"
               aria-label="Go back one step"
             >
-              ← Back
+              â† Back
             </button>
           )}
           {addMode && step === 2 && (
@@ -469,7 +469,7 @@ export function OnboardingScreen() {
               disabled={isLoading}
               className="flex items-center gap-1 text-lavender-400 font-bold text-sm active:scale-95 disabled:opacity-40"
             >
-              ← Cancel
+              â† Cancel
             </button>
           )}
         </div>
@@ -490,13 +490,13 @@ export function OnboardingScreen() {
               transition={{ duration: 0.3, ease: 'easeInOut' }}
               className="flex-1 min-h-0 flex flex-col"
             >
-              {/* ── Step 1: Sign In ─────────────────────────────────────── */}
+              {/* â”€â”€ Step 1: Sign In â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               {step === 1 && (
                 <div className="flex-1 flex flex-col items-center justify-center gap-6 text-center">
                   <LeoMascot size="lg" mood="excited" />
                   <div>
                     <h1 className="text-4xl font-extrabold text-lavender-700 leading-tight">
-                      Hello! I'm Leo! 🦁
+                      Hello! I'm Leo! ðŸ¦
                     </h1>
                     <p className="mt-2 text-xl text-lavender-500 font-semibold">
                       Let's start our adventure together!
@@ -504,7 +504,7 @@ export function OnboardingScreen() {
                   </div>
                   <div className="w-full bg-white rounded-3xl p-5 shadow-lg shadow-lavender-100">
                     <p className="text-base text-gray-600 mb-4 font-semibold">
-                      Ask a grown-up to sign in first 👇
+                      Ask a grown-up to sign in first ðŸ‘‡
                     </p>
                     {isLoading ? (
                       <div className="flex justify-center py-4">
@@ -534,13 +534,13 @@ export function OnboardingScreen() {
                 </div>
               )}
 
-              {/* ── Step 2: Restore-from-Drive chooser OR Child Name ────── */}
+              {/* â”€â”€ Step 2: Restore-from-Drive chooser OR Child Name â”€â”€â”€â”€â”€â”€ */}
               {step === 2 && restoreMode && (
                 <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-4 py-4">
                   <LeoMascot size="md" mood="excited" />
                   <div className="text-center">
                     <h2 className="text-2xl font-extrabold text-lavender-700">
-                      Welcome back! ✨
+                      Welcome back! âœ¨
                     </h2>
                     <p className="mt-1 text-sm text-lavender-500 font-medium max-w-[300px]">
                       Found {driveProfiles.length} {driveProfiles.length === 1 ? 'child' : 'children'} backed up on your Google account. Pick one to restore.
@@ -548,9 +548,9 @@ export function OnboardingScreen() {
                   </div>
                   <div className="w-full flex flex-col gap-3">
                     {driveProfiles.map(dp => {
-                      const emoji = dp.profile.mascotChoice === 'lion' ? '🦁' : dp.profile.mascotChoice === 'owl' ? '🦉' : '🐰'
+                      const emoji = dp.profile.mascotChoice === 'lion' ? 'ðŸ¦' : dp.profile.mascotChoice === 'owl' ? 'ðŸ¦‰' : 'ðŸ°'
                       const langs = dp.profile.preferredLanguages.join(', ').toUpperCase()
-                      const synced = dp.syncedAt ? new Date(dp.syncedAt).toLocaleDateString() : '—'
+                      const synced = dp.syncedAt ? new Date(dp.syncedAt).toLocaleDateString() : 'â€”'
                       return (
                         <button
                           key={dp.profile.id}
@@ -562,14 +562,14 @@ export function OnboardingScreen() {
                           <div className="flex-1 min-w-0">
                             <p className="font-extrabold text-gray-800 text-lg truncate">{dp.profile.name}</p>
                             <p className="text-xs text-gray-400 font-medium truncate">
-                              Age {dp.profile.age} · {langs}
+                              Age {dp.profile.age} Â· {langs}
                             </p>
                             <p className="text-xs text-lavender-400 font-semibold mt-0.5">
-                              {dp.interestTags.length} interests · {dp.learnedObjects.length} discoveries · synced {synced}
+                              {dp.interestTags.length} interests Â· {dp.learnedObjects.length} discoveries Â· synced {synced}
                             </p>
                           </div>
                           <span className="text-xs font-extrabold text-lavender-600 bg-lavender-50 px-3 py-1.5 rounded-full flex-shrink-0">
-                            Restore →
+                            Restore â†’
                           </span>
                         </button>
                       )
@@ -585,7 +585,7 @@ export function OnboardingScreen() {
                     disabled={isLoading}
                     className="text-sm text-lavender-400 font-semibold underline underline-offset-2 disabled:opacity-50"
                   >
-                    Start fresh — add a new child instead
+                    Start fresh â€” add a new child instead
                   </button>
                 </div>
               )}
@@ -594,7 +594,7 @@ export function OnboardingScreen() {
                   <LeoMascot size="md" mood="happy" />
                   <div className="text-center">
                     <h2 className="text-3xl font-extrabold text-lavender-700">
-                      What's your name? 😊
+                      What's your name? ðŸ˜Š
                     </h2>
                     <p className="mt-1 text-lg text-lavender-400 font-medium">
                       What shall I call my new friend?
@@ -619,7 +619,7 @@ export function OnboardingScreen() {
                     />
                   </div>
 
-                  {/* Age stepper (no upper cap — AI adapts to any age) */}
+                  {/* Age stepper (no upper cap â€” AI adapts to any age) */}
                   <div className="w-full text-center">
                     <p className="text-base font-bold text-lavender-500 mb-2">How old are you?</p>
                     <div className="flex justify-center items-center gap-4">
@@ -629,7 +629,7 @@ export function OnboardingScreen() {
                         className="w-14 h-14 rounded-2xl text-3xl font-extrabold bg-lavender-100 text-lavender-600 active:scale-90 disabled:opacity-30"
                         aria-label="Younger"
                       >
-                        −
+                        âˆ’
                       </button>
                       <div className="w-24 h-20 rounded-3xl bg-lavender-50 border-4 border-lavender-300 flex flex-col items-center justify-center shadow-md">
                         <span className="text-4xl font-extrabold text-lavender-700 leading-none">{childAge}</span>
@@ -641,7 +641,7 @@ export function OnboardingScreen() {
                         className="w-14 h-14 rounded-2xl text-3xl font-extrabold bg-lavender-100 text-lavender-600 active:scale-90 disabled:opacity-30"
                         aria-label="Older"
                       >
-                        ＋
+                        ï¼‹
                       </button>
                     </div>
                   </div>
@@ -661,16 +661,16 @@ export function OnboardingScreen() {
                       active:scale-95 transition-transform
                     "
                   >
-                    {isLoading ? '...' : "That's me! →"}
+                    {isLoading ? '...' : "That's me! â†’"}
                   </button>
                 </div>
               )}
 
-              {/* ── Step 3: API Key ─────────────────────────────────────── */}
+              {/* â”€â”€ Step 3: API Key â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               {step === 3 && (
                 <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-5 py-4">
                   <div className="text-center">
-                    <span className="text-6xl">🔑</span>
+                    <span className="text-6xl">ðŸ”‘</span>
                     <h2 className="text-2xl font-extrabold text-leo-700 mt-2">
                       Magic Key Time!
                     </h2>
@@ -688,7 +688,7 @@ export function OnboardingScreen() {
                       rel="noopener noreferrer"
                       className="text-sm text-lavender-600 font-bold underline"
                     >
-                      aistudio.google.com → Get API key (free!) →
+                      aistudio.google.com â†’ Get API key (free!) â†’
                     </a>
                   </div>
                   <textarea
@@ -720,16 +720,16 @@ export function OnboardingScreen() {
                       active:scale-95 transition-transform
                     "
                   >
-                    {isLoading ? '...' : 'Got it! →'}
+                    {isLoading ? '...' : 'Got it! â†’'}
                   </button>
                 </div>
               )}
 
-              {/* ── Step 4: Languages ───────────────────────────────────── */}
+              {/* â”€â”€ Step 4: Languages â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               {step === 4 && (
                 <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-5 py-4">
                   <div className="text-center">
-                    <span className="text-6xl">🌍</span>
+                    <span className="text-6xl">ðŸŒ</span>
                     <h2 className="text-2xl font-extrabold text-mint-700 mt-2">
                       Which languages?
                     </h2>
@@ -759,7 +759,7 @@ export function OnboardingScreen() {
                           <p className="text-sm opacity-70">{lang.native}</p>
                         </div>
                         <span className="ml-auto text-2xl">
-                          {selectedLangs.includes(lang.code) ? '✅' : '⬜'}
+                          {selectedLangs.includes(lang.code) ? 'âœ…' : 'â¬œ'}
                         </span>
                       </button>
                     ))}
@@ -778,17 +778,17 @@ export function OnboardingScreen() {
                       active:scale-95 transition-transform
                     "
                   >
-                    These ones! →
+                    These ones! â†’
                   </button>
                 </div>
               )}
 
-              {/* ── Step 5: Mascot chooser ───────────────────────────────── */}
+              {/* â”€â”€ Step 5: Mascot chooser â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               {step === 5 && (
                 <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-5 py-4">
                   <div className="text-center">
                     <h2 className="text-2xl font-extrabold text-lavender-700">
-                      Choose your friend! 🎉
+                      Choose your friend! ðŸŽ‰
                     </h2>
                     <p className="mt-1 text-base text-gray-500 font-medium">
                       Who will be your learning buddy?
@@ -815,7 +815,7 @@ export function OnboardingScreen() {
                           <p className="text-sm font-semibold text-gray-500">{option.desc}</p>
                         </div>
                         {mascot === option.choice && (
-                          <span className="ml-auto text-2xl">✨</span>
+                          <span className="ml-auto text-2xl">âœ¨</span>
                         )}
                       </motion.button>
                     ))}
@@ -836,7 +836,7 @@ export function OnboardingScreen() {
                       active:scale-95 transition-transform
                     "
                   >
-                    {isLoading ? 'Starting...' : "Let's go! 🚀"}
+                    {isLoading ? 'Starting...' : "Let's go! ðŸš€"}
                   </button>
                 </div>
               )}

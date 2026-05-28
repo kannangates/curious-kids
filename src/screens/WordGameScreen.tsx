@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+﻿import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { db } from '../db/index'
 import type { LearnedObject } from '../db/index'
 import { useAppStore } from '../store/app'
@@ -71,7 +71,7 @@ export function WordGameScreen() {
 
     return {
       objectName: correct.o.objectName,
-      emoji: correct.o.emoji || '🌍',
+      emoji: correct.o.emoji || 'ðŸŒ',
       options,
       correctIndex: options.indexOf(correctVal),
       langName: LANG_NAMES[lang] ?? lang
@@ -145,7 +145,7 @@ export function WordGameScreen() {
     setRound(targetLang ? buildRound(pool, targetLang) : null)
   }, [pool, targetLang, buildRound])
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const notEnough = !loading && !round
 
@@ -159,12 +159,12 @@ export function WordGameScreen() {
             className="w-10 h-10 flex items-center justify-center text-xl rounded-full bg-coral-100 active:scale-90"
             aria-label="Go back"
           >
-            ←
+            â†
           </button>
-          <h1 className="font-extrabold text-coral-700 text-lg flex-1">🎮 Word Match</h1>
+          <h1 className="font-extrabold text-coral-700 text-lg flex-1">ðŸŽ® Word Match</h1>
           {round && (
             <span className="text-sm font-extrabold text-coral-600 bg-coral-50 px-3 py-1 rounded-full">
-              ⭐ {score}
+              â­ {score}
             </span>
           )}
         </div>
@@ -172,7 +172,7 @@ export function WordGameScreen() {
         {loading && (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <LeoMascot size="md" mood="thinking" />
-            <p className="text-sm font-bold text-coral-500 animate-pulse">Setting up the game…</p>
+            <p className="text-sm font-bold text-coral-500 animate-pulse">Setting up the gameâ€¦</p>
           </div>
         )}
 
@@ -185,8 +185,8 @@ export function WordGameScreen() {
               Play this game after learning at least 3 words. Try Word Explorer or the camera!
             </p>
             <div className="flex gap-3">
-              <button onClick={() => navigate('/words')} className="px-5 py-3 bg-coral-500 text-white font-extrabold rounded-2xl active:scale-95">📚 Word Explorer</button>
-              <button onClick={() => navigate('/camera')} className="px-5 py-3 bg-sky-500 text-white font-extrabold rounded-2xl active:scale-95">📷 Camera</button>
+              <button onClick={() => navigate('/words')} className="px-5 py-3 bg-coral-500 text-white font-extrabold rounded-2xl active:scale-95">ðŸ“š Word Explorer</button>
+              <button onClick={() => navigate('/camera')} className="px-5 py-3 bg-sky-500 text-white font-extrabold rounded-2xl active:scale-95">ðŸ“· Camera</button>
             </div>
           </div>
         )}
@@ -199,7 +199,7 @@ export function WordGameScreen() {
                 initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
                 className="text-center text-sm font-extrabold text-leo-600 mb-1"
               >
-                🔥 {streak} in a row!
+                ðŸ”¥ {streak} in a row!
               </motion.p>
             )}
 
@@ -237,13 +237,13 @@ export function WordGameScreen() {
                   className="mt-5 flex flex-col items-center gap-3"
                 >
                   <p className={`font-extrabold text-lg ${answered === round.correctIndex ? 'text-mint-600' : 'text-coral-600'}`}>
-                    {answered === round.correctIndex ? 'Yay! That\'s right! 🎉' : `It's "${round.options[round.correctIndex]}"! 💪`}
+                    {answered === round.correctIndex ? 'Yay! That\'s right! ðŸŽ‰' : `It's "${round.options[round.correctIndex]}"! ðŸ’ª`}
                   </p>
                   <button
                     onClick={nextRound}
                     className="w-full py-4 bg-gradient-to-r from-coral-400 to-coral-600 text-white font-extrabold text-lg rounded-3xl shadow-lg active:scale-95"
                   >
-                    Next word →
+                    Next word â†’
                   </button>
                 </motion.div>
               )}

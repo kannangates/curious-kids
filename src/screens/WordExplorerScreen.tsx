@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+﻿import { useCallback, useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { db } from '../db/index'
 import type { LearnedObject } from '../db/index'
 import { useAppStore } from '../store/app'
@@ -17,7 +17,7 @@ import { VoiceButton } from '../components/VoiceButton'
 import { XPCelebration } from '../components/XPCelebration'
 import { SafeArea } from '../components/SafeArea'
 
-// ─── Language display names ───────────────────────────────────────────────────
+// â”€â”€â”€ Language display names â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const LANG_NAMES: Record<string, string> = {
   en: 'English',
@@ -27,7 +27,7 @@ const LANG_NAMES: Record<string, string> = {
   te: 'Telugu'
 }
 
-// ─── Raw Gemini translation response ─────────────────────────────────────────
+// â”€â”€â”€ Raw Gemini translation response â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface RawTranslation {
   word?: string
@@ -36,7 +36,7 @@ interface RawTranslation {
   exampleSentence?: string
 }
 
-// ─── Translation result type ──────────────────────────────────────────────────
+// â”€â”€â”€ Translation result type â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface TranslationResult {
   word: string
@@ -46,7 +46,7 @@ interface TranslationResult {
   language: string
 }
 
-// ─── Translation request parser ───────────────────────────────────────────────
+// â”€â”€â”€ Translation request parser â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface ParsedRequest {
   word: string
@@ -88,11 +88,11 @@ function parseTranslationRequest(
     }
   }
 
-  // No pattern matched — treat the whole transcript as the word to translate
+  // No pattern matched â€” treat the whole transcript as the word to translate
   return { word: lower.replace(/[^a-z\s]/g, '').trim() || transcript.trim(), language: fallbackLang }
 }
 
-// ─── Word card component ──────────────────────────────────────────────────────
+// â”€â”€â”€ Word card component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface WordCardProps {
   item: LearnedObject
@@ -148,7 +148,7 @@ function WordCard({ item, primaryLang, onSpeak }: WordCardProps) {
   )
 }
 
-// ─── Translation response card ────────────────────────────────────────────────
+// â”€â”€â”€ Translation response card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface TranslationCardProps {
   result: TranslationResult
@@ -189,7 +189,7 @@ function TranslationCard({ result, onSpeak }: TranslationCardProps) {
           "
           aria-label="Speak translation"
         >
-          🔊
+          ðŸ”Š
         </button>
       </div>
 
@@ -207,7 +207,7 @@ function TranslationCard({ result, onSpeak }: TranslationCardProps) {
   )
 }
 
-// ─── WordExplorerScreen ───────────────────────────────────────────────────────
+// â”€â”€â”€ WordExplorerScreen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function WordExplorerScreen() {
   const navigate = useNavigate()
@@ -235,7 +235,7 @@ export function WordExplorerScreen() {
 
   const { transcript, isListening, startListening, stopListening, error: speechError, isSupported } = useSpeech(primaryLang)
 
-  // ── isMounted guard ────────────────────────────────────────────────────────
+  // â”€â”€ isMounted guard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   useEffect(() => {
     isMountedRef.current = true
@@ -245,7 +245,7 @@ export function WordExplorerScreen() {
     }
   }, [])
 
-  // ── Load Gemini client ─────────────────────────────────────────────────────
+  // â”€â”€ Load Gemini client â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   useEffect(() => {
     let cancelled = false
@@ -273,7 +273,7 @@ export function WordExplorerScreen() {
     return () => { cancelled = true }
   }, [profile, googleSub])
 
-  // ── Load learned words ─────────────────────────────────────────────────────
+  // â”€â”€ Load learned words â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   useEffect(() => {
     let cancelled = false
@@ -310,7 +310,7 @@ export function WordExplorerScreen() {
     return () => { cancelled = true }
   }, [profile])
 
-  // ── TTS helper ─────────────────────────────────────────────────────────────
+  // â”€â”€ TTS helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const speakText = useCallback((text: string, lang: string) => {
     setIsSpeaking(true)
@@ -319,7 +319,7 @@ export function WordExplorerScreen() {
       .catch(() => { if (isMountedRef.current) setIsSpeaking(false) })
   }, [])
 
-  // ── Handle transcript ──────────────────────────────────────────────────────
+  // â”€â”€ Handle transcript â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   useEffect(() => {
     if (!transcript || isListening) return
@@ -349,11 +349,11 @@ export function WordExplorerScreen() {
         let t: Record<string, string> = {}
         try { t = JSON.parse(cached.translations) as Record<string, string> } catch { t = {} }
         const val = t[language] ?? t['en'] ?? cached.objectName
-        const msg = `In ${LANG_NAMES[language] ?? language}, ${word} is "${val}"! 🌍`
+        const msg = `In ${LANG_NAMES[language] ?? language}, ${word} is "${val}"! ðŸŒ`
         setResponseText(msg)
         speakText(msg, primaryLang)
       } else {
-        const msg = "I need internet to translate! Let's try when we're connected! 🌐"
+        const msg = "I need internet to translate! Let's try when we're connected! ðŸŒ"
         setResponseText(msg)
         speakText(msg, primaryLang)
       }
@@ -378,7 +378,7 @@ export function WordExplorerScreen() {
 
       // Safety check output
       if (!checkOutput(response)) {
-        const msg = "Oops, let me think of something better! 🦁"
+        const msg = "Oops, let me think of something better! ðŸ¦"
         setResponseText(msg)
         speakText(msg, primaryLang)
         return
@@ -427,7 +427,7 @@ export function WordExplorerScreen() {
               id: crypto.randomUUID(),
               profileId: profile.id,
               objectName: result.word,
-              emoji: '🌍',
+              emoji: 'ðŸŒ',
               translations: JSON.stringify({ en: result.word, [language]: result.translation }),
               learnedAt: new Date().toISOString(),
               timesRevisited: 0
@@ -470,14 +470,14 @@ export function WordExplorerScreen() {
           }
         }
       } else {
-        // Couldn't parse JSON — show raw response
+        // Couldn't parse JSON â€” show raw response
         const msg = response.slice(0, 150)
         setResponseText(msg)
         speakText(msg, primaryLang)
       }
     } catch (err) {
       if (!isMountedRef.current) return
-      const msg = "Oops! Leo couldn't find that word. Let's try again! 🦁"
+      const msg = "Oops! Leo couldn't find that word. Let's try again! ðŸ¦"
       setResponseText(msg)
       speakText(msg, primaryLang)
       console.error('[WordExplorer] translation error:', err)
@@ -494,13 +494,13 @@ export function WordExplorerScreen() {
     handleTranscriptRef.current = handleTranscript
   }, [handleTranscript])
 
-  // ── Language chips in Leo's speech bubble ─────────────────────────────────
+  // â”€â”€ Language chips in Leo's speech bubble â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const langList = (profile?.preferredLanguages ?? ['en'])
     .map(l => LANG_NAMES[l] ?? l)
     .join(', ')
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   return (
     <SafeArea className="bg-gradient-to-br from-violet-100 via-lavender-50 to-mint-100 overflow-hidden">
@@ -513,10 +513,10 @@ export function WordExplorerScreen() {
             className="w-10 h-10 flex items-center justify-center text-xl rounded-full bg-lavender-100 active:scale-90 flex-shrink-0"
             aria-label="Go back"
           >
-            ←
+            â†
           </button>
           <div className="flex-1">
-            <p className="font-extrabold text-lavender-700 text-lg">🌍 Word Explorer</p>
+            <p className="font-extrabold text-lavender-700 text-lg">ðŸŒ Word Explorer</p>
             <p className="text-xs text-lavender-400 font-medium">
               {isLoading ? 'Translating...' : isSpeaking ? 'Speaking...' : isListening ? 'Listening...' : 'Ask me to translate!'}
             </p>
@@ -547,7 +547,7 @@ export function WordExplorerScreen() {
             >
               <p className="text-sm font-bold text-lavender-700 leading-relaxed">
                 {isLoading
-                  ? 'Let me look that up... 🔍'
+                  ? 'Let me look that up... ðŸ”'
                   : `Say a word and I'll tell you how to say it in ${langList}!`}
               </p>
             </motion.div>
@@ -566,7 +566,7 @@ export function WordExplorerScreen() {
             {apiError ? (
               <div className="text-center px-6">
                 <p className="text-sm text-orange-600 font-semibold">
-                  Magic key not set up yet! Ask a parent to check Settings. ⚙️
+                  Magic key not set up yet! Ask a parent to check Settings. âš™ï¸
                 </p>
                 <button
                   onClick={() => navigate('/settings')}
@@ -650,9 +650,9 @@ export function WordExplorerScreen() {
                 animate={{ opacity: 1 }}
                 className="text-center py-8"
               >
-                <span className="text-5xl block mb-3">🌍</span>
+                <span className="text-5xl block mb-3">ðŸŒ</span>
                 <p className="text-sm font-bold text-lavender-500">
-                  No words yet! Ask me to translate something! 🌟
+                  No words yet! Ask me to translate something! ðŸŒŸ
                 </p>
               </motion.div>
             ) : (

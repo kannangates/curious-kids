@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback } from 'react'
+﻿import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { db } from '../db/index'
 import type { InterestTag, SessionSummary } from '../db/index'
 import { useAppStore } from '../store/app'
@@ -24,7 +24,7 @@ interface WeeklyReport {
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000
 
-// ─── Level bar colours ─────────────────────────────────────────────────────────
+// â”€â”€â”€ Level bar colours â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const LEVEL_COLORS: Record<string, string> = {
   Explorer:   'from-sky-400 to-sky-600',
@@ -33,7 +33,7 @@ const LEVEL_COLORS: Record<string, string> = {
   Champion:   'from-leo-400 to-leo-600'
 }
 
-// ─── Helpers ───────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function formatDate(isoString: string): string {
   try {
@@ -60,7 +60,7 @@ function formatDateTime(isoString: string): string {
   }
 }
 
-// ─── Level thresholds (matches xp.ts) ─────────────────────────────────────────
+// â”€â”€â”€ Level thresholds (matches xp.ts) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const LEVEL_THRESHOLDS: Record<string, number> = {
   Explorer: 50,
@@ -84,7 +84,7 @@ function levelProgress(xpData: XPData): number {
   return Math.min(100, Math.max(0, Math.round(progress * 100)))
 }
 
-// ─── ParentDashboardScreen ────────────────────────────────────────────────────
+// â”€â”€â”€ ParentDashboardScreen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function ParentDashboardScreen() {
   const navigate = useNavigate()
@@ -136,7 +136,7 @@ export function ParentDashboardScreen() {
         // Last synced
         const settings = await db.appSettings.get('main')
 
-        // ── Weekly report (last 7 days) ──
+        // â”€â”€ Weekly report (last 7 days) â”€â”€
         const cutoff = Date.now() - WEEK_MS
         const recentObjects = allObjects.filter(o => new Date(o.learnedAt).getTime() >= cutoff)
         const byLanguage: Record<string, number> = {}
@@ -205,9 +205,9 @@ export function ParentDashboardScreen() {
   }, [profile, googleSub, weekly, interests])
 
   const mascotEmoji =
-    profile?.mascotChoice === 'lion' ? '🦁'
-    : profile?.mascotChoice === 'owl' ? '🦉'
-    : '🐰'
+    profile?.mascotChoice === 'lion' ? 'ðŸ¦'
+    : profile?.mascotChoice === 'owl' ? 'ðŸ¦‰'
+    : 'ðŸ°'
 
   const INTEREST_COLORS = [
     'bg-lavender-100 text-lavender-700',
@@ -261,10 +261,10 @@ export function ParentDashboardScreen() {
             className="w-10 h-10 flex items-center justify-center text-xl rounded-full bg-lavender-100 active:scale-90"
             aria-label="Go back to settings"
           >
-            ←
+            â†
           </button>
           <h1 className="text-2xl font-extrabold text-lavender-700 flex-1">
-            {profile.name}'s Dashboard 📊
+            {profile.name}'s Dashboard ðŸ“Š
           </h1>
         </div>
 
@@ -280,7 +280,7 @@ export function ParentDashboardScreen() {
           <div>
             <p className="text-2xl font-extrabold text-gray-800">{profile.name}</p>
             <p className="text-sm text-gray-400 font-medium">
-              Age {profile.age} · {profile.preferredLanguages.join(', ').toUpperCase()}
+              Age {profile.age} Â· {profile.preferredLanguages.join(', ').toUpperCase()}
             </p>
             <p className="text-xs text-gray-300 font-medium mt-0.5">
               Joined {formatDate(profile.createdAt)}
@@ -319,7 +319,7 @@ export function ParentDashboardScreen() {
                   <span>{xpData.nextLevelXP} XP to {nextLevelName}</span>
                 )}
                 {xpData.nextLevelXP === 0 && (
-                  <span className="text-leo-500">Max Level! 🏆</span>
+                  <span className="text-leo-500">Max Level! ðŸ†</span>
                 )}
               </div>
               <div className="h-4 bg-gray-100 rounded-full overflow-hidden">
@@ -367,7 +367,7 @@ export function ParentDashboardScreen() {
             className="bg-white rounded-3xl p-5 shadow-sm border border-mint-200"
           >
             <div className="flex items-center justify-between mb-3">
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">📊 This Week</p>
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">ðŸ“Š This Week</p>
               <span className="text-xs font-bold text-mint-600 bg-mint-50 px-2 py-0.5 rounded-full">last 7 days</span>
             </div>
 
@@ -380,7 +380,7 @@ export function ParentDashboardScreen() {
                 disabled={loadingNarrative || !isOnline}
                 className="text-sm font-bold text-mint-600 underline underline-offset-2 mb-3 disabled:opacity-50"
               >
-                {loadingNarrative ? 'Writing summary…' : isOnline ? '✨ Write a friendly summary' : 'Summary needs internet'}
+                {loadingNarrative ? 'Writing summaryâ€¦' : isOnline ? 'âœ¨ Write a friendly summary' : 'Summary needs internet'}
               </button>
             )}
 
@@ -413,14 +413,14 @@ export function ParentDashboardScreen() {
             {/* Big discovery */}
             {weekly.bigDiscovery && (
               <div className="bg-leo-50 rounded-2xl px-3 py-2">
-                <p className="text-[10px] text-leo-500 font-extrabold uppercase tracking-wide">🌟 Highlight</p>
+                <p className="text-[10px] text-leo-500 font-extrabold uppercase tracking-wide">ðŸŒŸ Highlight</p>
                 <p className="text-sm text-gray-700 font-medium">{weekly.bigDiscovery}</p>
               </div>
             )}
 
             {weekly.wordsLearned === 0 && weekly.sessions === 0 && (
               <p className="text-sm text-gray-400 font-medium text-center py-2">
-                No activity yet this week — encourage {profile.name} to explore with Leo! 🦁
+                No activity yet this week â€” encourage {profile.name} to explore with Leo! ðŸ¦
               </p>
             )}
           </motion.div>
@@ -438,7 +438,7 @@ export function ParentDashboardScreen() {
           </p>
           {interests.length === 0 ? (
             <p className="text-sm text-gray-400 font-medium">
-              No interests recorded yet — start exploring! 🚀
+              No interests recorded yet â€” start exploring! ðŸš€
             </p>
           ) : (
             <div className="flex flex-wrap gap-2">
@@ -472,7 +472,7 @@ export function ParentDashboardScreen() {
           </p>
           {summaries.length === 0 ? (
             <p className="text-sm text-gray-400 font-medium">
-              No sessions yet — let {profile.name} start chatting with Leo! 🦁
+              No sessions yet â€” let {profile.name} start chatting with Leo! ðŸ¦
             </p>
           ) : (
             <div className="flex flex-col gap-3">
@@ -522,7 +522,7 @@ export function ParentDashboardScreen() {
                 : 'Never synced'}
             </p>
           </div>
-          <span className="text-2xl">☁️</span>
+          <span className="text-2xl">â˜ï¸</span>
         </motion.div>
 
         {/* Quick links */}
@@ -536,13 +536,13 @@ export function ParentDashboardScreen() {
             onClick={() => navigate('/discoveries')}
             className="flex-1 py-3 bg-gradient-to-r from-mint-400 to-mint-600 text-white font-extrabold rounded-2xl shadow-md active:scale-95"
           >
-            ⭐ Discoveries
+            â­ Discoveries
           </button>
           <button
             onClick={() => navigate('/settings')}
             className="flex-1 py-3 bg-gradient-to-r from-lavender-400 to-lavender-600 text-white font-extrabold rounded-2xl shadow-md active:scale-95"
           >
-            ⚙️ Settings
+            âš™ï¸ Settings
           </button>
         </motion.div>
 

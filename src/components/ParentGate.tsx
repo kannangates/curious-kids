@@ -1,6 +1,6 @@
-import { useEffect, useState, useCallback, type ReactNode } from 'react'
+﻿import { useEffect, useState, useCallback, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { db } from '../db/index'
 import { verifyPin } from '../lib/crypto'
 import { LeoMascot } from './LeoMascot'
@@ -66,7 +66,7 @@ export function ParentGate({ children }: ParentGateProps) {
   }
   const backspace = () => setPin(p => p.slice(0, -1))
 
-  // Physical-keyboard support — digits + Backspace work while locked
+  // Physical-keyboard support â€” digits + Backspace work while locked
   useEffect(() => {
     if (status !== 'locked') return
     function onKey(e: KeyboardEvent) {
@@ -79,7 +79,7 @@ export function ParentGate({ children }: ParentGateProps) {
       }
       if (e.key.length === 1 && e.key >= '0' && e.key <= '9') {
         e.preventDefault()
-        // Functional update — always sees the latest pin, no stale-closure risk
+        // Functional update â€” always sees the latest pin, no stale-closure risk
         setPin(p => (p.length < 4 ? p + e.key : p))
       }
     }
@@ -97,13 +97,13 @@ export function ParentGate({ children }: ParentGateProps) {
 
   if (status === 'open') return <>{children}</>
 
-  // Locked → PIN entry
+  // Locked â†’ PIN entry
   return (
     <SafeArea className="bg-gradient-to-br from-lavender-100 to-white">
       <div className="flex flex-col flex-1 items-center justify-center gap-6 px-6 max-w-xs mx-auto w-full">
         <LeoMascot size="md" mood="thinking" />
         <div className="text-center">
-          <h1 className="text-2xl font-extrabold text-lavender-700">Parent Zone 🔒</h1>
+          <h1 className="text-2xl font-extrabold text-lavender-700">Parent Zone ðŸ”’</h1>
           <p className="text-sm text-gray-500 font-medium mt-1">Enter your 4-digit PIN</p>
         </div>
 
@@ -152,12 +152,12 @@ export function ParentGate({ children }: ParentGateProps) {
             className="h-16 rounded-2xl bg-lavender-50 text-2xl font-extrabold text-lavender-400 active:scale-90"
             aria-label="Delete"
           >
-            ⌫
+            âŒ«
           </button>
         </div>
 
         <button onClick={() => navigate('/')} className="text-sm text-lavender-400 font-semibold">
-          ← Back to Leo
+          â† Back to Leo
         </button>
       </div>
     </SafeArea>

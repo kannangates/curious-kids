@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState, useCallback } from 'react'
+﻿import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence } from 'motion/react'
 import { db, safeDbWrite } from '../db/index'
 import type { LearnedObject } from '../db/index'
 import { useAppStore } from '../store/app'
@@ -14,7 +14,7 @@ import { playTap, playOops } from '../lib/audio'
 import { XPCelebration } from '../components/XPCelebration'
 import { SafeArea } from '../components/SafeArea'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface VisionResult {
   objectName: string
@@ -36,7 +36,7 @@ type ScreenPhase =
   | 'result'
   | 'error'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 const CONSENT_KEY = (profileId: string) => `ck_camera_consent_${profileId}`
 
@@ -80,8 +80,8 @@ function buildQuiz(result: VisionResult, langs: string[]): QuizQuestion {
       }
       const langName = LANG_NAMES[targetLang] ?? targetLang
 
-      // Generic distractors — wrong-sounding made-up words
-      const distractors = ['सनी', 'ಮರ', 'पानी'].filter(d => d !== correctAnswer).slice(0, 2)
+      // Generic distractors â€” wrong-sounding made-up words
+      const distractors = ['à¤¸à¤¨à¥€', 'à²®à²°', 'à¤ªà¤¾à¤¨à¥€'].filter(d => d !== correctAnswer).slice(0, 2)
       // Fill up to 2 distractors if needed
       const fallbacks = ['Neel', 'Tara', 'Mira', 'Balu', 'Ravi']
       let distIdx = 0
@@ -128,7 +128,7 @@ function buildQuiz(result: VisionResult, langs: string[]): QuizQuestion {
   }
 }
 
-// ─── CameraScreen ─────────────────────────────────────────────────────────────
+// â”€â”€â”€ CameraScreen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function CameraScreen() {
   const navigate = useNavigate()
@@ -145,7 +145,7 @@ export function CameraScreen() {
   const [cameraOff, setCameraOff] = useState(false)
   // Counter that increments on every successful getUserMedia. Drives the
   // attach effect so the live stream is bound to <video> regardless of
-  // whether render or getUserMedia finishes first — and re-fires on retake.
+  // whether render or getUserMedia finishes first â€” and re-fires on retake.
   const [streamVersion, setStreamVersion] = useState(0)
 
   // XP celebration state
@@ -167,8 +167,8 @@ export function CameraScreen() {
     }
   }, [])
 
-  // ── Attach stream to <video>. Either phase or the stream can become
-  // ready first — depending on phase alone missed the race (effect fired
+  // â”€â”€ Attach stream to <video>. Either phase or the stream can become
+  // ready first â€” depending on phase alone missed the race (effect fired
   // before getUserMedia resolved and never re-fired). The streamVersion
   // counter ticks on every new acquisition, guaranteeing this effect runs
   // whenever a fresh stream is available.
@@ -180,7 +180,7 @@ export function CameraScreen() {
     }
   }, [phase, streamVersion])
 
-  // ── Init Gemini client ────────────────────────────────────────────────────
+  // â”€â”€ Init Gemini client â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   useEffect(() => {
     if (!profile || !googleSub) return
@@ -191,7 +191,7 @@ export function CameraScreen() {
         const settings = await db.appSettings.get('main')
         if (!settings?.apiKeyEncrypted) {
           if (!cancelled && isMountedRef.current) {
-            setClientError('Ask a parent to set up the magic key first! ⚙️')
+            setClientError('Ask a parent to set up the magic key first! âš™ï¸')
           }
           return
         }
@@ -205,7 +205,7 @@ export function CameraScreen() {
         if (!cancelled && isMountedRef.current) {
           setClientError(
             err instanceof DOMException || (err instanceof Error && err.message.includes('decrypt'))
-              ? 'Sign-in mismatch — please ask a parent to re-enter the API key.'
+              ? 'Sign-in mismatch â€” please ask a parent to re-enter the API key.'
               : 'Could not load the magic key. Please check settings.'
           )
         }
@@ -216,7 +216,7 @@ export function CameraScreen() {
     return () => { cancelled = true }
   }, [profile, googleSub])
 
-  // ── Start the camera ──────────────────────────────────────────────────────
+  // â”€â”€ Start the camera â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const startCamera = useCallback(async (retry = false) => {
     if (!isMountedRef.current) return
@@ -234,7 +234,7 @@ export function CameraScreen() {
         return
       }
       streamRef.current = stream
-      // Bump the version — this guarantees the attach effect re-runs even if
+      // Bump the version â€” this guarantees the attach effect re-runs even if
       // <video> hadn't mounted yet when getUserMedia resolved, and it fires
       // again on retakes (re-attach after release without manual reset).
       setStreamVersion(v => v + 1)
@@ -251,7 +251,7 @@ export function CameraScreen() {
         return
       }
       if (name === 'NotAllowedError') {
-        setErrorMsg("Leo can't see without camera access! Ask a parent to allow the camera in browser settings. 📷")
+        setErrorMsg("Leo can't see without camera access! Ask a parent to allow the camera in browser settings. ðŸ“·")
       } else if (name === 'NotFoundError') {
         setErrorMsg('No camera found on this device!')
       } else {
@@ -264,7 +264,7 @@ export function CameraScreen() {
     }
   }, [])
 
-  // ── Handle consent ────────────────────────────────────────────────────────
+  // â”€â”€ Handle consent â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handleConsent = useCallback(() => {
     if (!profile) return
@@ -272,7 +272,7 @@ export function CameraScreen() {
     void startCamera()
   }, [profile, startCamera])
 
-  // ── Respect parent camera toggle, then check consent / auto-start ───────
+  // â”€â”€ Respect parent camera toggle, then check consent / auto-start â”€â”€â”€â”€â”€â”€â”€
   useEffect(() => {
     if (!profile) return
     let cancelled = false
@@ -284,7 +284,7 @@ export function CameraScreen() {
           setCameraOff(true)
           return // do NOT start the camera when disabled
         }
-      } catch { /* ignore — default to enabled */ }
+      } catch { /* ignore â€” default to enabled */ }
       if (cancelled) return
       if (profile && hasConsent(profile.id)) void startCamera()
       // else stay on consent phase
@@ -293,26 +293,26 @@ export function CameraScreen() {
     return () => { cancelled = true }
   }, [profile, startCamera])
 
-  // ── Capture photo ──────────────────────────────────────────────────────
+  // â”€â”€ Capture photo â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handleCapture = useCallback(async () => {
     if (!isMountedRef.current || !videoRef.current || !canvasRef.current) return
     if (!isOnline) {
-      setErrorMsg('Leo needs internet to identify things! Come back when connected 🌐')
+      setErrorMsg('Leo needs internet to identify things! Come back when connected ðŸŒ')
       releaseStream(streamRef.current)
       streamRef.current = null
       setPhase('error')
       return
     }
     if (!geminiClient) {
-      setErrorMsg(clientError ?? 'Leo is not ready yet — please wait a moment!')
+      setErrorMsg(clientError ?? 'Leo is not ready yet â€” please wait a moment!')
       releaseStream(streamRef.current)
       streamRef.current = null
       setPhase('error')
       return
     }
 
-    // Pause the feed visually. Cap the longest side to 1024px — plenty for
+    // Pause the feed visually. Cap the longest side to 1024px â€” plenty for
     // object recognition, keeps the base64 payload small and well under limits.
     const video = videoRef.current
     const canvas = canvasRef.current
@@ -326,7 +326,7 @@ export function CameraScreen() {
     if (!ctx) return
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height)
 
-    // Release stream immediately — image never stored
+    // Release stream immediately â€” image never stored
     releaseStream(streamRef.current)
     streamRef.current = null
 
@@ -337,7 +337,7 @@ export function CameraScreen() {
     // Guard 4MB limit (~3MB raw in base64)
     if (base64.length > 4 * 1024 * 1024) {
       if (isMountedRef.current) {
-        setErrorMsg("This photo is too big! Try getting closer to the object 📸")
+        setErrorMsg("This photo is too big! Try getting closer to the object ðŸ“¸")
         setPhase('error')
       }
       return
@@ -394,7 +394,7 @@ export function CameraScreen() {
             }
           }
         } catch (err) {
-          // Not valid JSON — fall through to raw display
+          // Not valid JSON â€” fall through to raw display
           console.warn('[Camera] JSON parse failed:', err)
         }
       }
@@ -473,22 +473,22 @@ export function CameraScreen() {
         // Non-JSON fallback: show raw text (truncated)
         const fallbackText = displayText
           ? displayText.slice(0, 300)
-          : "Leo couldn't identify that — try again! 🤔"
+          : "Leo couldn't identify that â€” try again! ðŸ¤”"
         setResult({
           objectName: 'Unknown',
-          emoji: '🔍',
+          emoji: 'ðŸ”',
           funFact: fallbackText,
           translations: {}
         })
         setPhase('result')
       }
     } catch (err) {
-      // Log the full error for parents/devs — the UI shows a friendly summary
+      // Log the full error for parents/devs â€” the UI shows a friendly summary
       console.error('[Camera] analyzeImage failed:', err)
       if (!isMountedRef.current) return
       releaseStream(streamRef.current)
       streamRef.current = null
-      // Invalid API key → route to the dedicated key-error screen (Settings link)
+      // Invalid API key â†’ route to the dedicated key-error screen (Settings link)
       if (err instanceof ApiKeyError) {
         setClientError(err.message)
         setPhase('error')
@@ -500,7 +500,7 @@ export function CameraScreen() {
     }
   }, [isOnline, geminiClient, clientError, profile])
 
-  // ── Quiz answer ──────────────────────────────────────────────────────────
+  // â”€â”€ Quiz answer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handleAnswer = useCallback(async (idx: number) => {
     if (!quiz || quizAnswered) return
@@ -527,7 +527,7 @@ export function CameraScreen() {
     }
   }, [quiz, quizAnswered, profile])
 
-  // ── Restart camera ────────────────────────────────────────────────────────
+  // â”€â”€ Restart camera â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const handleRetake = useCallback(() => {
     setResult(null)
@@ -538,25 +538,25 @@ export function CameraScreen() {
     void startCamera()
   }, [startCamera])
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   // Camera turned off by parent
   if (cameraOff) {
     return (
       <SafeArea className="bg-gradient-to-br from-sky-50 to-mint-50">
         <div className="flex flex-col flex-1 items-center justify-center gap-6 px-6 text-center">
-          <span className="text-8xl">📷</span>
+          <span className="text-8xl">ðŸ“·</span>
           <div>
             <h2 className="text-2xl font-extrabold text-sky-700">Camera is turned off</h2>
             <p className="mt-2 text-base text-gray-600 font-medium">
-              A grown-up can switch it back on in Settings. ⚙️
+              A grown-up can switch it back on in Settings. âš™ï¸
             </p>
           </div>
           <button
             onClick={() => navigate('/')}
             className="px-8 py-4 bg-gradient-to-r from-sky-400 to-sky-600 text-white font-extrabold text-lg rounded-3xl shadow-lg active:scale-95"
           >
-            ← Back Home
+            â† Back Home
           </button>
         </div>
       </SafeArea>
@@ -568,16 +568,16 @@ export function CameraScreen() {
     return (
       <SafeArea className="bg-gradient-to-br from-sky-50 to-mint-50">
         <div className="flex flex-col flex-1 items-center justify-center gap-6 px-6 text-center">
-          <span className="text-8xl">🔑</span>
+          <span className="text-8xl">ðŸ”‘</span>
           <p className="text-xl font-extrabold text-sky-700">{clientError}</p>
           <button
             onClick={() => navigate('/settings')}
             className="px-6 py-3 bg-lavender-500 text-white font-extrabold rounded-2xl shadow-lg active:scale-95"
           >
-            Go to Settings ⚙️
+            Go to Settings âš™ï¸
           </button>
           <button onClick={() => navigate('/')} className="text-lavender-400 font-semibold">
-            ← Back Home
+            â† Back Home
           </button>
         </div>
       </SafeArea>
@@ -602,9 +602,9 @@ export function CameraScreen() {
             className="w-10 h-10 flex items-center justify-center text-xl rounded-full bg-sky-100 active:scale-90"
             aria-label="Go back"
           >
-            ←
+            â†
           </button>
-          <span className="text-2xl">📷</span>
+          <span className="text-2xl">ðŸ“·</span>
           <h1 className="font-extrabold text-sky-700 text-lg flex-1">What Is This?</h1>
           {!isOnline && (
             <span className="text-xs font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-full">
@@ -613,7 +613,7 @@ export function CameraScreen() {
           )}
         </div>
 
-        {/* ── CONSENT PHASE ──────────────────────────────────────────────── */}
+        {/* â”€â”€ CONSENT PHASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
         <AnimatePresence mode="wait">
           {phase === 'consent' && (
             <motion.div
@@ -628,18 +628,18 @@ export function CameraScreen() {
                 animate={{ rotate: [-5, 5, -5, 5, 0] }}
                 transition={{ duration: 1, repeat: Infinity, repeatDelay: 2 }}
               >
-                📷
+                ðŸ“·
               </motion.span>
               <div>
                 <h2 className="text-2xl font-extrabold text-sky-700 mb-2">
                   Leo wants to see the world!
                 </h2>
                 <p className="text-base text-sky-600 font-medium">
-                  Point your camera at anything — Leo will tell you all about it! 🌍
+                  Point your camera at anything â€” Leo will tell you all about it! ðŸŒ
                 </p>
               </div>
               <div className="bg-white rounded-3xl p-4 shadow-sm border border-sky-100 text-sm text-gray-500 font-medium text-left">
-                <p className="font-extrabold text-gray-700 mb-1">🔒 Privacy note for parents:</p>
+                <p className="font-extrabold text-gray-700 mb-1">ðŸ”’ Privacy note for parents:</p>
                 <p>Photos are analysed instantly by AI and <strong>never saved</strong> to any server or storage. The image is used only to identify the object.</p>
               </div>
               <button
@@ -650,7 +650,7 @@ export function CameraScreen() {
                   active:scale-95 transition-transform
                 "
               >
-                Let's go! 🚀
+                Let's go! ðŸš€
               </button>
               <button
                 onClick={() => navigate('/')}
@@ -661,7 +661,7 @@ export function CameraScreen() {
             </motion.div>
           )}
 
-          {/* ── CAMERA PHASE ──────────────────────────────────────────────── */}
+          {/* â”€â”€ CAMERA PHASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           {phase === 'camera' && (
             <motion.div
               key="camera"
@@ -705,12 +705,12 @@ export function CameraScreen() {
                 "
                 aria-label="Take photo"
               >
-                📷
+                ðŸ“·
               </motion.button>
             </motion.div>
           )}
 
-          {/* ── LOADING PHASE ──────────────────────────────────────────────── */}
+          {/* â”€â”€ LOADING PHASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           {phase === 'loading' && (
             <motion.div
               key="loading"
@@ -724,12 +724,12 @@ export function CameraScreen() {
                 animate={{ rotate: 360 }}
                 transition={{ duration: 1.5, repeat: Infinity, ease: 'linear' }}
               >
-                🔍
+                ðŸ”
               </motion.span>
               <div>
                 <p className="text-2xl font-extrabold text-sky-700">Leo is thinking...</p>
                 <p className="text-base text-sky-500 font-medium mt-1">
-                  Figuring out what this is! 🧠
+                  Figuring out what this is! ðŸ§ 
                 </p>
               </div>
               {/* Animated dots */}
@@ -746,7 +746,7 @@ export function CameraScreen() {
             </motion.div>
           )}
 
-          {/* ── RESULT PHASE ──────────────────────────────────────────────── */}
+          {/* â”€â”€ RESULT PHASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           {phase === 'result' && result && (
             <motion.div
               key="result"
@@ -763,7 +763,7 @@ export function CameraScreen() {
                     <h2 className="text-3xl font-extrabold text-gray-800 capitalize">
                       {result.objectName}
                     </h2>
-                    <p className="text-sm text-gray-400 font-medium">Just discovered! 🎉</p>
+                    <p className="text-sm text-gray-400 font-medium">Just discovered! ðŸŽ‰</p>
                   </div>
                 </div>
 
@@ -806,10 +806,10 @@ export function CameraScreen() {
                   active:scale-95 transition-transform
                 "
               >
-                Teach me more! 🦁
+                Teach me more! ðŸ¦
               </button>
 
-              {/* ── QUIZ SECTION ──────────────────────────────────────────── */}
+              {/* â”€â”€ QUIZ SECTION â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
               {quiz && !quizSkipped && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
@@ -818,7 +818,7 @@ export function CameraScreen() {
                   className="bg-white rounded-3xl p-5 shadow-md border-2 border-mint-100"
                 >
                   <p className="text-xs font-extrabold text-mint-600 uppercase tracking-wider mb-2">
-                    Mini Quiz 🧩
+                    Mini Quiz ðŸ§©
                   </p>
                   <p className="text-base font-extrabold text-gray-800 mb-4 leading-snug">
                     {quiz.text}
@@ -859,7 +859,7 @@ export function CameraScreen() {
                         animate={{ opacity: 1, scale: 1 }}
                         className="text-center text-mint-700 font-extrabold text-lg"
                       >
-                        Amazing! You got it! 🎉
+                        Amazing! You got it! ðŸŽ‰
                       </motion.p>
                     )}
                     {quizAnswered === 'wrong' && (
@@ -868,7 +868,7 @@ export function CameraScreen() {
                         animate={{ opacity: 1, scale: 1 }}
                         className="text-center text-coral-600 font-extrabold text-base"
                       >
-                        Oops! The answer was {quiz.options[quiz.correctIndex]}! Try the next one! 💪
+                        Oops! The answer was {quiz.options[quiz.correctIndex]}! Try the next one! ðŸ’ª
                       </motion.p>
                     )}
                   </AnimatePresence>
@@ -884,7 +884,7 @@ export function CameraScreen() {
                 </motion.div>
               )}
 
-              {/* "Take Another Photo" button — show after quiz answered/skipped */}
+              {/* "Take Another Photo" button â€” show after quiz answered/skipped */}
               {(quizAnswered || quizSkipped) && (
                 <motion.button
                   initial={{ opacity: 0, y: 10 }}
@@ -896,7 +896,7 @@ export function CameraScreen() {
                     active:scale-95 transition-transform
                   "
                 >
-                  Take Another Photo 📷
+                  Take Another Photo ðŸ“·
                 </motion.button>
               )}
 
@@ -910,13 +910,13 @@ export function CameraScreen() {
                     active:scale-95 transition-transform
                   "
                 >
-                  Take Another Photo 📷
+                  Take Another Photo ðŸ“·
                 </button>
               )}
             </motion.div>
           )}
 
-          {/* ── ERROR PHASE ──────────────────────────────────────────────── */}
+          {/* â”€â”€ ERROR PHASE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
           {phase === 'error' && (
             <motion.div
               key="error"
@@ -925,7 +925,7 @@ export function CameraScreen() {
               exit={{ opacity: 0 }}
               className="flex flex-col flex-1 items-center justify-center gap-6 px-6 text-center py-12"
             >
-              <span className="text-8xl">😅</span>
+              <span className="text-8xl">ðŸ˜…</span>
               <div>
                 <h2 className="text-2xl font-extrabold text-coral-600 mb-2">Oops!</h2>
                 <p className="text-base text-gray-600 font-medium leading-relaxed">{errorMsg}</p>
@@ -938,10 +938,10 @@ export function CameraScreen() {
                   active:scale-95
                 "
               >
-                Try Again 📷
+                Try Again ðŸ“·
               </button>
               <button onClick={() => navigate('/')} className="text-sky-400 font-semibold">
-                ← Back Home
+                â† Back Home
               </button>
             </motion.div>
           )}

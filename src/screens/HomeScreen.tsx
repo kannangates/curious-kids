@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from 'react'
+﻿import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion } from 'motion/react'
 import { db } from '../db/index'
 import type { InterestTag, SessionSummary } from '../db/index'
 import { useAppStore } from '../store/app'
@@ -9,7 +9,7 @@ import { speak, stopSpeaking } from '../lib/voice'
 import { LeoMascot } from '../components/LeoMascot'
 import { SafeArea } from '../components/SafeArea'
 
-// ─── Navigation card ──────────────────────────────────────────────────────────
+// â”€â”€â”€ Navigation card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 interface NavCardProps {
   emoji: string
@@ -42,7 +42,7 @@ function NavCard({ emoji, label, sublabel, gradient, onClick, delay = 0 }: NavCa
   )
 }
 
-// ─── HomeScreen ───────────────────────────────────────────────────────────────
+// â”€â”€â”€ HomeScreen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export function HomeScreen() {
   const navigate = useNavigate()
@@ -51,28 +51,28 @@ export function HomeScreen() {
   const [lastSummary, setLastSummary] = useState<SessionSummary | null>(null)
   const [topInterests, setTopInterests] = useState<InterestTag[]>([])
   const [greeting, setGreeting] = useState('')
-  const [speechBubble, setSpeechBubble] = useState("What shall we explore today? 🌟")
+  const [speechBubble, setSpeechBubble] = useState("What shall we explore today? ðŸŒŸ")
 
   const lang = profile?.preferredLanguages[0] ?? 'en'
   const spokeRef = useRef(false)  // ensures the greeting is spoken once per visit
 
-  // ── Topic chip emoji helper ────────────────────────────────────────────────
+  // â”€â”€ Topic chip emoji helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   const TOPIC_EMOJIS: Record<string, string> = {
-    lion: '🦁', tiger: '🐯', elephant: '🐘', dinosaur: '🦕', space: '🚀',
-    star: '⭐', bird: '🐦', fish: '🐠', ocean: '🌊', tree: '🌳',
-    flower: '🌸', sun: '☀️', moon: '🌙', rain: '🌧️', rainbow: '🌈',
-    robot: '🤖', train: '🚂', plane: '✈️', car: '🚗', boat: '⛵',
-    butterfly: '🦋', bee: '🐝', frog: '🐸', panda: '🐼', penguin: '🐧',
-    horse: '🐴', shark: '🦈', whale: '🐳', turtle: '🐢', dog: '🐶',
-    cat: '🐱', rabbit: '🐰', snake: '🐍', monkey: '🐒', giraffe: '🦒',
-    zebra: '🦓', kangaroo: '🦘', koala: '🐨', dragon: '🐉', unicorn: '🦄',
-    math: '🔢', music: '🎵', art: '🎨', science: '🔬', nature: '🌿',
-    water: '💧', fire: '🔥', earth: '🌍', wind: '🌬️', cloud: '☁️'
+    lion: 'ðŸ¦', tiger: 'ðŸ¯', elephant: 'ðŸ˜', dinosaur: 'ðŸ¦•', space: 'ðŸš€',
+    star: 'â­', bird: 'ðŸ¦', fish: 'ðŸ ', ocean: 'ðŸŒŠ', tree: 'ðŸŒ³',
+    flower: 'ðŸŒ¸', sun: 'â˜€ï¸', moon: 'ðŸŒ™', rain: 'ðŸŒ§ï¸', rainbow: 'ðŸŒˆ',
+    robot: 'ðŸ¤–', train: 'ðŸš‚', plane: 'âœˆï¸', car: 'ðŸš—', boat: 'â›µ',
+    butterfly: 'ðŸ¦‹', bee: 'ðŸ', frog: 'ðŸ¸', panda: 'ðŸ¼', penguin: 'ðŸ§',
+    horse: 'ðŸ´', shark: 'ðŸ¦ˆ', whale: 'ðŸ³', turtle: 'ðŸ¢', dog: 'ðŸ¶',
+    cat: 'ðŸ±', rabbit: 'ðŸ°', snake: 'ðŸ', monkey: 'ðŸ’', giraffe: 'ðŸ¦’',
+    zebra: 'ðŸ¦“', kangaroo: 'ðŸ¦˜', koala: 'ðŸ¨', dragon: 'ðŸ‰', unicorn: 'ðŸ¦„',
+    math: 'ðŸ”¢', music: 'ðŸŽµ', art: 'ðŸŽ¨', science: 'ðŸ”¬', nature: 'ðŸŒ¿',
+    water: 'ðŸ’§', fire: 'ðŸ”¥', earth: 'ðŸŒ', wind: 'ðŸŒ¬ï¸', cloud: 'â˜ï¸'
   }
 
   function chipEmoji(tag: string): string {
-    return TOPIC_EMOJIS[tag.toLowerCase()] ?? '✨'
+    return TOPIC_EMOJIS[tag.toLowerCase()] ?? 'âœ¨'
   }
 
   useEffect(() => {
@@ -109,15 +109,15 @@ export function HomeScreen() {
         if (!cancelled) setTopInterests(top3)
 
         // Decide the speech-bubble copy (last session > top interest > default)
-        let bubble = "What shall we explore today? 🌟"
+        let bubble = "What shall we explore today? ðŸŒŸ"
         if (latest?.summary) bubble = latest.summary
-        else if (top3.length > 0) bubble = `Let's learn more about ${top3[0].tag} today! 🌟`
+        else if (top3.length > 0) bubble = `Let's learn more about ${top3[0].tag} today! ðŸŒŸ`
         if (!cancelled) setSpeechBubble(bubble)
 
         // Speak the warm welcome once per Home visit so the app feels alive
         if (!cancelled && !spokeRef.current) {
           spokeRef.current = true
-          // Strip emojis from the spoken text — some voices read them aloud
+          // Strip emojis from the spoken text â€” some voices read them aloud
           const clean = `${greetingText} ${bubble}`.replace(/[\p{Extended_Pictographic}]/gu, '').replace(/\s+/g, ' ').trim()
           void speak(clean, lang)
         }
@@ -171,7 +171,7 @@ export function HomeScreen() {
             "
             aria-label="Parent settings"
           >
-            ⚙️
+            âš™ï¸
           </motion.button>
         </div>
 
@@ -217,7 +217,7 @@ export function HomeScreen() {
         {/* Navigation grid */}
         <div className="grid grid-cols-2 gap-3">
           <NavCard
-            emoji="🎙️"
+            emoji="ðŸŽ™ï¸"
             label="Talk to Leo"
             sublabel="Ask anything!"
             gradient="bg-gradient-to-br from-lavender-500 to-lavender-700"
@@ -225,7 +225,7 @@ export function HomeScreen() {
             delay={0.1}
           />
           <NavCard
-            emoji="📷"
+            emoji="ðŸ“·"
             label="What Is This?"
             sublabel="Point & learn!"
             gradient="bg-gradient-to-br from-sky-400 to-sky-600"
@@ -233,7 +233,7 @@ export function HomeScreen() {
             delay={0.2}
           />
           <NavCard
-            emoji="📚"
+            emoji="ðŸ“š"
             label="Word Explorer"
             sublabel="Learn new words!"
             gradient="bg-gradient-to-br from-coral-400 to-coral-600"
@@ -241,7 +241,7 @@ export function HomeScreen() {
             delay={0.3}
           />
           <NavCard
-            emoji="✨"
+            emoji="âœ¨"
             label="My Discoveries"
             sublabel="All I've learned!"
             gradient="bg-gradient-to-br from-mint-500 to-mint-700"
@@ -249,7 +249,7 @@ export function HomeScreen() {
             delay={0.4}
           />
           <NavCard
-            emoji="🎮"
+            emoji="ðŸŽ®"
             label="Word Match"
             sublabel="Play & guess!"
             gradient="bg-gradient-to-br from-leo-400 to-leo-600"
@@ -257,7 +257,7 @@ export function HomeScreen() {
             delay={0.5}
           />
           <NavCard
-            emoji="🧩"
+            emoji="ðŸ§©"
             label="Puzzle Time"
             sublabel="Solve riddles!"
             gradient="bg-gradient-to-br from-lavender-400 to-sky-500"
@@ -265,7 +265,7 @@ export function HomeScreen() {
             delay={0.6}
           />
           <NavCard
-            emoji="🌙"
+            emoji="ðŸŒ™"
             label="Bedtime Story"
             sublabel="A tale for you!"
             gradient="bg-gradient-to-br from-indigo-400 to-violet-600"
@@ -321,7 +321,7 @@ export function HomeScreen() {
             className="mt-3 px-4 py-2 bg-white/50 rounded-2xl backdrop-blur-sm"
           >
             <p className="text-xs text-center text-lavender-600 font-semibold truncate">
-              Last time: {lastSummary.topicsExplored.slice(0, 3).join(', ')} 🌈
+              Last time: {lastSummary.topicsExplored.slice(0, 3).join(', ')} ðŸŒˆ
             </p>
           </motion.div>
         )}
