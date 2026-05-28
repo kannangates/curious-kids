@@ -1,5 +1,5 @@
 import { db } from '../db/index'
-import type { ChildProfile, InterestTag, SessionSummary, LearnedObject } from '../db/index'
+import type { AppSettings, ChildProfile, InterestTag, SessionSummary, LearnedObject } from '../db/index'
 
 // ─── Custom errors ────────────────────────────────────────────────────────────
 
@@ -161,6 +161,69 @@ export async function saveToDrive(
     if (err instanceof TokenExpiredError) throw err
     throw new Error(`Drive save failed: ${err instanceof Error ? err.message : String(err)}`)
   }
+}
+
+// ─── App-settings file (parent's global settings, mirrors appSettings row) ──
+const SETTINGS_FILE_NAME = 'curiouskie-settings.json'
+
+/**
+ * Pushes the parent's global app settings (API key, models, PIN hash, time
+ * limit, sound, camera, etc.) to a single shared Drive file in appDataFolder.
+ * Best-effort: errors are surfaced to the caller (so it can decide to log /
+ * ignore) but won't corrupt local state.
+ */
+export async function uploadAppSettings(
+  accessToken: string,
+  settings: AppSettings
+): Promise<void> {
+  const existing = await findDriveFile(accessToken, SETTINGS_FILE_NAME)
+  const body = JSON.stringify(settings)
+
+  if (existing) {
+    const res = await fetchWithAuth(
+      `https://www.googleapis.com/upload/drive/v3/files/${existing.id}?uploadType=media`,
+      { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body },
+      accessToken
+    )
+    if (!res.ok) throw new Error(`Drive settings update ${res.status}: ${await res.text()}`)
+  } else {
+    const metadata = { name: SETTINGS_FILE_NAME, parents: ['appDataFolder'] }
+    const form = new FormData()
+    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
+    form.append('media', new Blob([body], { type: 'application/json' }))
+    const res = await fetchWithAuth(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+      { method: 'POST', body: form },
+      accessToken
+    )
+    if (!res.ok) throw new Error(`Drive settings create ${res.status}: ${await res.text()}`)
+  }
+}
+
+/**
+ * Pulls the parent's global app settings from Drive. Returns null if no
+ * settings file exists yet (first-ever login). Throws TokenExpiredError when
+ * the access token is stale so the caller can prompt re-auth.
+ */
+export async function downloadAppSettings(
+  accessToken: string
+): Promise<AppSettings | null> {
+  const file = await findDriveFile(accessToken, SETTINGS_FILE_NAME)
+  if (!file) return null
+  const res = await fetchWithAuth(
+    `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+    { method: 'GET' },
+    accessToken
+  )
+  if (!res.ok) throw new Error(`Drive settings fetch ${res.status}: ${await res.text()}`)
+  return await res.json() as AppSettings
+}
+
+/** Reads current appSettings from IndexedDB and pushes it to Drive. */
+export async function syncAppSettingsToDrive(accessToken: string): Promise<void> {
+  const s = await db.appSettings.get('main')
+  if (!s) return
+  await uploadAppSettings(accessToken, s)
 }
 
 /**

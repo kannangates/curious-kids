@@ -7,7 +7,7 @@ import type { MascotChoice } from '../db/index'
 import { useAppStore } from '../store/app'
 import { encryptApiKey } from '../lib/crypto'
 import { validateApiKey } from '../lib/gemini'
-import { checkDriveForProfile, listDriveChildProfiles } from '../lib/drive'
+import { checkDriveForProfile, listDriveChildProfiles, downloadAppSettings, syncAppSettingsToDrive } from '../lib/drive'
 import type { DriveProfile } from '../lib/drive'
 import { setActiveProfileId } from '../lib/profiles'
 import { logEvent } from '../lib/debugLog'
@@ -144,6 +144,21 @@ export function OnboardingScreen() {
         setGoogleToken(accessToken)
         setGoogleSub(sub)
         logEvent('info', '[Onboarding] sub + token saved')
+
+        // BEFORE anything else (homepage / restore chooser), restore the
+        // parent's global settings (API key, models, PIN, time limit, etc.)
+        // from Drive so the rest of onboarding / restore can use them.
+        try {
+          const remoteSettings = await downloadAppSettings(accessToken)
+          if (remoteSettings) {
+            await db.appSettings.put({ ...remoteSettings, id: 'main' })
+            logEvent('info', '[Onboarding] Restored appSettings from Drive')
+          } else {
+            logEvent('info', '[Onboarding] No appSettings file on Drive yet')
+          }
+        } catch (settingsErr) {
+          logEvent('warn', '[Onboarding] downloadAppSettings failed', settingsErr)
+        }
 
         // Look for existing children in this Google account's Drive backup —
         // if any, drop into the restore chooser instead of a fresh name step.
@@ -334,6 +349,12 @@ export function OnboardingScreen() {
         onboardingVersion: 1,
         lastSyncedAt: existing?.lastSyncedAt ?? new Date().toISOString()
       }))
+      // Push freshly-set key + settings to Drive so the next device pulls them
+      if (googleToken) {
+        void syncAppSettingsToDrive(googleToken).catch(err =>
+          logEvent('warn', '[Onboarding] settings push failed', err)
+        )
+      }
       goToStep(4)
     } catch (err) {
       setError(`Failed to save key: ${err instanceof Error ? err.message : String(err)}`)
@@ -393,6 +414,12 @@ export function OnboardingScreen() {
         enabledLanguages: selectedLangs,
         onboardingVersion: 1
       }))
+      // Push the final settings + child profile out to Drive
+      if (googleToken) {
+        void syncAppSettingsToDrive(googleToken).catch(err =>
+          logEvent('warn', '[Onboarding] settings push failed', err)
+        )
+      }
 
       setProfile(profile)
       navigate('/')

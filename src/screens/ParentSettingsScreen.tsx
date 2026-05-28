@@ -7,7 +7,7 @@ import type { AppSettings, ChildProfile, MascotChoice } from '../db/index'
 import { useAppStore } from '../store/app'
 import { encryptApiKey, decryptApiKey, hashPin } from '../lib/crypto'
 import { validateApiKey, listAvailableModels } from '../lib/gemini'
-import { buildSyncSnapshot, saveToDrive, uploadDebugLogToDrive, downloadDebugLogFromDrive, deleteChildFromDrive, TokenExpiredError } from '../lib/drive'
+import { buildSyncSnapshot, saveToDrive, uploadDebugLogToDrive, downloadDebugLogFromDrive, deleteChildFromDrive, syncAppSettingsToDrive, TokenExpiredError } from '../lib/drive'
 import {
   isDebugEnabled,
   setDebugEnabled,
@@ -163,6 +163,15 @@ export function ParentSettingsScreen() {
     if (uri) void previewVoice(sample, primaryLang, uri)
   }, [selectedVoiceURI, voices, primaryLang, profile])
 
+  // Tiny helper: after any local settings change, push the row to Drive so
+  // the parent's other devices pick it up on next sign-in. Best-effort.
+  const pushSettingsToDrive = useCallback(() => {
+    if (!googleToken) return
+    void syncAppSettingsToDrive(googleToken).catch(err => {
+      console.warn('[settings] Drive push failed:', err)
+    })
+  }, [googleToken])
+
   const showSuccess = useCallback((msg: string) => {
     setSuccessMessage(msg)
     setTimeout(() => setSuccessMessage(null), 3000)
@@ -213,6 +222,7 @@ export function ParentSettingsScreen() {
 
       const encrypted = await encryptApiKey(newApiKey.trim(), googleSub)
       await db.appSettings.update('main', { apiKeyEncrypted: encrypted })
+      pushSettingsToDrive()
       setCurrentKeyMasked(newApiKey.trim().slice(0, 8) + '••••••••••••••••••••')
       setNewApiKey('')
       showSuccess('Magic key updated! ✅')
@@ -221,7 +231,7 @@ export function ParentSettingsScreen() {
     } finally {
       setIsSaving(false)
     }
-  }, [newApiKey, googleSub, showSuccess, showError])
+  }, [newApiKey, googleSub, showSuccess, showError, pushSettingsToDrive])
 
   // ── Update session limit ─────────────────────────────────────────────────
 
@@ -229,13 +239,14 @@ export function ParentSettingsScreen() {
     setIsSaving(true)
     try {
       await db.appSettings.update('main', { sessionTimeLimit: sessionLimit })
+      pushSettingsToDrive()
       showSuccess('Session limit saved! ✅')
     } catch (err) {
       showError(`Failed to save: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setIsSaving(false)
     }
-  }, [sessionLimit, showSuccess, showError])
+  }, [sessionLimit, showSuccess, showError, pushSettingsToDrive])
 
   // ── Model configuration ─────────────────────────────────────────────────
 
@@ -245,6 +256,7 @@ export function ParentSettingsScreen() {
     setIsSaving(true)
     try {
       await db.appSettings.update('main', { chatModel: chat, visionModel: vision })
+      pushSettingsToDrive()
       setChatModel(chat)
       setVisionModel(vision)
       showSuccess('Models saved! ✅ (reopen Chat/Camera to apply)')
@@ -253,7 +265,7 @@ export function ParentSettingsScreen() {
     } finally {
       setIsSaving(false)
     }
-  }, [chatModel, visionModel, showSuccess, showError])
+  }, [chatModel, visionModel, showSuccess, showError, pushSettingsToDrive])
 
   const handleLoadModels = useCallback(async () => {
     if (!googleSub) {
@@ -285,11 +297,12 @@ export function ParentSettingsScreen() {
     setCameraEnabled(next)
     try {
       await db.appSettings.update('main', { cameraEnabled: next })
+      pushSettingsToDrive()
     } catch (err) {
       showError(`Couldn't save: ${err instanceof Error ? err.message : String(err)}`)
       setCameraEnabled(!next)
     }
-  }, [cameraEnabled, showError])
+  }, [cameraEnabled, showError, pushSettingsToDrive])
 
   // ── Parent PIN ─────────────────────────────────────────────────────────
 
@@ -306,6 +319,7 @@ export function ParentSettingsScreen() {
     try {
       const hash = await hashPin(pinInput)
       await db.appSettings.update('main', { parentPinHash: hash })
+      pushSettingsToDrive()
       markParentUnlocked() // stay unlocked in this session
       setHasPin(true)
       setPinInput('')
@@ -316,12 +330,13 @@ export function ParentSettingsScreen() {
     } finally {
       setIsSaving(false)
     }
-  }, [pinInput, pinConfirm, showSuccess, showError])
+  }, [pinInput, pinConfirm, showSuccess, showError, pushSettingsToDrive])
 
   const handleRemovePin = useCallback(async () => {
     setIsSaving(true)
     try {
       await db.appSettings.update('main', { parentPinHash: '' })
+      pushSettingsToDrive()
       setHasPin(false)
       setPinInput('')
       setPinConfirm('')
@@ -331,7 +346,7 @@ export function ParentSettingsScreen() {
     } finally {
       setIsSaving(false)
     }
-  }, [showSuccess, showError])
+  }, [showSuccess, showError, pushSettingsToDrive])
 
   // ── Manual Drive sync (connects to Google first if needed) ────────────────
 

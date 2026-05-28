@@ -2,8 +2,10 @@ import { useState } from 'react'
 import { useGoogleLogin } from '@react-oauth/google'
 import { motion } from 'framer-motion'
 import type { ChildProfile } from '../db/index'
+import { db } from '../db/index'
 import { useAppStore } from '../store/app'
 import { logEvent } from '../lib/debugLog'
+import { downloadAppSettings } from '../lib/drive'
 import { LeoMascot } from './LeoMascot'
 import { SafeArea } from './SafeArea'
 
@@ -49,6 +51,19 @@ export function WelcomeBackScreen({ profile }: WelcomeBackScreenProps) {
           logEvent('error', '[WelcomeBack] userinfo response missing sub', info)
           throw new Error('Could not read your Google account')
         }
+        // Auto-restore the parent's global settings from Drive before the
+        // app unlocks. If the parent updated models / PIN / etc. on another
+        // device, those land here immediately.
+        try {
+          const remoteSettings = await downloadAppSettings(accessToken)
+          if (remoteSettings) {
+            await db.appSettings.put({ ...remoteSettings, id: 'main' })
+            logEvent('info', '[WelcomeBack] Restored appSettings from Drive')
+          }
+        } catch (settingsErr) {
+          logEvent('warn', '[WelcomeBack] downloadAppSettings failed', settingsErr)
+        }
+
         setGoogleToken(accessToken)
         setGoogleSub(info.sub)
         logEvent('info', '[WelcomeBack] sub + token saved → unlocking app')
