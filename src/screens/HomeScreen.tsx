@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { db } from '../db/index'
 import type { InterestTag, SessionSummary } from '../db/index'
 import { useAppStore } from '../store/app'
 import { decayInterests, buildGreeting, getTopInterests } from '../lib/memory'
+import { speak, stopSpeaking } from '../lib/voice'
 import { LeoMascot } from '../components/LeoMascot'
 import { SafeArea } from '../components/SafeArea'
 
@@ -52,6 +53,9 @@ export function HomeScreen() {
   const [topInterests, setTopInterests] = useState<InterestTag[]>([])
   const [greeting, setGreeting] = useState('')
   const [speechBubble, setSpeechBubble] = useState("What shall we explore today? 🌟")
+
+  const lang = profile?.preferredLanguages[0] ?? 'en'
+  const spokeRef = useRef(false)  // ensures the greeting is spoken once per visit
 
   // ── Topic chip emoji helper ────────────────────────────────────────────────
 
@@ -105,11 +109,18 @@ export function HomeScreen() {
         const top3 = await getTopInterests(profile.id, 3)
         if (!cancelled) setTopInterests(top3)
 
-        // Set speech bubble from latest summary or default
-        if (latest?.summary) {
-          if (!cancelled) setSpeechBubble(latest.summary)
-        } else if (top3.length > 0) {
-          if (!cancelled) setSpeechBubble(`Let's learn more about ${top3[0].tag} today! 🌟`)
+        // Decide the speech-bubble copy (last session > top interest > default)
+        let bubble = "What shall we explore today? 🌟"
+        if (latest?.summary) bubble = latest.summary
+        else if (top3.length > 0) bubble = `Let's learn more about ${top3[0].tag} today! 🌟`
+        if (!cancelled) setSpeechBubble(bubble)
+
+        // Speak the warm welcome once per Home visit so the app feels alive
+        if (!cancelled && !spokeRef.current) {
+          spokeRef.current = true
+          // Strip emojis from the spoken text — some voices read them aloud
+          const clean = `${greetingText} ${bubble}`.replace(/[\p{Extended_Pictographic}]/gu, '').replace(/\s+/g, ' ').trim()
+          void speak(clean, lang)
         }
       } catch (err) {
         console.error('Failed to load home data:', err)
@@ -120,6 +131,11 @@ export function HomeScreen() {
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.id])
+
+  // Stop the greeting if the child navigates away before it finishes
+  useEffect(() => {
+    return () => { stopSpeaking() }
+  }, [])
 
   const mascotName =
     profile?.mascotChoice === 'lion'

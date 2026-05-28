@@ -15,9 +15,15 @@ interface UseSpeechReturn {
  * React hook for speech recognition.
  * - continuous: false (single utterance mode)
  * - interimResults: true (shows partial results)
- * - Auto-stops after 2 seconds of silence
+ * - Kid-patient silence timeouts: longer wait BEFORE first speech, shorter
+ *   between phrases — so a child can take a beat to think and still finish.
  * - Cleans up recognition on unmount
  */
+
+// Patient timing for kids who speak slowly / in broken phrases.
+const FIRST_SPEECH_TIMEOUT_MS = 8000  // up to 8s to *start* speaking
+const POST_SPEECH_TIMEOUT_MS  = 4000  // up to 4s between phrases once speaking
+
 export function useSpeech(lang = 'en'): UseSpeechReturn {
   const [transcript, setTranscript] = useState('')
   const [interimTranscript, setInterimTranscript] = useState('')
@@ -26,6 +32,7 @@ export function useSpeech(lang = 'en'): UseSpeechReturn {
 
   const recognitionRef = useRef<any | null>(null)
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const hasSpokenRef = useRef(false) // becomes true once we hear any speech
   const isSupported = getSpeechRecognition() !== null
 
   const clearSilenceTimer = useCallback(() => {
@@ -37,10 +44,10 @@ export function useSpeech(lang = 'en'): UseSpeechReturn {
 
   const resetSilenceTimer = useCallback((recognition: any) => {
     clearSilenceTimer()
+    const ms = hasSpokenRef.current ? POST_SPEECH_TIMEOUT_MS : FIRST_SPEECH_TIMEOUT_MS
     silenceTimerRef.current = setTimeout(() => {
-      // 2 seconds of silence — stop listening
       recognition.stop()
-    }, 2000)
+    }, ms)
   }, [clearSilenceTimer])
 
   const stopListening = useCallback(() => {
@@ -78,6 +85,7 @@ export function useSpeech(lang = 'en'): UseSpeechReturn {
     setError(null)
     setTranscript('')
     setInterimTranscript('')
+    hasSpokenRef.current = false  // fresh listen → use the longer "first speech" timeout
 
     // Configure recognition
     recognition.continuous = false
@@ -104,15 +112,15 @@ export function useSpeech(lang = 'en'): UseSpeechReturn {
       }
 
       if (finalText) {
+        hasSpokenRef.current = true
         setTranscript(prev => (prev + ' ' + finalText).trim())
         setInterimTranscript('')
-        // Reset silence timer when we get final results
         resetSilenceTimer(recognition)
       }
 
       if (interimText) {
+        hasSpokenRef.current = true
         setInterimTranscript(interimText)
-        // Reset silence timer on interim results too
         resetSilenceTimer(recognition)
       }
     }
