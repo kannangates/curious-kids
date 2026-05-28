@@ -4,11 +4,21 @@ import { BrowserRouter } from 'react-router-dom'
 import { GoogleOAuthProvider } from '@react-oauth/google'
 import App from './App'
 import { installGlobalErrorCapture } from './lib/debugLog'
+import { applyTheme, getThemeMode } from './lib/theme'
+import { primeSpeechOnGesture } from './lib/voice'
 import './index.css'
 
 // Capture uncaught errors / rejections / console.error|warn into the in-app
 // debug log BEFORE React mounts, so even early crashes are recorded.
 installGlobalErrorCapture()
+
+// Apply the saved theme mode before mount so the kid never sees a dark flash.
+applyTheme(getThemeMode())
+
+// iOS/some mobile browsers silently block TTS until a user gesture happens.
+// This hook unlocks speechSynthesis on the very first tap so Leo's greeting
+// and chat responses become audible.
+primeSpeechOnGesture()
 
 // Set VITE_GOOGLE_CLIENT_ID in your .env file
 // See .env.example for the format

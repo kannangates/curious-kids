@@ -38,9 +38,11 @@ export async function listProfiles(): Promise<ChildProfile[]> {
 
 /**
  * Deletes one child and ALL of their data (interests, summaries, discoveries)
- * plus their per-child localStorage (XP, usage, camera consent). Leaves the
- * shared app settings / API key intact UNLESS this was the last child, in which
- * case settings are wiped for a clean slate. Returns the remaining profiles.
+ * plus their per-child localStorage (XP, usage, camera consent). The shared
+ * appSettings row — which holds the encrypted Gemini API key, the parent
+ * PIN hash, the chosen models, time limit etc. — is ALWAYS preserved, even
+ * when the last child is deleted, so the parent doesn't have to re-enter
+ * their key when adding a new child. Returns the remaining profiles.
  */
 export async function deleteProfile(profileId: string): Promise<ChildProfile[]> {
   await db.transaction(
@@ -70,8 +72,8 @@ export async function deleteProfile(profileId: string): Promise<ChildProfile[]> 
   const remaining = await listProfiles()
 
   if (remaining.length === 0) {
-    // Last child removed → wipe shared settings for a fresh start
-    try { await db.appSettings.delete('main') } catch { /* ignore */ }
+    // Last child removed — clear the active-profile pointer but KEEP appSettings
+    // (parent's API key stays, so adding a new child is friction-free).
     clearActiveProfileId()
   } else if (getActiveProfileId() === profileId) {
     // Deleted the active child → point to the next most-recent one

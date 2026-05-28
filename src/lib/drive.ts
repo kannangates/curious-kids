@@ -164,6 +164,55 @@ export async function saveToDrive(
 }
 
 /**
+ * Removes a child's snapshot file from Drive's appDataFolder so the child
+ * doesn't reappear in the restore chooser on other devices. Best-effort —
+ * a Drive failure should NOT block the local delete.
+ */
+export async function deleteChildFromDrive(
+  accessToken: string,
+  childName: string
+): Promise<void> {
+  try {
+    const fileName = DRIVE_FILE_NAME(childName)
+    const file = await findDriveFile(accessToken, fileName)
+    if (!file) return
+    const res = await fetchWithAuth(
+      `https://www.googleapis.com/drive/v3/files/${file.id}`,
+      { method: 'DELETE' },
+      accessToken
+    )
+    if (!res.ok && res.status !== 404) {
+      throw new Error(`Drive delete ${res.status}: ${await res.text()}`)
+    }
+  } catch (err) {
+    if (err instanceof TokenExpiredError) throw err
+    // Log but don't throw — local delete already succeeded
+    console.warn('Drive child delete failed:', err)
+  }
+}
+
+/**
+ * Fetches the latest uploaded debug log from Drive (appDataFolder). Used by
+ * the parent on a *second* device to see what's been recorded elsewhere
+ * (e.g. desktop reading the log from mobile).
+ * Returns the file's text content, or null if no log has been uploaded yet.
+ */
+export async function downloadDebugLogFromDrive(
+  accessToken: string
+): Promise<string | null> {
+  const fileName = 'curiouskie-debug.txt'
+  const file = await findDriveFile(accessToken, fileName)
+  if (!file) return null
+  const res = await fetchWithAuth(
+    `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`,
+    { method: 'GET' },
+    accessToken
+  )
+  if (!res.ok) throw new Error(`Drive log fetch ${res.status}: ${await res.text()}`)
+  return res.text()
+}
+
+/**
  * Lists every child-profile JSON the parent has on Drive (appDataFolder),
  * fetches each, and returns the parsed DriveProfile[]. Used by the
  * "Restore from Drive" chooser shown right after Google sign-in so a new

@@ -17,6 +17,45 @@ export function isSpeechSupported(): boolean {
   return typeof window !== 'undefined' && 'speechSynthesis' in window
 }
 
+// ─── Mobile TTS priming ─────────────────────────────────────────────────────
+// iOS Safari (and some Android browsers) silently block speechSynthesis.speak()
+// until the page has received a real user gesture. Without this priming, the
+// Home greeting / chat responses simply produce no sound on mobile.
+//
+// We listen for the very first touch/click and fire a 1-character whisper so
+// the audio context is "unlocked" for the rest of the session. The whisper is
+// near-silent (volume 0.01) so the user never notices.
+
+let speechPrimed = false
+
+export function primeSpeechOnGesture(): void {
+  if (speechPrimed || !isSpeechSupported() || typeof window === 'undefined') return
+
+  function prime() {
+    if (speechPrimed) return
+    speechPrimed = true
+    try {
+      const u = new SpeechSynthesisUtterance(' ')
+      u.volume = 0.01
+      u.rate = 1
+      window.speechSynthesis.speak(u)
+      // Cancel immediately so it really is silent
+      setTimeout(() => { try { window.speechSynthesis.cancel() } catch { /* ignore */ } }, 30)
+    } catch { /* ignore */ }
+    window.removeEventListener('touchstart', prime)
+    window.removeEventListener('pointerdown', prime)
+    window.removeEventListener('keydown', prime)
+  }
+
+  window.addEventListener('touchstart', prime, { once: true, passive: true })
+  window.addEventListener('pointerdown', prime, { once: true, passive: true })
+  window.addEventListener('keydown', prime, { once: true })
+}
+
+export function isSpeechPrimed(): boolean {
+  return speechPrimed
+}
+
 // ─── Preferred-voice override (parent-chosen, per device) ──────────────────────
 
 const PREF_VOICE_KEY = 'ck_voice_uri'

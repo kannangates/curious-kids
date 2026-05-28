@@ -17,6 +17,16 @@
     height: 100%;
     overflow: hidden;
     overscroll-behavior: none;
+    /* Force LIGHT mode so the browser/OS dark theme never overrides our
+       kid-friendly palette (parent can opt back in via Settings). */
+    color-scheme: light;
+  }
+
+  /* Opt-in: when <html> carries class="theme-system", inherit the OS theme.
+     We don't currently ship a designed dark theme, but this lets a parent
+     allow whichever color-scheme their OS prefers if they want. */
+  html.theme-system {
+    color-scheme: light dark;
   }
 
   body {

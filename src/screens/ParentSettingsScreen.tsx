@@ -7,7 +7,7 @@ import type { AppSettings, ChildProfile, MascotChoice } from '../db/index'
 import { useAppStore } from '../store/app'
 import { encryptApiKey, decryptApiKey, hashPin } from '../lib/crypto'
 import { validateApiKey, listAvailableModels } from '../lib/gemini'
-import { buildSyncSnapshot, saveToDrive, uploadDebugLogToDrive, TokenExpiredError } from '../lib/drive'
+import { buildSyncSnapshot, saveToDrive, uploadDebugLogToDrive, downloadDebugLogFromDrive, deleteChildFromDrive, TokenExpiredError } from '../lib/drive'
 import {
   isDebugEnabled,
   setDebugEnabled,
@@ -19,6 +19,7 @@ import {
 import { isSfxMuted, setSfxMuted, playSuccess } from '../lib/audio'
 import { getVoicesForLang, getPreferredVoiceURI, setPreferredVoiceURI, previewVoice, stopSpeaking } from '../lib/voice'
 import { listProfiles, setActiveProfileId, deleteProfile, resetMemoryForProfile } from '../lib/profiles'
+import { getThemeMode, setThemeMode, type ThemeMode } from '../lib/theme'
 import { markParentUnlocked } from '../components/ParentGate'
 import { SafeArea } from '../components/SafeArea'
 
@@ -41,6 +42,9 @@ export function ParentSettingsScreen() {
   // Memory reset
   const [resetWindow, setResetWindow] = useState<'1' | '7' | '30' | 'all'>('7')
   const [isResetting, setIsResetting] = useState(false)
+
+  // Theme (Light by default — protects the kid from a dark-mode flash)
+  const [themeMode, setThemeModeState] = useState<ThemeMode>(getThemeMode())
 
   // Debug mode (verbose action logging + auto Drive backup)
   const [debugOn, setDebugOn] = useState(isDebugEnabled())
@@ -454,6 +458,52 @@ export function ParentSettingsScreen() {
     }
   }, [googleToken, showSuccess, showError])
 
+  // Pull the debug log from Drive (so desktop can see mobile's log, etc.)
+  // Then share/download it like a normal export — no merging into local
+  // storage, so each device's local log stays clean and unambiguous.
+  const handleFetchDebugFromDrive = useCallback(async () => {
+    if (!googleToken) {
+      showError('Sign in to Google first (Google Drive Backup → Connect)')
+      return
+    }
+    setDriveLogStatus('syncing')
+    try {
+      const text = await downloadDebugLogFromDrive(googleToken)
+      if (!text) {
+        showError('No log file found on Drive yet — back up from the source device first.')
+        return
+      }
+      const filename = `curious-kids-log-from-drive-${new Date().toISOString().slice(0, 10)}.txt`
+      // Try Web Share with a File (one-tap on mobile)
+      try {
+        const file = new File([text], filename, { type: 'text/plain' })
+        const navAny = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean }
+        if (navAny.canShare && navAny.canShare({ files: [file] }) && typeof navigator.share === 'function') {
+          await navigator.share({ files: [file], title: 'CuriousKids debug log (from Drive)' })
+          showSuccess('Drive log shared ☁️')
+          return
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
+        // fall through to download
+      }
+      const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }))
+      const a = document.createElement('a')
+      a.href = url; a.download = filename
+      document.body.appendChild(a); a.click(); document.body.removeChild(a)
+      setTimeout(() => URL.revokeObjectURL(url), 5000)
+      showSuccess('Drive log downloaded')
+    } catch (err) {
+      if (err instanceof TokenExpiredError) {
+        showError('Google session expired — reconnect Drive Backup, then try again.')
+      } else {
+        showError(`Fetch failed: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    } finally {
+      setTimeout(() => setDriveLogStatus('idle'), 1500)
+    }
+  }, [googleToken, showSuccess, showError])
+
   const handleToggleDebug = useCallback(async () => {
     const next = !debugOn
     setDebugEnabled(next)
@@ -541,8 +591,16 @@ export function ParentSettingsScreen() {
     if (!confirmed) return
     try {
       const remaining = await deleteProfile(child.id)
+      // Also remove the Drive snapshot so the child doesn't reappear on
+      // another device's restore chooser. Best-effort, non-blocking.
+      if (googleToken) {
+        void deleteChildFromDrive(googleToken, child.name).catch(err => {
+          console.warn('[delete] Drive cleanup failed:', err)
+        })
+      }
       if (remaining.length === 0) {
         setProfile(null)
+        setChildren([])
         navigate('/onboarding')
         return
       }
@@ -555,7 +613,7 @@ export function ParentSettingsScreen() {
     } catch (err) {
       showError(`Failed to delete: ${err instanceof Error ? err.message : String(err)}`)
     }
-  }, [profile, setProfile, navigate, showSuccess, showError])
+  }, [profile, setProfile, navigate, showSuccess, showError, googleToken])
 
   // ─── Render ─────────────────────────────────────────────────────────────
 
@@ -914,6 +972,27 @@ export function ParentSettingsScreen() {
           </button>
         </div>
 
+        {/* Theme — Light by default, opt-in to follow system */}
+        <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100 flex flex-col gap-3">
+          <div>
+            <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">App Theme</p>
+            <p className="text-sm text-gray-500 font-medium mt-0.5">
+              Forces the kid-friendly Light theme by default so the OS dark mode never takes over.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            {([['light', '☀️ Light (always)'], ['system', '🌓 Follow system']] as const).map(([val, label]) => (
+              <button
+                key={val}
+                onClick={() => { setThemeMode(val); setThemeModeState(val) }}
+                className={`py-3 rounded-2xl font-extrabold border-2 active:scale-95 ${themeMode === val ? 'bg-lavender-100 border-lavender-400 text-lavender-700' : 'bg-white border-gray-200 text-gray-500'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Sound effects toggle */}
         <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100 flex items-center justify-between">
           <div>
@@ -1119,7 +1198,15 @@ export function ParentSettingsScreen() {
                   {driveLogStatus === 'syncing' ? 'Syncing to Drive…'
                     : driveLogStatus === 'done' ? '✅ Backed up to Drive'
                     : !googleToken ? '☁️ Back up to Drive (connect Google first)'
-                    : '☁️ Back up to Drive now'}
+                    : '☁️ Back up this device to Drive'}
+                </button>
+
+                <button
+                  onClick={() => void handleFetchDebugFromDrive()}
+                  disabled={driveLogStatus === 'syncing' || !googleToken}
+                  className="w-full py-3 font-bold text-mint-700 bg-mint-50 border-2 border-mint-200 rounded-2xl active:scale-95 disabled:opacity-50"
+                >
+                  📥 Fetch log from Drive (from another device)
                 </button>
 
                 <p className="text-xs text-gray-400 font-medium text-center">
