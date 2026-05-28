@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { db } from '../db/index'
@@ -8,7 +8,7 @@ import { speak, stopSpeaking } from '../lib/voice'
 import { LeoMascot } from '../components/LeoMascot'
 import { SafeArea } from '../components/SafeArea'
 
-// â”€â”€â”€ Animal categorisation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Animal categorisation ────────────────────────────────────────────────────
 
 const ANIMAL_SET = new Set([
   'lion', 'tiger', 'elephant', 'giraffe', 'zebra', 'penguin', 'dolphin',
@@ -41,7 +41,7 @@ function categorise(obj: LearnedObject): 'animals' | 'words' | 'objects' {
   return 'objects'
 }
 
-// â”€â”€â”€ Days since helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Days since helper ────────────────────────────────────────────────────────
 
 function daysSince(isoDate: string): number {
   const diff = Date.now() - new Date(isoDate).getTime()
@@ -55,7 +55,7 @@ function daysAgoLabel(isoDate: string): string {
   return `${d} days ago`
 }
 
-// â”€â”€â”€ Translation pill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Translation pill ─────────────────────────────────────────────────────────
 
 const PILL_COLORS = [
   'bg-lavender-100 text-lavender-700',
@@ -85,7 +85,7 @@ function TranslationPill({ lang, value, colorIdx }: TranslationPillProps) {
   )
 }
 
-// â”€â”€â”€ Discovery card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Discovery card ───────────────────────────────────────────────────────────
 
 interface DiscoveryCardProps {
   item: LearnedObject
@@ -136,7 +136,7 @@ function DiscoveryCard({ item, onTap }: DiscoveryCardProps) {
   )
 }
 
-// â”€â”€â”€ Expanded card modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Expanded card modal ──────────────────────────────────────────────────────
 
 interface ExpandedCardProps {
   item: LearnedObject
@@ -211,7 +211,7 @@ function ExpandedCard({ item, primaryLang, onClose, onAskLeo }: ExpandedCardProp
                     className="w-9 h-9 flex items-center justify-center bg-white rounded-full shadow-sm text-lg active:scale-90"
                     aria-label={`Speak ${value}`}
                   >
-                    ðŸ”Š
+                    🔊
                   </button>
                 </div>
               ))}
@@ -229,7 +229,7 @@ function ExpandedCard({ item, primaryLang, onClose, onAskLeo }: ExpandedCardProp
             className="w-9 h-9 flex items-center justify-center bg-white rounded-full shadow-sm text-lg active:scale-90"
             aria-label={`Speak ${item.objectName}`}
           >
-            ðŸ”Š
+            🔊
           </button>
         </div>
 
@@ -242,7 +242,7 @@ function ExpandedCard({ item, primaryLang, onClose, onAskLeo }: ExpandedCardProp
             shadow-lg active:scale-95 transition-transform
           "
         >
-          Ask Leo more about {item.objectName}! ðŸ¦
+          Ask Leo more about {item.objectName}! 🦁
         </button>
 
         <button
@@ -256,7 +256,7 @@ function ExpandedCard({ item, primaryLang, onClose, onAskLeo }: ExpandedCardProp
   )
 }
 
-// â”€â”€â”€ Tab button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Tab button ───────────────────────────────────────────────────────────────
 
 interface TabButtonProps {
   label: string
@@ -291,7 +291,7 @@ function TabButton({ label, active, count, onClick }: TabButtonProps) {
   )
 }
 
-// â”€â”€â”€ DiscoveriesScreen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── DiscoveriesScreen ────────────────────────────────────────────────────────
 
 export function DiscoveriesScreen() {
   const navigate = useNavigate()
@@ -303,7 +303,7 @@ export function DiscoveriesScreen() {
   const [expandedItem, setExpandedItem] = useState<LearnedObject | null>(null)
   const [isLoading, setIsLoading] = useState(true)
 
-  // â”€â”€ Load discoveries â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Load discoveries ───────────────────────────────────────────────────────
 
   useEffect(() => {
     let cancelled = false
@@ -334,13 +334,13 @@ export function DiscoveriesScreen() {
     return () => { cancelled = true }
   }, [profile])
 
-  // â”€â”€ Cleanup speech on unmount â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Cleanup speech on unmount ──────────────────────────────────────────────
 
   useEffect(() => {
     return () => { stopSpeaking() }
   }, [])
 
-  // â”€â”€ Filtered items â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Filtered items ─────────────────────────────────────────────────────────
 
   const filtered = allItems.filter(item => {
     if (activeTab === 'all') return true
@@ -355,14 +355,14 @@ export function DiscoveriesScreen() {
     objects: allItems.filter(i => categorise(i) === 'objects').length
   }
 
-  // â”€â”€ Ask Leo more â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Ask Leo more ───────────────────────────────────────────────────────────
 
   const handleAskLeo = (item: LearnedObject) => {
     setExpandedItem(null)
     navigate(`/chat?q=Tell+me+more+about+${encodeURIComponent(item.objectName)}`)
   }
 
-  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <SafeArea className="bg-gradient-to-br from-mint-50 via-lavender-50 to-leo-50 overflow-hidden">
@@ -375,10 +375,10 @@ export function DiscoveriesScreen() {
             className="w-10 h-10 flex items-center justify-center text-xl rounded-full bg-lavender-100 active:scale-90 flex-shrink-0"
             aria-label="Go back"
           >
-            â†
+            ←
           </button>
           <div className="flex-1">
-            <p className="font-extrabold text-lavender-700 text-lg">â­ My Discoveries</p>
+            <p className="font-extrabold text-lavender-700 text-lg">⭐ My Discoveries</p>
           </div>
           {allItems.length > 0 && (
             <span className="
@@ -437,7 +437,7 @@ export function DiscoveriesScreen() {
                   text-white font-extrabold text-base rounded-3xl shadow-lg active:scale-95
                 "
               >
-                Start Exploring ðŸš€
+                Start Exploring 🚀
               </button>
             </motion.div>
           )}
@@ -450,7 +450,7 @@ export function DiscoveriesScreen() {
               className="flex flex-col items-center justify-center py-12 gap-3 text-center"
             >
               <span className="text-5xl">
-                {activeTab === 'animals' ? 'ðŸ¦' : activeTab === 'words' ? 'ðŸŒ' : 'ðŸ”'}
+                {activeTab === 'animals' ? '🦁' : activeTab === 'words' ? '🌍' : '🔍'}
               </span>
               <p className="text-sm font-bold text-lavender-500">
                 No {activeTab} discovered yet!

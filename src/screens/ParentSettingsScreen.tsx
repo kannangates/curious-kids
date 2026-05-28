@@ -1,4 +1,4 @@
-﻿import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGoogleLogin } from '@react-oauth/google'
 import { motion } from 'motion/react'
@@ -23,7 +23,7 @@ import { getThemeMode, setThemeMode, type ThemeMode } from '../lib/theme'
 import { markParentUnlocked } from '../components/ParentGate'
 import { SafeArea } from '../components/SafeArea'
 
-// â”€â”€â”€ ParentSettingsScreen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── ParentSettingsScreen ─────────────────────────────────────────────────────
 
 export function ParentSettingsScreen() {
   const navigate = useNavigate()
@@ -32,7 +32,7 @@ export function ParentSettingsScreen() {
   const [children, setChildren] = useState<ChildProfile[]>([])
   const [settings, setSettings] = useState<AppSettings | null>(null)
 
-  // Edit-active-child fields (form collapsed by default â€” opens on Edit click)
+  // Edit-active-child fields (form collapsed by default — opens on Edit click)
   const [editOpen, setEditOpen] = useState(false)
   const [editName, setEditName] = useState('')
   const [editAge, setEditAge] = useState(5)
@@ -43,12 +43,12 @@ export function ParentSettingsScreen() {
   const [resetWindow, setResetWindow] = useState<'1' | '7' | '30' | 'all'>('7')
   const [isResetting, setIsResetting] = useState(false)
 
-  // Theme (Light by default â€” protects the kid from a dark-mode flash)
+  // Theme (Light by default — protects the kid from a dark-mode flash)
   const [themeMode, setThemeModeState] = useState<ThemeMode>(getThemeMode())
 
   // Debug mode (verbose action logging + auto Drive backup)
   const [debugOn, setDebugOn] = useState(isDebugEnabled())
-  const [exportLabel, setExportLabel] = useState<'' | 'âœ“ Shared' | 'âœ“ Downloaded'>('')
+  const [exportLabel, setExportLabel] = useState<'' | '✓ Shared' | '✓ Downloaded'>('')
   const [driveLogStatus, setDriveLogStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle')
   const [lastDebugSync, setLastDebugSync] = useState<string | null>(() => {
     try { return localStorage.getItem('ck_debug_last_drive_sync') } catch { return null }
@@ -119,7 +119,7 @@ export function ParentSettingsScreen() {
           if (s.apiKeyEncrypted && googleSub) {
             try {
               const plain = await decryptApiKey(s.apiKeyEncrypted, googleSub)
-              setCurrentKeyMasked(plain.slice(0, 8) + 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢')
+              setCurrentKeyMasked(plain.slice(0, 8) + '••••••••••••••••••••')
             } catch {
               setCurrentKeyMasked('(encrypted)')
             }
@@ -182,7 +182,7 @@ export function ParentSettingsScreen() {
     setTimeout(() => setErrorMessage(null), 4000)
   }, [])
 
-  // â”€â”€ Switch active child â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Switch active child ────────────────────────────────────────────────────
 
   const handleSwitchChild = useCallback(async (child: ChildProfile) => {
     if (child.id === profile?.id) return
@@ -198,15 +198,15 @@ export function ParentSettingsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile, setProfile, navigate])
 
-  // â”€â”€ Update API key â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Update API key ───────────────────────────────────────────────────────
 
   const handleUpdateApiKey = useCallback(async () => {
     if (!newApiKey.trim().startsWith('AIza')) {
-      showError('Invalid key format â€” should start with "AIza"')
+      showError('Invalid key format — should start with "AIza"')
       return
     }
     if (!googleSub) {
-      showError('Not signed in â€” please sign in again')
+      showError('Not signed in — please sign in again')
       return
     }
 
@@ -223,9 +223,9 @@ export function ParentSettingsScreen() {
       const encrypted = await encryptApiKey(newApiKey.trim(), googleSub)
       await db.appSettings.update('main', { apiKeyEncrypted: encrypted })
       pushSettingsToDrive()
-      setCurrentKeyMasked(newApiKey.trim().slice(0, 8) + 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢')
+      setCurrentKeyMasked(newApiKey.trim().slice(0, 8) + '••••••••••••••••••••')
       setNewApiKey('')
-      showSuccess('Magic key updated! âœ…')
+      showSuccess('Magic key updated! ✅')
     } catch (err) {
       showError(`Failed to update key: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
@@ -233,14 +233,14 @@ export function ParentSettingsScreen() {
     }
   }, [newApiKey, googleSub, showSuccess, showError, pushSettingsToDrive])
 
-  // â”€â”€ Update session limit â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Update session limit ─────────────────────────────────────────────────
 
   const handleUpdateSessionLimit = useCallback(async () => {
     setIsSaving(true)
     try {
       await db.appSettings.update('main', { sessionTimeLimit: sessionLimit })
       pushSettingsToDrive()
-      showSuccess('Session limit saved! âœ…')
+      showSuccess('Session limit saved! ✅')
     } catch (err) {
       showError(`Failed to save: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
@@ -248,7 +248,7 @@ export function ParentSettingsScreen() {
     }
   }, [sessionLimit, showSuccess, showError, pushSettingsToDrive])
 
-  // â”€â”€ Model configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Model configuration ─────────────────────────────────────────────────
 
   const handleSaveModels = useCallback(async () => {
     const chat = chatModel.trim() || DEFAULT_CHAT_MODEL
@@ -259,7 +259,7 @@ export function ParentSettingsScreen() {
       pushSettingsToDrive()
       setChatModel(chat)
       setVisionModel(vision)
-      showSuccess('Models saved! âœ… (reopen Chat/Camera to apply)')
+      showSuccess('Models saved! ✅ (reopen Chat/Camera to apply)')
     } catch (err) {
       showError(`Failed to save models: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
@@ -290,7 +290,7 @@ export function ParentSettingsScreen() {
     }
   }, [googleSub, showError])
 
-  // â”€â”€ Camera toggle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Camera toggle ──────────────────────────────────────────────────────
 
   const handleToggleCamera = useCallback(async () => {
     const next = !cameraEnabled
@@ -304,7 +304,7 @@ export function ParentSettingsScreen() {
     }
   }, [cameraEnabled, showError, pushSettingsToDrive])
 
-  // â”€â”€ Parent PIN â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Parent PIN ─────────────────────────────────────────────────────────
 
   const handleSetPin = useCallback(async () => {
     if (!/^\d{4}$/.test(pinInput)) {
@@ -324,7 +324,7 @@ export function ParentSettingsScreen() {
       setHasPin(true)
       setPinInput('')
       setPinConfirm('')
-      showSuccess('Parent PIN set! ðŸ”’')
+      showSuccess('Parent PIN set! 🔒')
     } catch (err) {
       showError(`Failed to set PIN: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
@@ -348,7 +348,7 @@ export function ParentSettingsScreen() {
     }
   }, [showSuccess, showError, pushSettingsToDrive])
 
-  // â”€â”€ Manual Drive sync (connects to Google first if needed) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Manual Drive sync (connects to Google first if needed) ────────────────
 
   const runDriveSync = useCallback(async (token: string) => {
     if (!profile) { showError('No child profile to sync'); return }
@@ -358,13 +358,13 @@ export function ParentSettingsScreen() {
       await saveToDrive(token, profile.name, snapshot)
       await db.appSettings.update('main', { lastSyncedAt: new Date().toISOString() })
       setSyncStatus('done')
-      showSuccess('Synced to Google Drive! â˜ï¸')
+      showSuccess('Synced to Google Drive! ☁️')
     } catch (err) {
       setSyncStatus('error')
       if (err instanceof TokenExpiredError) {
-        // Token no longer valid â€” drop it so the next tap reconnects
+        // Token no longer valid — drop it so the next tap reconnects
         setGoogleToken(null)
-        showError('Google session expired â€” tap Sync Now again to reconnect.')
+        showError('Google session expired — tap Sync Now again to reconnect.')
       } else {
         showError(`Sync failed: ${err instanceof Error ? err.message : String(err)}`)
       }
@@ -400,15 +400,15 @@ export function ParentSettingsScreen() {
     if (googleToken) {
       void runDriveSync(googleToken)
     } else {
-      // No valid token (e.g. after a refresh) â†’ connect to Google, then it syncs
+      // No valid token (e.g. after a refresh) → connect to Google, then it syncs
       setSyncStatus('syncing')
       connectGoogle()
     }
   }, [googleToken, profile, runDriveSync, connectGoogle, showError])
 
-  // â”€â”€ Delete profile â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Delete profile ───────────────────────────────────────────────────────
 
-  // â”€â”€ Edit the active child â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Edit the active child ──────────────────────────────────────────────
 
   const handleSaveProfile = useCallback(async () => {
     if (!profile) return
@@ -427,7 +427,7 @@ export function ParentSettingsScreen() {
       setProfile(updated)
       setChildren(await listProfiles())
       setEditOpen(false)
-      showSuccess('Profile saved! âœ…')
+      showSuccess('Profile saved! ✅')
     } catch (err) {
       showError(`Failed to save: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
@@ -440,7 +440,7 @@ export function ParentSettingsScreen() {
     setEditLangs(prev => prev.includes(code) ? prev.filter(l => l !== code) : [...prev, code])
   }, [])
 
-  // â”€â”€ Debug mode â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Debug mode ──────────────────────────────────────────────────────────
 
   // Keep local state in sync if the flag is toggled elsewhere
   useEffect(() => {
@@ -450,7 +450,7 @@ export function ParentSettingsScreen() {
 
   const syncDebugLogToDrive = useCallback(async (silent = false): Promise<void> => {
     if (!googleToken) {
-      if (!silent) showError('Sign in to Google first (Google Drive Backup â†’ Connect)')
+      if (!silent) showError('Sign in to Google first (Google Drive Backup → Connect)')
       return
     }
     setDriveLogStatus('syncing')
@@ -460,11 +460,11 @@ export function ParentSettingsScreen() {
       try { localStorage.setItem('ck_debug_last_drive_sync', now) } catch { /* ignore */ }
       setLastDebugSync(now)
       setDriveLogStatus('done')
-      if (!silent) showSuccess('Debug log backed up to Drive â˜ï¸')
+      if (!silent) showSuccess('Debug log backed up to Drive ☁️')
     } catch (err) {
       setDriveLogStatus('error')
       if (err instanceof TokenExpiredError) {
-        if (!silent) showError('Google session expired â€” reconnect Drive Backup, then try again.')
+        if (!silent) showError('Google session expired — reconnect Drive Backup, then try again.')
       } else if (!silent) {
         showError(`Drive log sync failed: ${err instanceof Error ? err.message : String(err)}`)
       }
@@ -474,18 +474,18 @@ export function ParentSettingsScreen() {
   }, [googleToken, showSuccess, showError])
 
   // Pull the debug log from Drive (so desktop can see mobile's log, etc.)
-  // Then share/download it like a normal export â€” no merging into local
+  // Then share/download it like a normal export — no merging into local
   // storage, so each device's local log stays clean and unambiguous.
   const handleFetchDebugFromDrive = useCallback(async () => {
     if (!googleToken) {
-      showError('Sign in to Google first (Google Drive Backup â†’ Connect)')
+      showError('Sign in to Google first (Google Drive Backup → Connect)')
       return
     }
     setDriveLogStatus('syncing')
     try {
       const text = await downloadDebugLogFromDrive(googleToken)
       if (!text) {
-        showError('No log file found on Drive yet â€” back up from the source device first.')
+        showError('No log file found on Drive yet — back up from the source device first.')
         return
       }
       const filename = `curious-kids-log-from-drive-${new Date().toISOString().slice(0, 10)}.txt`
@@ -495,7 +495,7 @@ export function ParentSettingsScreen() {
         const navAny = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean }
         if (navAny.canShare && navAny.canShare({ files: [file] }) && typeof navigator.share === 'function') {
           await navigator.share({ files: [file], title: 'CuriousKids debug log (from Drive)' })
-          showSuccess('Drive log shared â˜ï¸')
+          showSuccess('Drive log shared ☁️')
           return
         }
       } catch (err) {
@@ -510,7 +510,7 @@ export function ParentSettingsScreen() {
       showSuccess('Drive log downloaded')
     } catch (err) {
       if (err instanceof TokenExpiredError) {
-        showError('Google session expired â€” reconnect Drive Backup, then try again.')
+        showError('Google session expired — reconnect Drive Backup, then try again.')
       } else {
         showError(`Fetch failed: ${err instanceof Error ? err.message : String(err)}`)
       }
@@ -540,7 +540,7 @@ export function ParentSettingsScreen() {
         const navAny = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean }
         if (navAny.canShare && navAny.canShare({ files: [file] }) && typeof navigator.share === 'function') {
           await navigator.share({ files: [file], title: 'CuriousKids debug log' })
-          setExportLabel('âœ“ Shared')
+          setExportLabel('✓ Shared')
           setTimeout(() => setExportLabel(''), 1800)
           return
         }
@@ -554,7 +554,7 @@ export function ParentSettingsScreen() {
       a.href = url; a.download = filename
       document.body.appendChild(a); a.click(); document.body.removeChild(a)
       setTimeout(() => URL.revokeObjectURL(url), 5000)
-      setExportLabel('âœ“ Downloaded')
+      setExportLabel('✓ Downloaded')
       setTimeout(() => setExportLabel(''), 1800)
     } catch (err) {
       showError(`Export failed: ${err instanceof Error ? err.message : String(err)}`)
@@ -562,7 +562,7 @@ export function ParentSettingsScreen() {
   }, [showError])
 
   // Auto-backup the debug log to Drive when the page is hidden (closing tab,
-  // switching apps on mobile) â€” but only when debug is ON and a token exists.
+  // switching apps on mobile) — but only when debug is ON and a token exists.
   useEffect(() => {
     if (!debugOn || !googleToken) return
     function onHide(): void {
@@ -572,7 +572,7 @@ export function ParentSettingsScreen() {
     return () => document.removeEventListener('visibilitychange', onHide)
   }, [debugOn, googleToken, syncDebugLogToDrive])
 
-  // â”€â”€ Reset memory (interests, sessions, discoveries) within a window â”€â”€â”€â”€â”€
+  // ── Reset memory (interests, sessions, discoveries) within a window ─────
 
   const handleResetMemory = useCallback(async () => {
     if (!profile) return
@@ -589,7 +589,7 @@ export function ParentSettingsScreen() {
     setIsResetting(true)
     try {
       const r = await resetMemoryForProfile(profile.id, days)
-      showSuccess(`Memory reset â€” cleared ${r.interests} interests, ${r.summaries} sessions, ${r.objects} discoveries.`)
+      showSuccess(`Memory reset — cleared ${r.interests} interests, ${r.summaries} sessions, ${r.objects} discoveries.`)
     } catch (err) {
       showError(`Failed to reset memory: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
@@ -597,7 +597,7 @@ export function ParentSettingsScreen() {
     }
   }, [profile, resetWindow, showSuccess, showError])
 
-  // â”€â”€ Delete a child â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Delete a child ──────────────────────────────────────────────────────
 
   const handleDeleteChild = useCallback(async (child: ChildProfile) => {
     const confirmed = window.confirm(
@@ -630,7 +630,7 @@ export function ParentSettingsScreen() {
     }
   }, [profile, setProfile, navigate, showSuccess, showError, googleToken])
 
-  // â”€â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ─── Render ─────────────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -651,9 +651,9 @@ export function ParentSettingsScreen() {
             className="w-10 h-10 flex items-center justify-center text-xl rounded-full bg-lavender-100 active:scale-90"
             aria-label="Go back"
           >
-            â†
+            ←
           </button>
-          <h1 className="text-2xl font-extrabold text-lavender-700">Parent Settings âš™ï¸</h1>
+          <h1 className="text-2xl font-extrabold text-lavender-700">Parent Settings ⚙️</h1>
         </div>
 
         {/* Toasts */}
@@ -676,7 +676,7 @@ export function ParentSettingsScreen() {
           </motion.div>
         )}
 
-        {/* Profile card now lives below as a collapsed "Edit" panel â€”
+        {/* Profile card now lives below as a collapsed "Edit" panel —
             removed the duplicate read-only summary here. */}
 
         {/* View Dashboard */}
@@ -689,16 +689,16 @@ export function ParentSettingsScreen() {
             flex items-center justify-center gap-2
           "
         >
-          ðŸ“Š View {profile?.name ? `${profile.name}'s` : 'Progress'} Dashboard
+          📊 View {profile?.name ? `${profile.name}'s` : 'Progress'} Dashboard
         </button>
 
-        {/* Children â€” switch / add */}
+        {/* Children — switch / add */}
         <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100 flex flex-col gap-3">
           <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Children</p>
           <div className="flex flex-col gap-2">
             {children.map(child => {
               const isActive = child.id === profile?.id
-              const emoji = child.mascotChoice === 'lion' ? 'ðŸ¦' : child.mascotChoice === 'owl' ? 'ðŸ¦‰' : 'ðŸ°'
+              const emoji = child.mascotChoice === 'lion' ? '🦁' : child.mascotChoice === 'owl' ? '🦉' : '🐰'
               return (
                 <div
                   key={child.id}
@@ -715,19 +715,19 @@ export function ParentSettingsScreen() {
                     <div className="flex-1 min-w-0">
                       <p className="font-extrabold text-gray-800 truncate">{child.name}</p>
                       <p className="text-xs text-gray-400 font-medium">
-                        Age {child.age} Â· {child.preferredLanguages.join(', ').toUpperCase()}
+                        Age {child.age} · {child.preferredLanguages.join(', ').toUpperCase()}
                       </p>
                     </div>
                     {isActive
                       ? <span className="text-xs font-extrabold text-lavender-600 bg-lavender-100 px-2 py-1 rounded-full">Active</span>
-                      : <span className="text-xs font-bold text-lavender-400">Switch â†’</span>}
+                      : <span className="text-xs font-bold text-lavender-400">Switch →</span>}
                   </button>
                   <button
                     onClick={() => void handleDeleteChild(child)}
                     className="w-10 h-10 flex items-center justify-center text-lg text-red-400 active:scale-90 flex-shrink-0"
                     aria-label={`Delete ${child.name}`}
                   >
-                    ðŸ—‘
+                    🗑
                   </button>
                 </div>
               )
@@ -741,22 +741,22 @@ export function ParentSettingsScreen() {
               rounded-2xl active:scale-95
             "
           >
-            ï¼‹ Add another child
+            ＋ Add another child
           </button>
         </div>
 
-        {/* Edit active child â€” collapsed by default, opens on "Edit" click */}
+        {/* Edit active child — collapsed by default, opens on "Edit" click */}
         {profile && (
           <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100 flex flex-col gap-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="text-2xl flex-shrink-0">
-                  {profile.mascotChoice === 'lion' ? 'ðŸ¦' : profile.mascotChoice === 'owl' ? 'ðŸ¦‰' : 'ðŸ°'}
+                  {profile.mascotChoice === 'lion' ? '🦁' : profile.mascotChoice === 'owl' ? '🦉' : '🐰'}
                 </span>
                 <div className="min-w-0">
                   <p className="text-xs text-gray-400 font-bold uppercase tracking-wider truncate">{profile.name}'s Profile</p>
                   <p className="text-xs text-gray-500 font-medium truncate">
-                    Age {profile.age} Â· {profile.preferredLanguages.join(', ').toUpperCase()}
+                    Age {profile.age} · {profile.preferredLanguages.join(', ').toUpperCase()}
                   </p>
                 </div>
               </div>
@@ -765,7 +765,7 @@ export function ParentSettingsScreen() {
                 className="text-sm font-extrabold text-lavender-600 bg-lavender-50 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0"
                 aria-expanded={editOpen}
               >
-                {editOpen ? 'Close' : 'Edit âœŽ'}
+                {editOpen ? 'Close' : 'Edit ✎'}
               </button>
             </div>
 
@@ -792,14 +792,14 @@ export function ParentSettingsScreen() {
                   disabled={editAge <= 2}
                   className="w-11 h-11 rounded-xl text-2xl font-extrabold bg-lavender-100 text-lavender-600 active:scale-90 disabled:opacity-30"
                   aria-label="Younger"
-                >âˆ’</button>
+                >−</button>
                 <span className="text-2xl font-extrabold text-lavender-700 w-12 text-center">{editAge}</span>
                 <button
                   onClick={() => setEditAge(a => Math.min(15, a + 1))}
                   disabled={editAge >= 15}
                   className="w-11 h-11 rounded-xl text-2xl font-extrabold bg-lavender-100 text-lavender-600 active:scale-90 disabled:opacity-30"
                   aria-label="Older"
-                >ï¼‹</button>
+                >＋</button>
               </div>
             </div>
 
@@ -807,7 +807,7 @@ export function ParentSettingsScreen() {
             <div>
               <label className="text-sm font-bold text-gray-600">Buddy</label>
               <div className="mt-1 grid grid-cols-3 gap-2">
-                {([['lion', 'ðŸ¦', 'Leo'], ['owl', 'ðŸ¦‰', 'Ollie'], ['bunny', 'ðŸ°', 'Benny']] as const).map(([c, e, n]) => (
+                {([['lion', '🦁', 'Leo'], ['owl', '🦉', 'Ollie'], ['bunny', '🐰', 'Benny']] as const).map(([c, e, n]) => (
                   <button
                     key={c}
                     onClick={() => setEditMascot(c)}
@@ -833,7 +833,7 @@ export function ParentSettingsScreen() {
                       disabled={c === 'en'}
                       className={`px-3 py-2 rounded-full text-sm font-bold border-2 active:scale-95 ${on ? 'bg-mint-100 border-mint-400 text-mint-700' : 'bg-white border-gray-200 text-gray-400'} ${c === 'en' ? 'opacity-70 cursor-default' : ''}`}
                     >
-                      {on ? 'âœ“ ' : ''}{l}
+                      {on ? '✓ ' : ''}{l}
                     </button>
                   )
                 })}
@@ -858,7 +858,7 @@ export function ParentSettingsScreen() {
           {currentKeyMasked && (
             <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2">
               <span className="text-sm font-mono text-gray-500 flex-1 truncate">
-                {showApiKey ? currentKeyMasked : 'â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢'}
+                {showApiKey ? currentKeyMasked : '••••••••••••••••••••••••'}
               </span>
               <button
                 onClick={() => setShowApiKey(p => !p)}
@@ -907,7 +907,7 @@ export function ParentSettingsScreen() {
             disabled={loadingModels}
             className="self-start text-sm font-bold text-lavender-600 underline underline-offset-2 disabled:opacity-50"
           >
-            {loadingModels ? 'Loadingâ€¦' : 'â†» Load models my key supports'}
+            {loadingModels ? 'Loading…' : '↻ Load models my key supports'}
           </button>
 
           <datalist id="model-options">
@@ -915,7 +915,7 @@ export function ParentSettingsScreen() {
           </datalist>
 
           <label className="text-sm font-bold text-gray-600 flex flex-col gap-1">
-            ðŸ§  Reasoning model (chat &amp; words)
+            🧠 Reasoning model (chat &amp; words)
             <input
               list="model-options"
               value={chatModel}
@@ -926,7 +926,7 @@ export function ParentSettingsScreen() {
           </label>
 
           <label className="text-sm font-bold text-gray-600 flex flex-col gap-1">
-            ðŸ“· Vision model (camera)
+            📷 Vision model (camera)
             <input
               list="model-options"
               value={visionModel}
@@ -938,7 +938,7 @@ export function ParentSettingsScreen() {
 
           {availableModels.length > 0 && (
             <p className="text-xs text-gray-400 font-medium">
-              {availableModels.length} models available â€” start typing to autocomplete.
+              {availableModels.length} models available — start typing to autocomplete.
             </p>
           )}
 
@@ -987,7 +987,7 @@ export function ParentSettingsScreen() {
           </button>
         </div>
 
-        {/* Theme â€” Light by default, opt-in to follow system */}
+        {/* Theme — Light by default, opt-in to follow system */}
         <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100 flex flex-col gap-3">
           <div>
             <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">App Theme</p>
@@ -996,7 +996,7 @@ export function ParentSettingsScreen() {
             </p>
           </div>
           <div className="grid grid-cols-2 gap-2">
-            {([['light', 'â˜€ï¸ Light (always)'], ['system', 'ðŸŒ“ Follow system']] as const).map(([val, label]) => (
+            {([['light', '☀️ Light (always)'], ['system', '🌓 Follow system']] as const).map(([val, label]) => (
               <button
                 key={val}
                 onClick={() => { setThemeMode(val); setThemeModeState(val) }}
@@ -1057,7 +1057,7 @@ export function ParentSettingsScreen() {
                 onChange={e => handleSelectVoice(e.target.value)}
                 className="w-full px-4 py-3 text-sm font-semibold bg-gray-50 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-lavender-400"
               >
-                <option value="">Auto â€” best available ({voices[0]?.name})</option>
+                <option value="">Auto — best available ({voices[0]?.name})</option>
                 {voices.map(v => (
                   <option key={v.voiceURI} value={v.voiceURI}>
                     {v.name} ({v.lang})
@@ -1068,7 +1068,7 @@ export function ParentSettingsScreen() {
                 onClick={handlePreviewVoice}
                 className="w-full py-3 font-bold text-lavender-700 bg-lavender-50 border-2 border-lavender-200 rounded-2xl active:scale-95"
               >
-                ðŸ”Š Preview voice
+                🔊 Preview voice
               </button>
             </>
           )}
@@ -1095,7 +1095,7 @@ export function ParentSettingsScreen() {
         <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100 flex flex-col gap-3">
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Parent PIN</p>
-            {hasPin && <span className="text-xs font-bold text-mint-600 bg-mint-50 px-2 py-0.5 rounded-full">On ðŸ”’</span>}
+            {hasPin && <span className="text-xs font-bold text-mint-600 bg-mint-50 px-2 py-0.5 rounded-full">On 🔒</span>}
           </div>
           <p className="text-sm text-gray-500 font-medium -mt-1">
             Locks Settings &amp; the Dashboard so little hands can't change things.
@@ -1166,16 +1166,16 @@ export function ParentSettingsScreen() {
                 {googleToken ? 'Syncing...' : 'Connecting...'}
               </>
             ) : syncStatus === 'done' ? (
-              'âœ… Synced!'
+              '✅ Synced!'
             ) : googleToken ? (
-              'â˜ï¸ Sync Now'
+              '☁️ Sync Now'
             ) : (
-              'â˜ï¸ Connect & Back Up'
+              '☁️ Connect & Back Up'
             )}
           </button>
         </div>
 
-        {/* Debug mode â€” captures actions + errors, exports / auto-backs-up the log */}
+        {/* Debug mode — captures actions + errors, exports / auto-backs-up the log */}
         {profile && (
           <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100 flex flex-col gap-3">
             <div className="flex items-center justify-between">
@@ -1202,7 +1202,7 @@ export function ParentSettingsScreen() {
                   onClick={() => void handleExportLog()}
                   className="w-full py-3 font-bold text-white bg-gradient-to-r from-lavender-500 to-lavender-700 rounded-2xl active:scale-95"
                 >
-                  {exportLabel || 'ðŸ“¤ Export Log (Share / Save)'}
+                  {exportLabel || '📤 Export Log (Share / Save)'}
                 </button>
 
                 <button
@@ -1210,10 +1210,10 @@ export function ParentSettingsScreen() {
                   disabled={driveLogStatus === 'syncing' || !googleToken}
                   className="w-full py-3 font-bold text-sky-700 bg-sky-50 border-2 border-sky-200 rounded-2xl active:scale-95 disabled:opacity-50"
                 >
-                  {driveLogStatus === 'syncing' ? 'Syncing to Driveâ€¦'
-                    : driveLogStatus === 'done' ? 'âœ… Backed up to Drive'
-                    : !googleToken ? 'â˜ï¸ Back up to Drive (connect Google first)'
-                    : 'â˜ï¸ Back up this device to Drive'}
+                  {driveLogStatus === 'syncing' ? 'Syncing to Drive…'
+                    : driveLogStatus === 'done' ? '✅ Backed up to Drive'
+                    : !googleToken ? '☁️ Back up to Drive (connect Google first)'
+                    : '☁️ Back up this device to Drive'}
                 </button>
 
                 <button
@@ -1221,7 +1221,7 @@ export function ParentSettingsScreen() {
                   disabled={driveLogStatus === 'syncing' || !googleToken}
                   className="w-full py-3 font-bold text-mint-700 bg-mint-50 border-2 border-mint-200 rounded-2xl active:scale-95 disabled:opacity-50"
                 >
-                  ðŸ“¥ Fetch log from Drive (from another device)
+                  📥 Fetch log from Drive (from another device)
                 </button>
 
                 <p className="text-xs text-gray-400 font-medium text-center">
@@ -1262,7 +1262,7 @@ export function ParentSettingsScreen() {
               disabled={isResetting}
               className="w-full py-3 font-bold text-white bg-gradient-to-r from-coral-400 to-coral-600 rounded-2xl disabled:opacity-50 active:scale-95"
             >
-              {isResetting ? 'Resetting...' : 'ðŸ§¹ Reset Memory'}
+              {isResetting ? 'Resetting...' : '🧹 Reset Memory'}
             </button>
           </div>
         )}
@@ -1282,7 +1282,7 @@ export function ParentSettingsScreen() {
                 rounded-2xl active:scale-95
               "
             >
-              ðŸ—‘ï¸ Delete {profile.name}'s Profile
+              🗑️ Delete {profile.name}'s Profile
             </button>
           </div>
         )}

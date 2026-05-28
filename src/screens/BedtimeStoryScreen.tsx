@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import { useAppStore } from '../store/app'
@@ -52,7 +52,7 @@ export function BedtimeStoryScreen() {
     setErrorMsg('')
 
     if (!isOnline) {
-      setErrorMsg("Leo needs the internet to dream up a brand-new story. Let's try again when we're connected! ðŸŒ™")
+      setErrorMsg("Leo needs the internet to dream up a brand-new story. Let's try again when we're connected! 🌙")
       setPhase('error')
       return
     }
@@ -83,9 +83,9 @@ export function BedtimeStoryScreen() {
     } catch (err) {
       if (!isMountedRef.current) return
       if (err instanceof NoApiKeyError) {
-        setErrorMsg('Ask a parent to set up the magic key in Settings first. âš™ï¸')
+        setErrorMsg('Ask a parent to set up the magic key in Settings first. ⚙️')
       } else {
-        setErrorMsg("Leo's story dust ran out for a moment. Let's try again! ðŸŒ™")
+        setErrorMsg("Leo's story dust ran out for a moment. Let's try again! 🌙")
       }
       setPhase('error')
     }
@@ -95,7 +95,7 @@ export function BedtimeStoryScreen() {
     void generate()
   }, [generate])
 
-  // â”€â”€ Read aloud controls â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Read aloud controls ────────────────────────────────────────────────────
 
   const handleRead = useCallback(() => {
     if (!story) return
@@ -122,7 +122,7 @@ export function BedtimeStoryScreen() {
     setIsPaused(false)
   }, [])
 
-  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <SafeArea className="bg-gradient-to-b from-[#1b1740] via-[#2a2456] to-[#3a2f6e] overflow-hidden">
@@ -137,7 +137,7 @@ export function BedtimeStoryScreen() {
             transition={{ duration: 2.5, delay: s.delay, repeat: Infinity }}
           />
         ))}
-        <span className="absolute top-10 right-8 text-5xl">ðŸŒ™</span>
+        <span className="absolute top-10 right-8 text-5xl">🌙</span>
       </div>
 
       <div className="relative flex flex-col flex-1 max-w-sm mx-auto w-full">
@@ -148,9 +148,9 @@ export function BedtimeStoryScreen() {
             className="w-10 h-10 flex items-center justify-center text-xl rounded-full bg-white/15 text-white active:scale-90"
             aria-label="Go back"
           >
-            â†
+            ←
           </button>
-          <h1 className="font-extrabold text-white text-lg flex-1">ðŸŒ™ Bedtime Story</h1>
+          <h1 className="font-extrabold text-white text-lg flex-1">🌙 Bedtime Story</h1>
         </div>
 
         {/* Loading */}
@@ -160,7 +160,7 @@ export function BedtimeStoryScreen() {
               <LeoMascot size="lg" mood="sleeping" />
             </motion.div>
             <p className="text-lg font-bold text-white/90">
-              {story ? 'Once upon a timeâ€¦' : `Leo is dreaming up a story for ${profile?.name ?? 'you'}â€¦`}
+              {story ? 'Once upon a time…' : `Leo is dreaming up a story for ${profile?.name ?? 'you'}…`}
             </p>
             {story && (
               <p className="text-sm text-white/70 font-medium leading-relaxed max-h-40 overflow-y-auto px-2">
@@ -180,7 +180,7 @@ export function BedtimeStoryScreen() {
                 onClick={() => void generate()}
                 className="px-6 py-3 bg-white/20 text-white font-extrabold rounded-2xl active:scale-95"
               >
-                Try again ðŸŒŸ
+                Try again 🌟
               </button>
               <button
                 onClick={() => navigate('/')}
@@ -214,7 +214,7 @@ export function BedtimeStoryScreen() {
                   onClick={handleRead}
                   className="flex-1 py-4 bg-gradient-to-r from-lavender-400 to-lavender-600 text-white font-extrabold text-lg rounded-3xl shadow-lg active:scale-95"
                 >
-                  â–¶ Read to me
+                  ▶ Read to me
                 </button>
               ) : (
                 <>
@@ -222,14 +222,14 @@ export function BedtimeStoryScreen() {
                     onClick={handlePauseResume}
                     className="flex-1 py-4 bg-white/20 text-white font-extrabold text-lg rounded-3xl active:scale-95"
                   >
-                    {isPaused ? 'â–¶ Resume' : 'â¸ Pause'}
+                    {isPaused ? '▶ Resume' : '⏸ Pause'}
                   </button>
                   <button
                     onClick={handleStop}
                     className="px-5 py-4 bg-white/10 text-white/80 font-bold rounded-3xl active:scale-95"
                     aria-label="Stop"
                   >
-                    â¹
+                    ⏹
                   </button>
                 </>
               )}
@@ -238,7 +238,7 @@ export function BedtimeStoryScreen() {
                 className="px-5 py-4 bg-white/10 text-white/80 font-bold rounded-3xl active:scale-95"
                 aria-label="New story"
               >
-                ðŸ”„
+                🔄
               </button>
             </div>
           </>

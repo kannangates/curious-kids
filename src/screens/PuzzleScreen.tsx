@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { db } from '../db/index'
@@ -75,7 +75,7 @@ export function PuzzleScreen() {
       }
     }
     if (!riddle) {
-      riddle = `Leo is thinking of something you learned aboutâ€¦ ${answer.emoji}\nCan you guess which one?`
+      riddle = `Leo is thinking of something you learned about… ${answer.emoji}\nCan you guess which one?`
     }
 
     if (!isMountedRef.current) return
@@ -145,11 +145,11 @@ export function PuzzleScreen() {
             className="w-10 h-10 flex items-center justify-center text-xl rounded-full bg-lavender-100 active:scale-90"
             aria-label="Go back"
           >
-            â†
+            ←
           </button>
-          <h1 className="font-extrabold text-lavender-700 text-lg flex-1">ðŸ§© Puzzle Time</h1>
+          <h1 className="font-extrabold text-lavender-700 text-lg flex-1">🧩 Puzzle Time</h1>
           {round && (
-            <span className="text-sm font-extrabold text-lavender-600 bg-lavender-50 px-3 py-1 rounded-full">â­ {score}</span>
+            <span className="text-sm font-extrabold text-lavender-600 bg-lavender-50 px-3 py-1 rounded-full">⭐ {score}</span>
           )}
           {!isOnline && (
             <span className="text-xs font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-full">Offline</span>
@@ -159,7 +159,7 @@ export function PuzzleScreen() {
         {loading && (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <LeoMascot size="md" mood="thinking" />
-            <p className="text-sm font-bold text-lavender-500 animate-pulse">Loading puzzlesâ€¦</p>
+            <p className="text-sm font-bold text-lavender-500 animate-pulse">Loading puzzles…</p>
           </div>
         )}
 
@@ -171,8 +171,8 @@ export function PuzzleScreen() {
               Puzzle Time needs at least 3 discoveries. Point the camera at things or chat with Leo!
             </p>
             <div className="flex gap-3">
-              <button onClick={() => navigate('/camera')} className="px-5 py-3 bg-sky-500 text-white font-extrabold rounded-2xl active:scale-95">ðŸ“· Camera</button>
-              <button onClick={() => navigate('/chat')} className="px-5 py-3 bg-lavender-500 text-white font-extrabold rounded-2xl active:scale-95">ðŸŽ™ï¸ Chat</button>
+              <button onClick={() => navigate('/camera')} className="px-5 py-3 bg-sky-500 text-white font-extrabold rounded-2xl active:scale-95">📷 Camera</button>
+              <button onClick={() => navigate('/chat')} className="px-5 py-3 bg-lavender-500 text-white font-extrabold rounded-2xl active:scale-95">🎙️ Chat</button>
             </div>
           </div>
         )}
@@ -184,7 +184,7 @@ export function PuzzleScreen() {
               <div className="flex-shrink-0"><LeoMascot size="sm" mood={generating ? 'thinking' : 'excited'} /></div>
               <div className="flex-1">
                 {generating ? (
-                  <p className="text-sm font-bold text-lavender-400 animate-pulse">Leo is thinking of a riddleâ€¦</p>
+                  <p className="text-sm font-bold text-lavender-400 animate-pulse">Leo is thinking of a riddle…</p>
                 ) : (
                   <p className="text-base font-bold text-gray-700 leading-relaxed whitespace-pre-line">{round?.riddle}</p>
                 )}
@@ -194,7 +194,7 @@ export function PuzzleScreen() {
                   onClick={() => round && speak(round.riddle.replace(/\n/g, ' '), lang)}
                   className="w-9 h-9 flex items-center justify-center bg-lavender-100 rounded-full text-lg active:scale-90 flex-shrink-0"
                   aria-label="Hear the riddle again"
-                >ðŸ”Š</button>
+                >🔊</button>
               )}
             </div>
 
@@ -211,7 +211,7 @@ export function PuzzleScreen() {
                   else cls += 'bg-gray-100 border-gray-200 opacity-60'
                   return (
                     <button key={opt.id} onClick={() => void handleGuess(opt)} disabled={answeredId !== null} className={cls}>
-                      <span className="text-4xl">{opt.emoji || 'â“'}</span>
+                      <span className="text-4xl">{opt.emoji || '❓'}</span>
                       {answeredId !== null && (
                         <span className="text-xs font-extrabold capitalize leading-tight text-center">{opt.objectName}</span>
                       )}
@@ -229,13 +229,13 @@ export function PuzzleScreen() {
                   className="mt-6 flex flex-col items-center gap-3"
                 >
                   <p className={`font-extrabold text-lg ${answeredId === round.answer.id ? 'text-mint-600' : 'text-coral-600'}`}>
-                    {answeredId === round.answer.id ? 'You solved it! ðŸŽ‰' : `It was the ${round.answer.objectName}!`}
+                    {answeredId === round.answer.id ? 'You solved it! 🎉' : `It was the ${round.answer.objectName}!`}
                   </p>
                   <button
                     onClick={() => void makeRound(pool)}
                     className="w-full py-4 bg-gradient-to-r from-lavender-500 to-lavender-700 text-white font-extrabold text-lg rounded-3xl shadow-lg active:scale-95"
                   >
-                    Next puzzle â†’
+                    Next puzzle →
                   </button>
                 </motion.div>
               )}

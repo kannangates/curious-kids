@@ -131,8 +131,13 @@ export function logEvent(level: Level, message: string, detail?: unknown): void 
     message: String(message).slice(0, 500),
     detail: detail === undefined ? undefined : safeStringify(detail).slice(0, 1500),
   }
-  buf.push(entry)
-  if (buf.length > MAX_ENTRIES) buf = buf.slice(-MAX_ENTRIES)
+  // IMPORTANT: create a NEW array reference on every entry so
+  // useSyncExternalStore in DebugOverlay notices the change. Mutating in
+  // place (`buf.push`) keeps the reference identical → React's Object.is
+  // check skips the re-render and the overlay stays stale.
+  buf = buf.length >= MAX_ENTRIES
+    ? [...buf.slice(-(MAX_ENTRIES - 1)), entry]
+    : [...buf, entry]
   appendToTodayStorage(entry)  // persist for cross-session daily file export
   notify()
 }

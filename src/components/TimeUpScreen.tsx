@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { motion } from 'motion/react'
 import { LeoMascot } from './LeoMascot'
 import { SafeArea } from './SafeArea'
@@ -34,10 +34,10 @@ export function TimeUpScreen({ childName, limitMinutes, onGrantBonus }: TimeUpSc
           transition={{ delay: 0.2 }}
         >
           <h1 className="text-3xl font-extrabold text-lavender-700 mb-2">
-            Great exploring, {childName}! ðŸŒ™
+            Great exploring, {childName}! 🌙
           </h1>
           <p className="text-lg text-lavender-600 font-semibold max-w-[300px]">
-            Playtime is over for now. Leo needs a little nap â€” let's discover more tomorrow! ðŸ’¤
+            Playtime is over for now. Leo needs a little nap — let's discover more tomorrow! 💤
           </p>
         </motion.div>
 
@@ -48,7 +48,7 @@ export function TimeUpScreen({ childName, limitMinutes, onGrantBonus }: TimeUpSc
           className="bg-white/70 backdrop-blur-sm rounded-2xl px-5 py-3 shadow-sm"
         >
           <p className="text-sm font-bold text-lavender-500">
-            Today's playtime: {limitMinutes} minutes â°
+            Today's playtime: {limitMinutes} minutes ⏰
           </p>
         </motion.div>
 

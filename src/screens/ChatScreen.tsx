@@ -1,4 +1,4 @@
-﻿import { useEffect, useRef, useState, useCallback } from 'react'
+import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'motion/react'
 import { db, getRecentSummaries } from '../db/index'
@@ -17,7 +17,7 @@ import { LeoMascot } from '../components/LeoMascot'
 import { VoiceButton } from '../components/VoiceButton'
 import { SafeArea } from '../components/SafeArea'
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface ChatMessage {
   id: string
@@ -26,7 +26,7 @@ interface ChatMessage {
   timestamp: number
 }
 
-// â”€â”€â”€ ChatScreen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── ChatScreen ───────────────────────────────────────────────────────────────
 
 export function ChatScreen() {
   const navigate = useNavigate()
@@ -53,7 +53,7 @@ export function ChatScreen() {
 
   const { transcript, interimTranscript, isListening, startListening, stopListening, error: speechError, isSupported } = useSpeech(lang)
 
-  // â”€â”€ Scroll to bottom â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Scroll to bottom ────────────────────────────────────────────────────────
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -63,14 +63,14 @@ export function ChatScreen() {
     scrollToBottom()
   }, [messages, scrollToBottom])
 
-  // â”€â”€ isMounted guard â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── isMounted guard ────────────────────────────────────────────────────────
 
   useEffect(() => {
     isMountedRef.current = true
     return () => { isMountedRef.current = false }
   }, [])
 
-  // â”€â”€ Session end handler â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Session end handler ────────────────────────────────────────────────────
 
   const handleSessionEnd = useCallback(async () => {
     if (hasEndedRef.current) return
@@ -96,7 +96,7 @@ export function ChatScreen() {
     if (isMountedRef.current) endSession()
   }, [geminiClient, sessionStart, profile, sessionTopics, endSession])
 
-  // â”€â”€ Initialize: load API key, build prompt â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Initialize: load API key, build prompt ─────────────────────────────────
 
   useEffect(() => {
     let cancelled = false
@@ -154,8 +154,8 @@ export function ChatScreen() {
     return () => { cancelled = true }
   }, [profile, googleSub, startSession])
 
-  // â”€â”€ Pre-fill from ?q= query param (e.g. from Discoveries "Ask Leo more") â”€â”€â”€
-  // Wait until geminiClient is ready before firing â€” PBKDF2 derivation can take
+  // ── Pre-fill from ?q= query param (e.g. from Discoveries "Ask Leo more") ───
+  // Wait until geminiClient is ready before firing — PBKDF2 derivation can take
   // 300-800ms on mobile, so a fixed timeout risks sending before client exists.
   // Use ref pattern to avoid forward reference issue
 
@@ -166,7 +166,7 @@ export function ChatScreen() {
     void handleUserMessageRef.current?.(q)
   }, [geminiClient, searchParams])
 
-  // â”€â”€ Idle timer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Idle timer ────────────────────────────────────────────────────────────
 
   useEffect(() => {
     idleTimerRef.current = createIdleTimer(() => {
@@ -178,7 +178,7 @@ export function ChatScreen() {
     }
   }, [handleSessionEnd])
 
-  // â”€â”€ Cleanup on unmount (session end) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Cleanup on unmount (session end) ──────────────────────────────────────
 
   useEffect(() => {
     return () => {
@@ -187,7 +187,7 @@ export function ChatScreen() {
     }
   }, [handleSessionEnd])
 
-  // â”€â”€ Wire up page-hide / beforeunload session triggers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Wire up page-hide / beforeunload session triggers ─────────────────────
 
   useEffect(() => {
     const cleanup = initSessionTriggers(() => {
@@ -196,7 +196,7 @@ export function ChatScreen() {
     return cleanup
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // â”€â”€ Handle transcript when speech ends â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Handle transcript when speech ends ────────────────────────────────────
 
   useEffect(() => {
     if (transcript && !isListening) {
@@ -205,7 +205,7 @@ export function ChatScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [transcript, isListening])
 
-  // â”€â”€ speakAndTrack helper â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── speakAndTrack helper ───────────────────────────────────────────────────
 
   const speakAndTrack = useCallback((text: string, language: string): Promise<void> => {
     setIsSpeaking(true)
@@ -218,7 +218,7 @@ export function ChatScreen() {
     return p
   }, [])
 
-  // â”€â”€ Send message to Gemini â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Send message to Gemini ─────────────────────────────────────────────────
 
   const handleUserMessage = useCallback(async (text: string) => {
     if (!text.trim() || isLoading) return
@@ -257,7 +257,7 @@ export function ChatScreen() {
     const keywords = extractTopics(text)
     keywords.forEach(k => addSessionTopic(k))
 
-    // Answer time/date questions locally â€” the AI has no clock, and these
+    // Answer time/date questions locally — the AI has no clock, and these
     // should be instant + correct (works offline too).
     const local = getLocalAnswer(text)
     if (local) {
@@ -347,18 +347,18 @@ export function ChatScreen() {
 
       if (!isMountedRef.current) return
 
-      // Empty response (e.g. model returned no usable text) â€” don't leave the
+      // Empty response (e.g. model returned no usable text) — don't leave the
       // bubble stuck on loading dots; give a friendly nudge.
       if (!fullResponse.trim()) {
-        const emptyMsg = "Hmm, I didn't quite catch that! Can you ask me again? ðŸ¦"
+        const emptyMsg = "Hmm, I didn't quite catch that! Can you ask me again? 🦁"
         setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, text: emptyMsg } : m))
         await speakAndTrack(emptyMsg, lang)
         return
       }
 
-      // Safety check output â€” discard and replace with safe message
+      // Safety check output — discard and replace with safe message
       if (!checkOutput(fullResponse)) {
-        const safeMsg = "Oops, let me think of something better! ðŸ¦"
+        const safeMsg = "Oops, let me think of something better! 🦁"
         setMessages(prev =>
           prev.map(m =>
             m.id === assistantMsgId ? { ...m, text: safeMsg } : m
@@ -383,13 +383,13 @@ export function ChatScreen() {
       // Surface the real error for diagnostics (UI stays kid-friendly)
       console.error('[Chat] message failed:', err)
 
-      // Invalid API key â†’ show the dedicated key-setup screen (has Settings link)
+      // Invalid API key → show the dedicated key-setup screen (has Settings link)
       if (err instanceof ApiKeyError) {
         if (isMountedRef.current) setApiKeyError(err.message)
         return
       }
 
-      let errorMsg = "Oops! Leo got a little confused. Let's try again! ðŸ¦"
+      let errorMsg = "Oops! Leo got a little confused. Let's try again! 🦁"
 
       if (err instanceof SafetyError) {
         errorMsg = SAFE_DEFLECTION
@@ -419,7 +419,7 @@ export function ChatScreen() {
     handleUserMessageRef.current = handleUserMessage
   }, [handleUserMessage])
 
-  // â”€â”€ Render â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   // API key missing state
   if (apiKeyError) {
@@ -429,25 +429,25 @@ export function ChatScreen() {
           <LeoMascot size="lg" mood="thinking" />
           <div>
             <h2 className="text-2xl font-extrabold text-lavender-700">
-              Leo needs his magic key! ðŸ”‘
+              Leo needs his magic key! 🔑
             </h2>
             <p className="mt-2 text-base text-gray-600 font-medium">
               {typeof apiKeyError === 'string'
                 ? apiKeyError
-                : 'Ask a parent to set up the magic key first! âš™ï¸'}
+                : 'Ask a parent to set up the magic key first! ⚙️'}
             </p>
           </div>
           <button
             onClick={() => navigate('/settings')}
             className="px-8 py-4 bg-gradient-to-r from-lavender-500 to-lavender-700 text-white font-extrabold text-lg rounded-3xl shadow-lg active:scale-95"
           >
-            Go to Settings âš™ï¸
+            Go to Settings ⚙️
           </button>
           <button
             onClick={() => navigate('/')}
             className="text-lavender-400 font-semibold"
           >
-            â† Go back home
+            ← Go back home
           </button>
         </div>
       </SafeArea>
@@ -468,7 +468,7 @@ export function ChatScreen() {
             className="w-10 h-10 flex items-center justify-center text-xl rounded-full bg-lavender-100 active:scale-90"
             aria-label="Go back"
           >
-            â†
+            ←
           </button>
           <LeoMascot size="sm" mood={leoMood} speaking={isSpeaking} />
           <div className="flex-1">
@@ -481,7 +481,7 @@ export function ChatScreen() {
           </div>
           {/* Safe Mode indicator */}
           <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full flex-shrink-0 flex items-center gap-1">
-            ðŸ”’ Safe
+            🔒 Safe
           </span>
           {!isOnline && (
             <span className="text-xs font-bold text-orange-500 bg-orange-50 px-2 py-1 rounded-full">
@@ -498,7 +498,7 @@ export function ChatScreen() {
               animate={{ opacity: 1, y: 0 }}
               className="flex flex-col items-center justify-center pt-8 text-center gap-3"
             >
-              <span className="text-5xl">ðŸ‘‹</span>
+              <span className="text-5xl">👋</span>
               <p className="text-lg font-bold text-lavender-600">
                 Hi {profile?.name}! Tap the mic and ask me anything!
               </p>
@@ -553,7 +553,7 @@ export function ChatScreen() {
             onClick={() => setShowTranscript(p => !p)}
             className="text-xs text-lavender-400 font-semibold"
           >
-            {showTranscript ? 'â–¼ Hide transcript' : 'â–¶ Show transcript'}
+            {showTranscript ? '▼ Hide transcript' : '▶ Show transcript'}
           </button>
 
           <AnimatePresence>

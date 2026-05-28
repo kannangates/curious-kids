@@ -1,6 +1,6 @@
-﻿import { motion } from 'motion/react'
+import { motion } from 'motion/react'
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface VoiceButtonProps {
   isListening: boolean
@@ -9,7 +9,7 @@ interface VoiceButtonProps {
   disabled?: boolean
 }
 
-// â”€â”€â”€ Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export function VoiceButton({ isListening, onStart, onStop, disabled = false }: VoiceButtonProps) {
   const handlePress = (): void => {
@@ -23,7 +23,7 @@ export function VoiceButton({ isListening, onStart, onStop, disabled = false }: 
 
   return (
     <div className="flex flex-col items-center gap-2">
-      {/* Outer pulsing ring â€” only when listening */}
+      {/* Outer pulsing ring — only when listening */}
       <div className="relative flex items-center justify-center">
         {isListening && (
           <>
@@ -65,7 +65,7 @@ export function VoiceButton({ isListening, onStart, onStop, disabled = false }: 
         >
           {/* Icon */}
           <span className="text-3xl leading-none select-none" aria-hidden>
-            {isListening ? 'ðŸ”´' : 'ðŸŽ™ï¸'}
+            {isListening ? '🔴' : '🎙️'}
           </span>
 
           {/* Listening indicator bar */}

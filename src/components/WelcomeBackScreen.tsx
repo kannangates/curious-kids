@@ -1,4 +1,4 @@
-﻿import { useState } from 'react'
+import { useState } from 'react'
 import { useGoogleLogin } from '@react-oauth/google'
 import { motion } from 'motion/react'
 import type { ChildProfile } from '../db/index'
@@ -15,8 +15,8 @@ interface WelcomeBackScreenProps {
 
 /**
  * Shown when a profile exists but the in-memory Google `sub` is missing
- * (e.g. after a page refresh). The `sub` is never persisted â€” it's only used
- * to derive the key that decrypts the Gemini API key â€” so we recover it with a
+ * (e.g. after a page refresh). The `sub` is never persisted — it's only used
+ * to derive the key that decrypts the Gemini API key — so we recover it with a
  * single tap that re-runs the Google token flow. Local data (interests,
  * discoveries, XP) is already in IndexedDB; this only restores the session.
  */
@@ -66,7 +66,7 @@ export function WelcomeBackScreen({ profile }: WelcomeBackScreenProps) {
 
         setGoogleToken(accessToken)
         setGoogleSub(info.sub)
-        logEvent('info', '[WelcomeBack] sub + token saved â†’ unlocking app')
+        logEvent('info', '[WelcomeBack] sub + token saved → unlocking app')
       } catch (err) {
         logEvent('error', '[WelcomeBack] sign-in pipeline failed', err)
         setError(`Couldn't continue: ${err instanceof Error ? err.message : String(err)}`)
@@ -100,7 +100,7 @@ export function WelcomeBackScreen({ profile }: WelcomeBackScreenProps) {
           transition={{ delay: 0.15 }}
         >
           <h1 className="text-3xl font-extrabold text-lavender-700 mb-1">
-            Welcome back, {profile.name}! ðŸŽ‰
+            Welcome back, {profile.name}! 🎉
           </h1>
           <p className="text-lg text-lavender-500 font-semibold max-w-[300px]">
             {mascotName} missed you! Tap to continue and let's keep exploring.
@@ -125,7 +125,7 @@ export function WelcomeBackScreen({ profile }: WelcomeBackScreenProps) {
               rounded-3xl shadow-lg shadow-lavender-300 active:scale-95
             "
           >
-            Tap to continue â†’
+            Tap to continue →
           </motion.button>
         )}
 
@@ -136,7 +136,7 @@ export function WelcomeBackScreen({ profile }: WelcomeBackScreenProps) {
         )}
 
         <p className="text-xs text-gray-400 font-medium max-w-[280px] mt-2">
-          A grown-up signs in once per visit to keep {profile.name}'s magic key safe and private. ðŸ”’
+          A grown-up signs in once per visit to keep {profile.name}'s magic key safe and private. 🔒
         </p>
       </div>
     </SafeArea>

@@ -1,8 +1,8 @@
-﻿import { useEffect } from 'react'
+import { useEffect } from 'react'
 import { motion, AnimatePresence } from 'motion/react'
 import { playCelebration } from '../lib/audio'
 
-// â”€â”€â”€ Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface XPCelebrationProps {
   /** Whether the overlay is visible */
@@ -15,11 +15,11 @@ interface XPCelebrationProps {
   onDismiss: () => void
 }
 
-// â”€â”€â”€ Star burst particles â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── Star burst particles ──────────────────────────────────────────────────
 
-const STARS = ['â­', 'ðŸŒŸ', 'âœ¨', 'ðŸ’«', 'â­', 'ðŸŒŸ', 'âœ¨']
+const STARS = ['⭐', '🌟', '✨', '💫', '⭐', '🌟', '✨']
 
-// â”€â”€â”€ XPCelebration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ─── XPCelebration ────────────────────────────────────────────────────────────
 
 export function XPCelebration({
   visible,
@@ -98,7 +98,7 @@ export function XPCelebration({
               animate={{ rotate: [0, -10, 10, -10, 0], scale: [1, 1.2, 1] }}
               transition={{ duration: 0.6, delay: 0.1 }}
             >
-              {gained >= 15 ? 'ðŸ†' : gained >= 10 ? 'ðŸŒŸ' : 'â­'}
+              {gained >= 15 ? '🏆' : gained >= 10 ? '🌟' : '⭐'}
             </motion.span>
 
             {/* XP gained text */}
