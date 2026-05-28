@@ -7,7 +7,8 @@ import type { MascotChoice } from '../db/index'
 import { useAppStore } from '../store/app'
 import { encryptApiKey } from '../lib/crypto'
 import { validateApiKey } from '../lib/gemini'
-import { checkDriveForProfile } from '../lib/drive'
+import { checkDriveForProfile, listDriveChildProfiles } from '../lib/drive'
+import type { DriveProfile } from '../lib/drive'
 import { setActiveProfileId } from '../lib/profiles'
 import { logEvent } from '../lib/debugLog'
 import { LeoMascot } from '../components/LeoMascot'
@@ -77,6 +78,11 @@ export function OnboardingScreen() {
   const [googleSub, setGoogleSubLocal] = useState(addMode ? (storeSub ?? '') : '')
   const [googleToken, setGoogleTokenLocal] = useState(addMode ? (storeToken ?? '') : '')
 
+  // After sign-in: list of children we found in this Google account's Drive.
+  // When non-empty, step 2 swaps to a "restore" chooser instead of name input.
+  const [driveProfiles, setDriveProfiles] = useState<DriveProfile[]>([])
+  const [restoreMode, setRestoreMode] = useState(false)
+
   // Step 2 — Child name + age (no upper cap — the AI adapts to whatever age)
   const [childName, setChildName] = useState('')
   const [childAge, setChildAge] = useState<number>(5)
@@ -137,7 +143,22 @@ export function OnboardingScreen() {
         setGoogleTokenLocal(accessToken)
         setGoogleToken(accessToken)
         setGoogleSub(sub)
-        logEvent('info', '[Onboarding] sub + token saved → advancing to step 2')
+        logEvent('info', '[Onboarding] sub + token saved')
+
+        // Look for existing children in this Google account's Drive backup —
+        // if any, drop into the restore chooser instead of a fresh name step.
+        try {
+          const found = await listDriveChildProfiles(accessToken)
+          logEvent('info', `[Onboarding] Drive search: found ${found.length} child profile(s)`)
+          if (found.length > 0) {
+            setDriveProfiles(found)
+            setRestoreMode(true)
+            goToStep(2)  // step 2 will render the restore chooser because restoreMode is true
+            return
+          }
+        } catch (driveErr) {
+          logEvent('warn', '[Onboarding] Drive search failed, continuing fresh', driveErr)
+        }
         goToStep(2)
       } catch (err) {
         logEvent('error', '[Onboarding] sign-in pipeline failed', err)
@@ -156,6 +177,55 @@ export function OnboardingScreen() {
       setError('Google sign-in was blocked or cancelled. Check pop-up settings and try again.')
     }
   })
+
+  // ── Restore from Drive (multi-device recovery) ────────────────────────────
+  // Writes ALL found Drive profiles back into IndexedDB so the Children
+  // switcher in Settings has them, then sets the picked one as active.
+
+  const handleRestoreFromDrive = useCallback(async (selectedId: string) => {
+    const selected = driveProfiles.find(p => p.profile.id === selectedId)
+    if (!selected) return
+    setIsLoading(true)
+    setError(null)
+    try {
+      await db.transaction(
+        'rw',
+        [db.childProfiles, db.interestTags, db.sessionSummaries, db.learnedObjects, db.appSettings],
+        async () => {
+          // Bring ALL Drive children into IndexedDB
+          for (const dp of driveProfiles) {
+            await db.childProfiles.put(dp.profile)
+            if (dp.interestTags.length > 0) await db.interestTags.bulkPut(dp.interestTags)
+            if (dp.sessionSummaries.length > 0) await db.sessionSummaries.bulkPut(dp.sessionSummaries)
+            if (dp.learnedObjects.length > 0) await db.learnedObjects.bulkPut(dp.learnedObjects)
+          }
+          // appSettings: take the API key from the chosen profile (all
+          // children share one parent's key — they're identical anyway)
+          if (selected.apiKeyEncrypted) {
+            const current = await db.appSettings.get('main')
+            await db.appSettings.put({
+              id: 'main',
+              apiKeyEncrypted: selected.apiKeyEncrypted,
+              parentPinHash: current?.parentPinHash ?? '',
+              sessionTimeLimit: current?.sessionTimeLimit ?? 30,
+              enabledLanguages: selected.profile.preferredLanguages,
+              cameraEnabled: current?.cameraEnabled ?? true,
+              onboardingVersion: 1,
+              lastSyncedAt: selected.syncedAt
+            })
+          }
+        }
+      )
+      setActiveProfileId(selected.profile.id)
+      setProfile(selected.profile)
+      logEvent('info', `[Onboarding] Restored ${driveProfiles.length} child(ren); active=${selected.profile.name}`)
+      navigate('/')
+    } catch (err) {
+      logEvent('error', '[Onboarding] Restore failed', err)
+      setError(`Couldn't restore: ${err instanceof Error ? err.message : String(err)}`)
+      setIsLoading(false)
+    }
+  }, [driveProfiles, navigate, setProfile])
 
   // ── Step 2: Child name validation ──────────────────────────────────────────
 
@@ -437,8 +507,62 @@ export function OnboardingScreen() {
                 </div>
               )}
 
-              {/* ── Step 2: Child Name ──────────────────────────────────── */}
-              {step === 2 && (
+              {/* ── Step 2: Restore-from-Drive chooser OR Child Name ────── */}
+              {step === 2 && restoreMode && (
+                <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-4 py-4">
+                  <LeoMascot size="md" mood="excited" />
+                  <div className="text-center">
+                    <h2 className="text-2xl font-extrabold text-lavender-700">
+                      Welcome back! ✨
+                    </h2>
+                    <p className="mt-1 text-sm text-lavender-500 font-medium max-w-[300px]">
+                      Found {driveProfiles.length} {driveProfiles.length === 1 ? 'child' : 'children'} backed up on your Google account. Pick one to restore.
+                    </p>
+                  </div>
+                  <div className="w-full flex flex-col gap-3">
+                    {driveProfiles.map(dp => {
+                      const emoji = dp.profile.mascotChoice === 'lion' ? '🦁' : dp.profile.mascotChoice === 'owl' ? '🦉' : '🐰'
+                      const langs = dp.profile.preferredLanguages.join(', ').toUpperCase()
+                      const synced = dp.syncedAt ? new Date(dp.syncedAt).toLocaleDateString() : '—'
+                      return (
+                        <button
+                          key={dp.profile.id}
+                          onClick={() => void handleRestoreFromDrive(dp.profile.id)}
+                          disabled={isLoading}
+                          className="flex items-center gap-4 px-4 py-4 bg-white rounded-3xl shadow-md border-2 border-lavender-100 active:scale-95 disabled:opacity-50 text-left"
+                        >
+                          <span className="text-4xl flex-shrink-0">{emoji}</span>
+                          <div className="flex-1 min-w-0">
+                            <p className="font-extrabold text-gray-800 text-lg truncate">{dp.profile.name}</p>
+                            <p className="text-xs text-gray-400 font-medium truncate">
+                              Age {dp.profile.age} · {langs}
+                            </p>
+                            <p className="text-xs text-lavender-400 font-semibold mt-0.5">
+                              {dp.interestTags.length} interests · {dp.learnedObjects.length} discoveries · synced {synced}
+                            </p>
+                          </div>
+                          <span className="text-xs font-extrabold text-lavender-600 bg-lavender-50 px-3 py-1.5 rounded-full flex-shrink-0">
+                            Restore →
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                  {error && (
+                    <p className="text-red-500 text-sm font-semibold bg-red-50 px-4 py-2 rounded-xl text-center">
+                      {error}
+                    </p>
+                  )}
+                  <button
+                    onClick={() => { setRestoreMode(false); setError(null) }}
+                    disabled={isLoading}
+                    className="text-sm text-lavender-400 font-semibold underline underline-offset-2 disabled:opacity-50"
+                  >
+                    Start fresh — add a new child instead
+                  </button>
+                </div>
+              )}
+              {step === 2 && !restoreMode && (
                 <div className="flex-1 min-h-0 overflow-y-auto flex flex-col items-center gap-6 py-4">
                   <LeoMascot size="md" mood="happy" />
                   <div className="text-center">

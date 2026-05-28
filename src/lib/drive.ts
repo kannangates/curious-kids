@@ -164,6 +164,48 @@ export async function saveToDrive(
 }
 
 /**
+ * Lists every child-profile JSON the parent has on Drive (appDataFolder),
+ * fetches each, and returns the parsed DriveProfile[]. Used by the
+ * "Restore from Drive" chooser shown right after Google sign-in so a new
+ * device can recover existing children without re-onboarding.
+ */
+export async function listDriveChildProfiles(accessToken: string): Promise<DriveProfile[]> {
+  try {
+    const url = new URL('https://www.googleapis.com/drive/v3/files')
+    url.searchParams.set('spaces', 'appDataFolder')
+    // Only our per-child snapshots, not the debug log file
+    url.searchParams.set('q', "name contains 'curiouskie-' and name contains '.json' and trashed = false")
+    url.searchParams.set('fields', 'files(id,name,modifiedTime)')
+    url.searchParams.set('pageSize', '50')
+
+    const listRes = await fetchWithAuth(url.toString(), { method: 'GET' }, accessToken)
+    if (!listRes.ok) throw new Error(`Drive list ${listRes.status}: ${await listRes.text()}`)
+    const body = await listRes.json() as { files?: Array<{ id: string; name: string }> }
+    const files = body.files ?? []
+
+    const results: DriveProfile[] = []
+    for (const f of files) {
+      try {
+        const r = await fetchWithAuth(
+          `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`,
+          { method: 'GET' },
+          accessToken
+        )
+        if (!r.ok) continue
+        const json = await r.json() as DriveProfile
+        // Sanity: must look like one of our snapshots
+        if (json?.profile?.id && json?.profile?.name) results.push(json)
+      } catch { /* skip a bad file, continue with the rest */ }
+    }
+    return results
+  } catch (err) {
+    if (err instanceof TokenExpiredError) throw err
+    console.warn('Drive list failed:', err)
+    return []
+  }
+}
+
+/**
  * Saves a plain-text debug log to Drive's appDataFolder (invisible to the
  * user in Drive UI, but recoverable by this app from any device). Used by
  * the debug-mode auto-backup so the log isn't lost if the device is reset.
