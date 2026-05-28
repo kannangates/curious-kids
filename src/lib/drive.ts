@@ -164,6 +164,45 @@ export async function saveToDrive(
 }
 
 /**
+ * Saves a plain-text debug log to Drive's appDataFolder (invisible to the
+ * user in Drive UI, but recoverable by this app from any device). Used by
+ * the debug-mode auto-backup so the log isn't lost if the device is reset.
+ *
+ * Always overwrites a single file named `curiouskie-debug.txt` (no history).
+ */
+export async function uploadDebugLogToDrive(
+  accessToken: string,
+  content: string
+): Promise<void> {
+  const fileName = 'curiouskie-debug.txt'
+  const existing = await findDriveFile(accessToken, fileName)
+
+  if (existing) {
+    const res = await fetchWithAuth(
+      `https://www.googleapis.com/upload/drive/v3/files/${existing.id}?uploadType=media`,
+      {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'text/plain' },
+        body: content
+      },
+      accessToken
+    )
+    if (!res.ok) throw new Error(`Drive log update ${res.status}: ${await res.text()}`)
+  } else {
+    const metadata = { name: fileName, parents: ['appDataFolder'] }
+    const form = new FormData()
+    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }))
+    form.append('media', new Blob([content], { type: 'text/plain' }))
+    const res = await fetchWithAuth(
+      'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart',
+      { method: 'POST', body: form },
+      accessToken
+    )
+    if (!res.ok) throw new Error(`Drive log create ${res.status}: ${await res.text()}`)
+  }
+}
+
+/**
  * Builds a sync snapshot from IndexedDB for the given profile.
  * Reads top 20 interest tags, last 7 session summaries, last 100 learned objects.
  */

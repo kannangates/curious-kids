@@ -4,8 +4,55 @@ import {
   getLogSnapshot,
   clearLog,
   formatLogForCopy,
+  formatAllStoredLogs,
+  suggestedLogFilename,
+  isDebugEnabled,
+  subscribeDebugFlag,
   type LogEntry,
 } from '../lib/debugLog'
+
+function useDebugFlag(): boolean {
+  return useSyncExternalStore(subscribeDebugFlag, isDebugEnabled, isDebugEnabled)
+}
+
+/**
+ * Save the full stored log (up to 7 days) as a .txt. Uses the Web Share API
+ * with a File when available — that's the one-tap way on mobile to send the
+ * log via WhatsApp/Email/Files/AirDrop. Falls back to a regular download.
+ */
+async function shareOrDownloadLog(): Promise<'shared' | 'downloaded' | 'cancelled'> {
+  const text = formatAllStoredLogs()
+  const filename = suggestedLogFilename()
+
+  // 1) Web Share with a File (modern mobile)
+  try {
+    const file = new File([text], filename, { type: 'text/plain' })
+    const navAny = navigator as Navigator & { canShare?: (data: { files: File[] }) => boolean }
+    if (navAny.canShare && navAny.canShare({ files: [file] }) && typeof navigator.share === 'function') {
+      await navigator.share({ files: [file], title: 'CuriousKids debug log' })
+      return 'shared'
+    }
+  } catch (err) {
+    // User cancelled, or share failed → fall through to download
+    if (err instanceof Error && err.name === 'AbortError') return 'cancelled'
+  }
+
+  // 2) Fallback: trigger a normal browser download
+  try {
+    const blob = new Blob([text], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 5000)
+    return 'downloaded'
+  } catch {
+    return 'cancelled'
+  }
+}
 
 function useLog(): LogEntry[] {
   return useSyncExternalStore(subscribe, getLogSnapshot, getLogSnapshot)
@@ -20,14 +67,18 @@ function useLog(): LogEntry[] {
  * states like the login loop.
  */
 export function DebugOverlay() {
+  const debugOn = useDebugFlag()
   const log = useLog()
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [savedLabel, setSavedLabel] = useState<'' | '✓ Shared' | '✓ Downloaded'>('')
+
+  // Only show the floating overlay when the parent has turned debug on.
+  // (Errors are still captured silently in the background regardless.)
+  if (!debugOn) return null
 
   const errCount = log.filter(e => e.level === 'error').length
   const warnCount = log.filter(e => e.level === 'warn').length
-
-  if (log.length === 0 && !open) return null
 
   const handleCopy = async () => {
     try {
@@ -37,6 +88,13 @@ export function DebugOverlay() {
     } catch {
       setCopied(false)
     }
+  }
+
+  const handleSave = async () => {
+    const result = await shareOrDownloadLog()
+    if (result === 'shared') setSavedLabel('✓ Shared')
+    else if (result === 'downloaded') setSavedLabel('✓ Downloaded')
+    setTimeout(() => setSavedLabel(''), 1800)
   }
 
   const badgeText =
@@ -72,12 +130,19 @@ export function DebugOverlay() {
             <span className="font-bold text-sm">
               Debug log <span className="opacity-60">({log.length})</span>
             </span>
-            <div className="flex gap-2">
+            <div className="flex gap-1.5 flex-wrap justify-end">
+              <button
+                onClick={() => void handleSave()}
+                className="px-2 py-1 bg-lavender-600 rounded text-xs font-bold"
+                title="Save / Share log file"
+              >
+                {savedLabel || '📤 Save'}
+              </button>
               <button
                 onClick={() => void handleCopy()}
                 className="px-2 py-1 bg-white/10 rounded text-xs"
               >
-                {copied ? '✓ Copied' : 'Copy'}
+                {copied ? '✓' : 'Copy'}
               </button>
               <button
                 onClick={() => clearLog()}

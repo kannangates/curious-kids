@@ -7,7 +7,15 @@ import type { AppSettings, ChildProfile, MascotChoice } from '../db/index'
 import { useAppStore } from '../store/app'
 import { encryptApiKey, decryptApiKey, hashPin } from '../lib/crypto'
 import { validateApiKey, listAvailableModels } from '../lib/gemini'
-import { buildSyncSnapshot, saveToDrive, TokenExpiredError } from '../lib/drive'
+import { buildSyncSnapshot, saveToDrive, uploadDebugLogToDrive, TokenExpiredError } from '../lib/drive'
+import {
+  isDebugEnabled,
+  setDebugEnabled,
+  subscribeDebugFlag,
+  formatAllStoredLogs,
+  suggestedLogFilename,
+  logAction,
+} from '../lib/debugLog'
 import { isSfxMuted, setSfxMuted, playSuccess } from '../lib/audio'
 import { getVoicesForLang, getPreferredVoiceURI, setPreferredVoiceURI, previewVoice, stopSpeaking } from '../lib/voice'
 import { listProfiles, setActiveProfileId, deleteProfile, resetMemoryForProfile } from '../lib/profiles'
@@ -33,6 +41,14 @@ export function ParentSettingsScreen() {
   // Memory reset
   const [resetWindow, setResetWindow] = useState<'1' | '7' | '30' | 'all'>('7')
   const [isResetting, setIsResetting] = useState(false)
+
+  // Debug mode (verbose action logging + auto Drive backup)
+  const [debugOn, setDebugOn] = useState(isDebugEnabled())
+  const [exportLabel, setExportLabel] = useState<'' | '✓ Shared' | '✓ Downloaded'>('')
+  const [driveLogStatus, setDriveLogStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle')
+  const [lastDebugSync, setLastDebugSync] = useState<string | null>(() => {
+    try { return localStorage.getItem('ck_debug_last_drive_sync') } catch { return null }
+  })
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [syncStatus, setSyncStatus] = useState<'idle' | 'syncing' | 'done' | 'error'>('idle')
@@ -404,6 +420,92 @@ export function ParentSettingsScreen() {
     if (code === 'en') return // English always on
     setEditLangs(prev => prev.includes(code) ? prev.filter(l => l !== code) : [...prev, code])
   }, [])
+
+  // ── Debug mode ──────────────────────────────────────────────────────────
+
+  // Keep local state in sync if the flag is toggled elsewhere
+  useEffect(() => {
+    const unsub = subscribeDebugFlag(() => setDebugOn(isDebugEnabled()))
+    return unsub
+  }, [])
+
+  const syncDebugLogToDrive = useCallback(async (silent = false): Promise<void> => {
+    if (!googleToken) {
+      if (!silent) showError('Sign in to Google first (Google Drive Backup → Connect)')
+      return
+    }
+    setDriveLogStatus('syncing')
+    try {
+      await uploadDebugLogToDrive(googleToken, formatAllStoredLogs())
+      const now = new Date().toISOString()
+      try { localStorage.setItem('ck_debug_last_drive_sync', now) } catch { /* ignore */ }
+      setLastDebugSync(now)
+      setDriveLogStatus('done')
+      if (!silent) showSuccess('Debug log backed up to Drive ☁️')
+    } catch (err) {
+      setDriveLogStatus('error')
+      if (err instanceof TokenExpiredError) {
+        if (!silent) showError('Google session expired — reconnect Drive Backup, then try again.')
+      } else if (!silent) {
+        showError(`Drive log sync failed: ${err instanceof Error ? err.message : String(err)}`)
+      }
+    } finally {
+      setTimeout(() => setDriveLogStatus('idle'), 2500)
+    }
+  }, [googleToken, showSuccess, showError])
+
+  const handleToggleDebug = useCallback(async () => {
+    const next = !debugOn
+    setDebugEnabled(next)
+    setDebugOn(next)
+    logAction(next ? 'Parent enabled debug mode' : 'Parent disabled debug mode')
+    if (next && googleToken) {
+      // Immediate first backup so even the toggle event lands on Drive
+      void syncDebugLogToDrive(true)
+    }
+  }, [debugOn, googleToken, syncDebugLogToDrive])
+
+  const handleExportLog = useCallback(async () => {
+    try {
+      const text = formatAllStoredLogs()
+      const filename = suggestedLogFilename()
+      // Try Web Share with a File (one-tap on mobile)
+      try {
+        const file = new File([text], filename, { type: 'text/plain' })
+        const navAny = navigator as Navigator & { canShare?: (d: { files: File[] }) => boolean }
+        if (navAny.canShare && navAny.canShare({ files: [file] }) && typeof navigator.share === 'function') {
+          await navigator.share({ files: [file], title: 'CuriousKids debug log' })
+          setExportLabel('✓ Shared')
+          setTimeout(() => setExportLabel(''), 1800)
+          return
+        }
+      } catch (err) {
+        if (err instanceof Error && err.name === 'AbortError') return
+        // fall through to download
+      }
+      // Fallback: regular download
+      const url = URL.createObjectURL(new Blob([text], { type: 'text/plain' }))
+      const a = document.createElement('a')
+      a.href = url; a.download = filename
+      document.body.appendChild(a); a.click(); document.body.removeChild(a)
+      setTimeout(() => URL.revokeObjectURL(url), 5000)
+      setExportLabel('✓ Downloaded')
+      setTimeout(() => setExportLabel(''), 1800)
+    } catch (err) {
+      showError(`Export failed: ${err instanceof Error ? err.message : String(err)}`)
+    }
+  }, [showError])
+
+  // Auto-backup the debug log to Drive when the page is hidden (closing tab,
+  // switching apps on mobile) — but only when debug is ON and a token exists.
+  useEffect(() => {
+    if (!debugOn || !googleToken) return
+    function onHide(): void {
+      if (document.hidden) void syncDebugLogToDrive(true)
+    }
+    document.addEventListener('visibilitychange', onHide)
+    return () => document.removeEventListener('visibilitychange', onHide)
+  }, [debugOn, googleToken, syncDebugLogToDrive])
 
   // ── Reset memory (interests, sessions, discoveries) within a window ─────
 
@@ -978,6 +1080,57 @@ export function ParentSettingsScreen() {
             )}
           </button>
         </div>
+
+        {/* Debug mode — captures actions + errors, exports / auto-backs-up the log */}
+        {profile && (
+          <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Debug Mode</p>
+                <p className="text-sm text-gray-500 font-medium mt-0.5">
+                  Records everything the app does so you can share a log if something breaks.
+                </p>
+              </div>
+              <button
+                role="switch"
+                aria-checked={debugOn}
+                aria-label="Toggle debug mode"
+                onClick={() => void handleToggleDebug()}
+                className={`relative w-14 h-8 rounded-full transition-colors flex-shrink-0 ${debugOn ? 'bg-mint-500' : 'bg-gray-300'}`}
+              >
+                <span className={`absolute top-1 w-6 h-6 bg-white rounded-full shadow transition-all ${debugOn ? 'left-7' : 'left-1'}`} />
+              </button>
+            </div>
+
+            {debugOn && (
+              <>
+                <button
+                  onClick={() => void handleExportLog()}
+                  className="w-full py-3 font-bold text-white bg-gradient-to-r from-lavender-500 to-lavender-700 rounded-2xl active:scale-95"
+                >
+                  {exportLabel || '📤 Export Log (Share / Save)'}
+                </button>
+
+                <button
+                  onClick={() => void syncDebugLogToDrive(false)}
+                  disabled={driveLogStatus === 'syncing' || !googleToken}
+                  className="w-full py-3 font-bold text-sky-700 bg-sky-50 border-2 border-sky-200 rounded-2xl active:scale-95 disabled:opacity-50"
+                >
+                  {driveLogStatus === 'syncing' ? 'Syncing to Drive…'
+                    : driveLogStatus === 'done' ? '✅ Backed up to Drive'
+                    : !googleToken ? '☁️ Back up to Drive (connect Google first)'
+                    : '☁️ Back up to Drive now'}
+                </button>
+
+                <p className="text-xs text-gray-400 font-medium text-center">
+                  {lastDebugSync
+                    ? `Last Drive backup: ${new Date(lastDebugSync).toLocaleString()}`
+                    : 'Auto-backs up when the app is closed/hidden.'}
+                </p>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Reset memory (interests, sessions, discoveries) within a time window */}
         {profile && (

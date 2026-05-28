@@ -1,7 +1,8 @@
 import { useEffect, useState, lazy, Suspense, type ReactNode, type ComponentType } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { db } from './db/index'
 import { useAppStore } from './store/app'
+import { logAction } from './lib/debugLog'
 // Eager: first-paint screens
 import { OnboardingScreen } from './screens/OnboardingScreen'
 import { HomeScreen } from './screens/HomeScreen'
@@ -55,6 +56,15 @@ import { TimeUpScreen } from './components/TimeUpScreen'
 import { WelcomeBackScreen } from './components/WelcomeBackScreen'
 import { ParentGate } from './components/ParentGate'
 import { DebugOverlay } from './components/DebugOverlay'
+
+// Logs each route change as a breadcrumb when debug mode is on
+function RouteLogger() {
+  const loc = useLocation()
+  useEffect(() => {
+    logAction(`Nav → ${loc.pathname}${loc.search || ''}`)
+  }, [loc.pathname, loc.search])
+  return null
+}
 
 // Shared loading fallback for lazily-loaded screens
 function LeoLoading() {
@@ -183,6 +193,7 @@ export default function App() {
 
   return (
     <>
+    <RouteLogger />
     <Suspense fallback={<LeoLoading />}>
     <Routes>
       {/* Onboarding — no auth required */}
