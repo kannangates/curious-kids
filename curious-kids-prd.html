@@ -666,9 +666,18 @@ code { font-family: 'JetBrains Mono', monospace; color: var(--teal); font-size: 
         <li><b>Key validation</b> at entry + friendly invalid-key handling</li>
         <li><b>"Welcome back" one-tap re-auth</b> after refresh (sub is memory-only)</li>
         <li><b>Bedtime Story Mode</b> 🌙 · <b>Weekly Parent Report</b> 📊 · <b>Word Matching Game</b> 🎮 · <b>Puzzle Mode</b> 🧩</li>
-        <li><b>Parent PIN lock</b> 🔒 (keypad gate on Settings &amp; Dashboard)</li>
+        <li><b>Parent PIN lock</b> 🔒 (keypad gate on Settings &amp; Dashboard, physical keyboard supported)</li>
         <li><b>Telugu</b> selectable in onboarding · <b>Camera on/off toggle</b></li>
-        <li><b>Code-split bundle</b> — every screen lazy-loaded on demand</li>
+        <li><b>Code-split bundle</b> — every screen lazy-loaded on demand, with <code>lazyRetry</code> auto-reload for stale chunks after deploys</li>
+        <li><b>Cross-device settings sync</b> ☁️ — encrypted key, PIN hash, models, time limit, languages auto-pulled on sign-in and auto-pushed after every change (Drive <code>appDataFolder</code>)</li>
+        <li><b>Restore-from-Drive chooser</b> — fresh device sign-in shows existing children from Drive so you pick which to load</li>
+        <li><b>Reset Memory</b> — clear interests / sessions / discoveries for today, last 7 / 30 days, or all time (profile + XP preserved)</li>
+        <li><b>Debug Mode</b> 🐞 — parent-toggled action log + auto-capture of errors/warns to per-day local buckets; Export (Web Share / download) + Drive backup + cross-device "Fetch from Drive"</li>
+        <li><b>App Theme lock</b> — Light by default (forces <code>color-scheme: light</code>, no OS dark-mode bleed); opt-in "Follow system"</li>
+        <li><b>Happy SVG mascot faces</b> — custom-drawn Leo / Ollie / Benny (not platform emoji), so the smile renders identically on every device</li>
+        <li><b>Profile delete</b> preserves parent's Gemini key + PIN + models, and removes the child's Drive snapshot so it doesn't reappear on another device</li>
+        <li><b>Mobile TTS auto-unlock</b> on first user gesture · <b>kid-patient STT</b> (8s to start, 4s between phrases)</li>
+        <li><b>motion/react</b> (Framer Motion's successor) — same API surface, migrated across all 17 animated surfaces</li>
       </ul>
     </div>
     <div class="card" style="border-left: 4px solid var(--yellow);">

@@ -21,16 +21,25 @@ A zero-cost, voice-first educational PWA for young children. Leo the mascot chat
 - Parent-selectable **TTS voice** (with preview) and **Gemini model** for chat & vision
 
 **Parent controls** (in Settings, behind an optional PIN)
-- **Multi-child profiles** — add, switch, edit (name/age/buddy/languages), and delete children
-- Optional **4-digit Parent PIN** lock on Settings & Dashboard
-- **Daily time limit** with a gentle "time's up" screen
+- **Multi-child profiles** — add, switch, edit (name/age/buddy/languages), and delete children (Drive snapshot is removed too, so the child won't reappear on another device)
+- Optional **4-digit Parent PIN** lock on Settings & Dashboard (physical keyboard works too)
+- **Daily time limit** with a gentle "time's up" screen + parent bonus-minutes override
 - Camera on/off, sound effects on/off
+- **App Theme** — Light by default (forces `color-scheme: light` so OS dark mode never overrides the kid UI); opt-in "Follow system"
+- **Reset Memory** — clear interests / sessions / discoveries for today, last 7 / 30 days, or all time (profile + XP preserved)
+- **Debug Mode** — captures every action + error to a per-day local log; Export shares via WhatsApp/Email/Files; auto-backs up to Drive on app close; "Fetch from Drive" pulls the other device's log
 - **Parent Dashboard** — XP, top interests, recent sessions, and a **Weekly Report**
+
+**Cross-device sync** (Google Drive `appDataFolder`)
+- Settings (encrypted API key, PIN hash, models, time limit, etc.) **auto-pull on every sign-in** and **auto-push on every change** — switch devices and your setup follows you, no re-entry.
+- Children sync per-child as `curiouskie-<name>.json`; a **Restore-from-Drive chooser** appears right after sign-in on a fresh device so you can pick which child to load.
+- Welcome-back re-auth on refresh is a single tap (the Google `sub` used to decrypt the key is the only thing not persisted by default).
 
 **Platform**
 - PWA — installable, works offline with warm fallback responses
-- Google Sign-In for the parent; Google Drive (`appDataFolder`) backup, one file per child
-- Free voice via the Web Speech API (STT + TTS) — no voice API cost
+- Google Sign-In for the parent; Google Drive (`appDataFolder` scope) used as the only remote — invisible to the user, no extra storage cost
+- Free voice via the Web Speech API (STT + TTS); kid-patient mic timing (8s to start, 4s between phrases); mobile TTS auto-unlocked on first tap
+- Custom SVG mascot faces (not platform emoji) so Leo/Ollie/Benny look identically happy on every device
 
 ## Setup
 
@@ -77,10 +86,11 @@ src/
   db/         — Dexie IndexedDB schema (childProfiles, interestTags, sessionSummaries, learnedObjects, appSettings)
   store/      — Zustand global state (auth, profile, session)
   lib/        — crypto, gemini, geminiClient, voice, safety, drive, session, memory,
-                xp, usage, profiles, audio, localAnswers
+                xp, usage, profiles, audio, localAnswers, debugLog, theme
   prompts/    — Gemini prompt builders (system, translation, camera, bedtime, puzzle, weekly report)
   hooks/      — useSpeech, useSessionLimit
-  components/ — LeoMascot, VoiceButton, SafeArea, XPCelebration, TimeUpScreen, WelcomeBackScreen, ParentGate
+  components/ — LeoMascot, VoiceButton, SafeArea, XPCelebration, TimeUpScreen, WelcomeBackScreen,
+                ParentGate, DebugOverlay
   screens/    — Onboarding, Home, Chat, Camera, WordExplorer, WordGame, Puzzle, Discoveries,
                 BedtimeStory, ParentSettings, ParentDashboard
 ```
