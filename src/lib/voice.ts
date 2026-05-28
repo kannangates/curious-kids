@@ -52,10 +52,6 @@ export function primeSpeechOnGesture(): void {
   window.addEventListener('keydown', prime, { once: true })
 }
 
-export function isSpeechPrimed(): boolean {
-  return speechPrimed
-}
-
 // ─── Preferred-voice override (parent-chosen, per device) ──────────────────────
 
 const PREF_VOICE_KEY = 'ck_voice_uri'

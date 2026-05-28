@@ -136,26 +136,6 @@ export async function safeDbWrite<T>(operation: () => Promise<T>): Promise<T | n
   }
 }
 
-/** Upsert an interest tag, incrementing weight (cap at 10). */
-export async function upsertInterestTag(profileId: string, tag: string, increment = 1): Promise<void> {
-  const existing = await db.interestTags
-    .where('profileId').equals(profileId)
-    .and(t => t.tag === tag.toLowerCase())
-    .first()
-
-  const now = new Date().toISOString()
-
-  if (existing && existing.id !== undefined) {
-    await db.interestTags.update(existing.id, {
-      weight: Math.min(10, existing.weight + increment),
-      lastMentioned: now
-    })
-  } else {
-    await db.interestTags.add({
-      profileId,
-      tag: tag.toLowerCase(),
-      weight: Math.min(10, increment),
-      lastMentioned: now
-    })
-  }
-}
+// Note: an older `upsertInterestTag` helper used to live here. It's been
+// superseded by `bumpInterest` in lib/memory.ts (which uses safeDbWrite
+// and is the only path used in production). Removed during cleanup.

@@ -12,22 +12,12 @@ interface LeoMascotProps {
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
+// Sizes for the container + drop shadow. (The old `emoji` text-class keys
+// here became dead when we swapped the emoji <span> for SVG faces.)
 const SIZE_MAP = {
-  sm: {
-    container: 'w-16 h-16',
-    emoji: 'text-4xl',
-    glow: 'shadow-lg'
-  },
-  md: {
-    container: 'w-24 h-24',
-    emoji: 'text-5xl',
-    glow: 'shadow-xl'
-  },
-  lg: {
-    container: 'w-36 h-36',
-    emoji: 'text-7xl',
-    glow: 'shadow-2xl'
-  }
+  sm: { container: 'w-16 h-16', glow: 'shadow-lg' },
+  md: { container: 'w-24 h-24', glow: 'shadow-xl' },
+  lg: { container: 'w-36 h-36', glow: 'shadow-2xl' }
 }
 
 // ─── Mascot faces (custom SVGs, identical across platforms) ───────────────
