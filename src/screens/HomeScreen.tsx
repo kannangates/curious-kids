@@ -5,7 +5,7 @@ import { db } from '../db/index'
 import type { InterestTag, SessionSummary } from '../db/index'
 import { useAppStore } from '../store/app'
 import { decayInterests, buildGreeting, getTopInterests } from '../lib/memory'
-import { speak, stopSpeaking } from '../lib/voice'
+import { speak, stopSpeaking, isSpeechPrimed } from '../lib/voice'
 import { LeoMascot } from '../components/LeoMascot'
 import { SafeArea } from '../components/SafeArea'
 
@@ -55,6 +55,11 @@ export function HomeScreen() {
 
   const lang = profile?.preferredLanguages[0] ?? 'en'
   const spokeRef = useRef(false)  // ensures the greeting is spoken once per visit
+  // If TTS wasn't primed (rare on mobile when the very first nav lands on /
+  // without a tap), expose a "🔊 tap to hear" affordance on the mascot so the
+  // child can replay the greeting with a single tap (which counts as a gesture).
+  const [needsTapToHear, setNeedsTapToHear] = useState(false)
+  const lastGreetingRef = useRef('')
 
   // ── Topic chip emoji helper ────────────────────────────────────────────────
 
@@ -119,7 +124,13 @@ export function HomeScreen() {
           spokeRef.current = true
           // Strip emojis from the spoken text — some voices read them aloud
           const clean = `${greetingText} ${bubble}`.replace(/[\p{Extended_Pictographic}]/gu, '').replace(/\s+/g, ' ').trim()
-          void speak(clean, lang)
+          lastGreetingRef.current = clean
+          if (isSpeechPrimed()) {
+            void speak(clean, lang)
+          } else {
+            // No user gesture yet (e.g. first nav on mobile) — show a 🔊 hint.
+            setNeedsTapToHear(true)
+          }
         }
       } catch (err) {
         console.error('Failed to load home data:', err)
@@ -195,14 +206,33 @@ export function HomeScreen() {
             </p>
           </motion.div>
 
-          {/* Mascot */}
-          <motion.div
+          {/* Mascot — tap to (re)play the greeting. Doubles as the mobile-TTS
+              fallback when the page loaded without a prior user gesture. */}
+          <motion.button
             initial={{ scale: 0.5, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
+            whileTap={{ scale: 0.95 }}
             transition={{ type: 'spring', stiffness: 200, damping: 15, delay: 0.1 }}
+            onClick={() => {
+              const text = lastGreetingRef.current
+                || `${greeting} ${speechBubble}`.replace(/[\p{Extended_Pictographic}]/gu, '').replace(/\s+/g, ' ').trim()
+              if (text) void speak(text, lang)
+              setNeedsTapToHear(false)
+            }}
+            className="relative bg-transparent border-0 p-0 rounded-full"
+            aria-label="Tap to hear greeting"
           >
             <LeoMascot size="md" mood="happy" />
-          </motion.div>
+            {needsTapToHear && (
+              <motion.span
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="absolute -bottom-1 -right-1 bg-leo-500 text-white text-xs font-extrabold rounded-full px-2 py-1 shadow-md"
+              >
+                🔊 tap
+              </motion.span>
+            )}
+          </motion.button>
 
           <motion.p
             initial={{ opacity: 0 }}

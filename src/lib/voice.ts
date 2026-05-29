@@ -28,6 +28,8 @@ export function isSpeechSupported(): boolean {
 
 let speechPrimed = false
 
+export function isSpeechPrimed(): boolean { return speechPrimed }
+
 export function primeSpeechOnGesture(): void {
   if (speechPrimed || !isSpeechSupported() || typeof window === 'undefined') return
 
@@ -35,12 +37,18 @@ export function primeSpeechOnGesture(): void {
     if (speechPrimed) return
     speechPrimed = true
     try {
-      const u = new SpeechSynthesisUtterance(' ')
-      u.volume = 0.01
-      u.rate = 1
+      // iOS WebKit / Brave: the priming utterance MUST be allowed to actually
+      // start (and not be immediately cancelled) for the audio session to be
+      // unlocked for subsequent non-gesture speech. Use a real (but inaudible)
+      // utterance and let it finish naturally — much more reliable than the
+      // older "speak then cancel" approach.
+      const u = new SpeechSynthesisUtterance('.')
+      u.volume = 0.001
+      u.rate = 2
+      u.lang = 'en-US'
+      // Don't await voiceschanged here — even a default-voice utterance is
+      // enough to unlock the session.
       window.speechSynthesis.speak(u)
-      // Cancel immediately so it really is silent
-      setTimeout(() => { try { window.speechSynthesis.cancel() } catch { /* ignore */ } }, 30)
     } catch { /* ignore */ }
     window.removeEventListener('touchstart', prime)
     window.removeEventListener('pointerdown', prime)
@@ -67,13 +75,31 @@ export function setPreferredVoiceURI(uri: string | null): void {
   } catch { /* ignore */ }
 }
 
+/**
+ * Safely reads the list of voices. Brave (and some privacy extensions) wrap
+ * `speechSynthesis.getVoices()` with a "fake voice" shim that can return
+ * objects which throw on `Object.getPrototypeOf(v)` or where `.name`/`.lang`
+ * is undefined. We catch + filter so a single bad entry can't break TTS.
+ */
+function safeGetVoices(): SpeechSynthesisVoice[] {
+  if (!isSpeechSupported()) return []
+  let raw: SpeechSynthesisVoice[] = []
+  try { raw = window.speechSynthesis.getVoices() ?? [] } catch { return [] }
+  return raw.filter(v => {
+    try {
+      return !!v && typeof v.name === 'string' && typeof v.lang === 'string'
+    } catch { return false }
+  })
+}
+
 /** All voices that can speak the given app language (for a settings picker). */
 export function getVoicesForLang(lang: string): SpeechSynthesisVoice[] {
   if (!isSpeechSupported()) return []
   const prefix = (LANG_MAP[lang] ?? lang).split('-')[0].toLowerCase()
-  const voices = window.speechSynthesis.getVoices()
-  const matches = voices.filter(v => v.lang.toLowerCase().startsWith(prefix))
-  // Sort best-sounding first so the picker's top option is the nicest
+  const voices = safeGetVoices()
+  const matches = voices.filter(v => {
+    try { return v.lang.toLowerCase().startsWith(prefix) } catch { return false }
+  })
   return matches.sort((a, b) => scoreVoice(b, lang) - scoreVoice(a, lang))
 }
 
@@ -85,31 +111,38 @@ export function getVoicesForLang(lang: string): SpeechSynthesisVoice[] {
  * / Google voices and avoid the old robotic desktop / eSpeak voices.
  */
 function scoreVoice(v: SpeechSynthesisVoice, lang: string): number {
-  const bcp47 = LANG_MAP[lang] ?? lang
-  const prefix = bcp47.split('-')[0].toLowerCase()
-  const name = v.name.toLowerCase()
-  const vlang = v.lang.toLowerCase()
-  let s = 0
+  // Brave's anti-fingerprint shim can produce voice objects that throw on
+  // property access. Wrap the whole thing so a single bad voice can't tank
+  // the picker / greeting.
+  try {
+    const bcp47 = LANG_MAP[lang] ?? lang
+    const prefix = bcp47.split('-')[0].toLowerCase()
+    const name = (v?.name ?? '').toLowerCase()
+    const vlang = (v?.lang ?? '').toLowerCase()
+    let s = 0
 
-  // Language fit
-  if (vlang === bcp47.toLowerCase()) s += 60
-  else if (vlang.startsWith(prefix)) s += 35
+    // Language fit
+    if (vlang && vlang === bcp47.toLowerCase()) s += 60
+    else if (vlang && vlang.startsWith(prefix)) s += 35
 
-  // Quality markers (free, high-quality neural/cloud voices)
-  if (name.includes('natural')) s += 45      // Edge "… Online (Natural)"
-  if (name.includes('neural')) s += 42
-  if (name.includes('google')) s += 38       // Chrome cloud voices
-  if (name.includes('online')) s += 22
-  if (name.includes('siri')) s += 30          // Apple
-  if (name.includes('premium') || name.includes('enhanced')) s += 25
-  if (v.localService === false) s += 12       // cloud voices usually nicer
+    // Quality markers (free, high-quality neural/cloud voices)
+    if (name.includes('natural')) s += 45      // Edge "… Online (Natural)"
+    if (name.includes('neural')) s += 42
+    if (name.includes('google')) s += 38       // Chrome cloud voices
+    if (name.includes('online')) s += 22
+    if (name.includes('siri')) s += 30          // Apple
+    if (name.includes('premium') || name.includes('enhanced')) s += 25
+    try { if (v?.localService === false) s += 12 } catch { /* shim threw */ }
 
-  // Robotic / low-quality markers
-  if (name.includes('desktop')) s -= 30       // old Windows SAPI voices
-  if (name.includes('espeak')) s -= 40
-  if (name.includes('compact')) s -= 12
+    // Robotic / low-quality markers
+    if (name.includes('desktop')) s -= 30       // old Windows SAPI voices
+    if (name.includes('espeak')) s -= 40
+    if (name.includes('compact')) s -= 12
 
-  return s
+    return s
+  } catch {
+    return -1000  // unusable
+  }
 }
 
 /**
@@ -118,21 +151,27 @@ function scoreVoice(v: SpeechSynthesisVoice, lang: string): number {
  */
 function selectVoice(lang: string): SpeechSynthesisVoice | null {
   if (!isSpeechSupported()) return null
-  const voices = window.speechSynthesis.getVoices()
+  const voices = safeGetVoices()
   if (voices.length === 0) return null
 
   // 1. Parent-chosen voice (if still available)
   const prefUri = getPreferredVoiceURI()
   if (prefUri) {
-    const chosen = voices.find(v => v.voiceURI === prefUri)
+    const chosen = voices.find(v => {
+      try { return v.voiceURI === prefUri } catch { return false }
+    })
     if (chosen) return chosen
   }
 
   // 2. Score all voices for this language; fall back to English if none match
   const bcp47 = LANG_MAP[lang] ?? lang
   const prefix = bcp47.split('-')[0].toLowerCase()
-  let pool = voices.filter(v => v.lang.toLowerCase().startsWith(prefix))
-  if (pool.length === 0) pool = voices.filter(v => v.lang.toLowerCase().startsWith('en'))
+  const langMatches = (p: string) =>
+    voices.filter(v => {
+      try { return (v.lang ?? '').toLowerCase().startsWith(p) } catch { return false }
+    })
+  let pool = langMatches(prefix)
+  if (pool.length === 0) pool = langMatches('en')
   if (pool.length === 0) pool = voices
 
   return pool

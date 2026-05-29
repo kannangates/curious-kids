@@ -52,6 +52,7 @@ const ParentDashboardScreen = lazyRetry(() => import('./screens/ParentDashboardS
 import { useSessionLimit } from './hooks/useSessionLimit'
 import { grantBonusMinutes } from './lib/usage'
 import { resolveActiveProfile, setActiveProfileId } from './lib/profiles'
+import { useAutoDriveConnect } from './lib/driveAuth'
 import { TimeUpScreen } from './components/TimeUpScreen'
 import { WelcomeBackScreen } from './components/WelcomeBackScreen'
 import { ParentGate } from './components/ParentGate'
@@ -160,6 +161,11 @@ function TimeGuard({ children }: { children: ReactNode }) {
 
 export default function App() {
   const setProfile = useAppStore(s => s.setProfile)
+
+  // If we already have a persisted Google `sub` but no live access token (e.g.
+  // after a refresh), try a silent GIS iframe refresh so Drive sync just keeps
+  // working without the parent having to tap "Connect & Back Up" again.
+  useAutoDriveConnect()
 
   // On app load, restore the ACTIVE profile from IndexedDB into the store
   useEffect(() => {

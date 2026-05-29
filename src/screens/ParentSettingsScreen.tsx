@@ -8,6 +8,7 @@ import { useAppStore } from '../store/app'
 import { encryptApiKey, decryptApiKey, hashPin } from '../lib/crypto'
 import { validateApiKey, listAvailableModels } from '../lib/gemini'
 import { buildSyncSnapshot, saveToDrive, uploadDebugLogToDrive, downloadDebugLogFromDrive, deleteChildFromDrive, syncAppSettingsToDrive, TokenExpiredError } from '../lib/drive'
+import { attemptSilentDriveConnect } from '../lib/driveAuth'
 import {
   isDebugEnabled,
   setDebugEnabled,
@@ -32,8 +33,9 @@ export function ParentSettingsScreen() {
   const [children, setChildren] = useState<ChildProfile[]>([])
   const [settings, setSettings] = useState<AppSettings | null>(null)
 
-  // Edit-active-child fields (form collapsed by default — opens on Edit click)
-  const [editOpen, setEditOpen] = useState(false)
+  // Edit-child modal: `editingChild` is the target row (any child, not just
+  // the active one). null = modal closed.
+  const [editingChild, setEditingChild] = useState<ChildProfile | null>(null)
   const [editName, setEditName] = useState('')
   const [editAge, setEditAge] = useState(5)
   const [editMascot, setEditMascot] = useState<MascotChoice>('lion')
@@ -93,15 +95,14 @@ export function ParentSettingsScreen() {
     void loadChildren()
   }, [profile])
 
-  // Seed the edit form from the active profile
-  useEffect(() => {
-    if (profile) {
-      setEditName(profile.name)
-      setEditAge(profile.age)
-      setEditMascot(profile.mascotChoice)
-      setEditLangs(profile.preferredLanguages.length ? profile.preferredLanguages : ['en'])
-    }
-  }, [profile])
+  // Open the edit modal for a specific child (any row in the children list).
+  const openEditModal = useCallback((child: ChildProfile) => {
+    setEditName(child.name)
+    setEditAge(child.age)
+    setEditMascot(child.mascotChoice)
+    setEditLangs(child.preferredLanguages.length ? child.preferredLanguages : ['en'])
+    setEditingChild(child)
+  }, [])
 
   useEffect(() => {
     async function loadSettings() {
@@ -164,12 +165,17 @@ export function ParentSettingsScreen() {
   }, [selectedVoiceURI, voices, primaryLang, profile])
 
   // Tiny helper: after any local settings change, push the row to Drive so
-  // the parent's other devices pick it up on next sign-in. Best-effort.
+  // the parent's other devices pick it up on next sign-in. If we don't have a
+  // live token yet, try a silent refresh first (GIS iframe) — succeeds when
+  // the Google session is still valid, no popup needed. Best-effort either way.
   const pushSettingsToDrive = useCallback(() => {
-    if (!googleToken) return
-    void syncAppSettingsToDrive(googleToken).catch(err => {
-      console.warn('[settings] Drive push failed:', err)
-    })
+    void (async () => {
+      let token = googleToken
+      if (!token) token = await attemptSilentDriveConnect()
+      if (!token) return
+      try { await syncAppSettingsToDrive(token) }
+      catch (err) { console.warn('[settings] Drive push failed:', err) }
+    })()
   }, [googleToken])
 
   const showSuccess = useCallback((msg: string) => {
@@ -411,7 +417,7 @@ export function ParentSettingsScreen() {
   // ── Edit the active child ──────────────────────────────────────────────
 
   const handleSaveProfile = useCallback(async () => {
-    if (!profile) return
+    if (!editingChild) return
     const name = editName.trim()
     if (name.length < 2) { showError('Name must be at least 2 characters'); return }
     if (!/^[a-zA-Z\s'-]+$/.test(name)) { showError('Name can only contain letters, spaces, and hyphens'); return }
@@ -419,21 +425,25 @@ export function ParentSettingsScreen() {
 
     setIsSaving(true)
     try {
-      const updated = { ...profile, name, age: editAge, mascotChoice: editMascot, preferredLanguages: langs }
-      await db.childProfiles.update(profile.id, {
+      const updated = { ...editingChild, name, age: editAge, mascotChoice: editMascot, preferredLanguages: langs }
+      await db.childProfiles.update(editingChild.id, {
         name, age: editAge, mascotChoice: editMascot, preferredLanguages: langs
       })
-      await db.appSettings.update('main', { enabledLanguages: langs }).catch(() => { /* non-fatal */ })
-      setProfile(updated)
+      // Only sync enabledLanguages globally when editing the *active* child —
+      // editing a non-active sibling shouldn't change the parent's global langs.
+      if (profile && editingChild.id === profile.id) {
+        await db.appSettings.update('main', { enabledLanguages: langs }).catch(() => { /* non-fatal */ })
+        setProfile(updated)
+      }
       setChildren(await listProfiles())
-      setEditOpen(false)
+      setEditingChild(null)
       showSuccess('Profile saved! ✅')
     } catch (err) {
       showError(`Failed to save: ${err instanceof Error ? err.message : String(err)}`)
     } finally {
       setIsSaving(false)
     }
-  }, [profile, editName, editAge, editMascot, editLangs, setProfile, showSuccess, showError])
+  }, [editingChild, profile, editName, editAge, editMascot, editLangs, setProfile, showSuccess, showError])
 
   const toggleEditLang = useCallback((code: string) => {
     if (code === 'en') return // English always on
@@ -723,6 +733,13 @@ export function ParentSettingsScreen() {
                       : <span className="text-xs font-bold text-lavender-400">Switch →</span>}
                   </button>
                   <button
+                    onClick={() => openEditModal(child)}
+                    className="w-10 h-10 flex items-center justify-center text-lg text-lavender-500 active:scale-90 flex-shrink-0"
+                    aria-label={`Edit ${child.name}`}
+                  >
+                    ✎
+                  </button>
+                  <button
                     onClick={() => void handleDeleteChild(child)}
                     className="w-10 h-10 flex items-center justify-center text-lg text-red-400 active:scale-90 flex-shrink-0"
                     aria-label={`Delete ${child.name}`}
@@ -745,109 +762,127 @@ export function ParentSettingsScreen() {
           </button>
         </div>
 
-        {/* Edit active child — collapsed by default, opens on "Edit" click */}
-        {profile && (
-          <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-2xl flex-shrink-0">
-                  {profile.mascotChoice === 'lion' ? '🦁' : profile.mascotChoice === 'owl' ? '🦉' : '🐰'}
-                </span>
-                <div className="min-w-0">
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-wider truncate">{profile.name}'s Profile</p>
-                  <p className="text-xs text-gray-500 font-medium truncate">
-                    Age {profile.age} · {profile.preferredLanguages.join(', ').toUpperCase()}
+        {/* Per-child edit modal — opened from the ✎ button next to any child
+            row above. Centred overlay, tap-outside or × to close, gradient
+            Save button matches the rest of Settings. */}
+        {editingChild && (
+          <div
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setEditingChild(null)}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Edit ${editingChild.name}`}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white rounded-3xl p-5 shadow-2xl border border-lavender-100 w-full max-w-sm max-h-[90vh] overflow-y-auto flex flex-col gap-4"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-2xl flex-shrink-0">
+                    {editMascot === 'lion' ? '🦁' : editMascot === 'owl' ? '🦉' : '🐰'}
+                  </span>
+                  <p className="text-base font-extrabold text-lavender-700 truncate">
+                    Edit {editingChild.name}
                   </p>
                 </div>
-              </div>
-              <button
-                onClick={() => setEditOpen(o => !o)}
-                className="text-sm font-extrabold text-lavender-600 bg-lavender-50 px-3 py-1.5 rounded-full active:scale-95 flex-shrink-0"
-                aria-expanded={editOpen}
-              >
-                {editOpen ? 'Close' : 'Edit ✎'}
-              </button>
-            </div>
-
-            {/* Name */}
-            {editOpen && (<>
-
-            <div>
-              <label className="text-sm font-bold text-gray-600">Name</label>
-              <input
-                type="text"
-                value={editName}
-                onChange={e => setEditName(e.target.value)}
-                maxLength={50}
-                className="mt-1 w-full px-4 py-3 text-base font-semibold bg-gray-50 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-lavender-400"
-              />
-            </div>
-
-            {/* Age stepper */}
-            <div>
-              <label className="text-sm font-bold text-gray-600">Age</label>
-              <div className="mt-1 flex items-center gap-3">
                 <button
-                  onClick={() => setEditAge(a => Math.max(2, a - 1))}
-                  disabled={editAge <= 2}
-                  className="w-11 h-11 rounded-xl text-2xl font-extrabold bg-lavender-100 text-lavender-600 active:scale-90 disabled:opacity-30"
-                  aria-label="Younger"
-                >−</button>
-                <span className="text-2xl font-extrabold text-lavender-700 w-12 text-center">{editAge}</span>
-                <button
-                  onClick={() => setEditAge(a => Math.min(15, a + 1))}
-                  disabled={editAge >= 15}
-                  className="w-11 h-11 rounded-xl text-2xl font-extrabold bg-lavender-100 text-lavender-600 active:scale-90 disabled:opacity-30"
-                  aria-label="Older"
-                >＋</button>
+                  onClick={() => setEditingChild(null)}
+                  className="w-9 h-9 flex items-center justify-center text-lg text-gray-400 hover:text-gray-700 active:scale-90 rounded-full"
+                  aria-label="Close"
+                >
+                  ✕
+                </button>
               </div>
-            </div>
 
-            {/* Mascot */}
-            <div>
-              <label className="text-sm font-bold text-gray-600">Buddy</label>
-              <div className="mt-1 grid grid-cols-3 gap-2">
-                {([['lion', '🦁', 'Leo'], ['owl', '🦉', 'Ollie'], ['bunny', '🐰', 'Benny']] as const).map(([c, e, n]) => (
+              {/* Name */}
+              <div>
+                <label className="text-sm font-bold text-gray-600">Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  maxLength={50}
+                  className="mt-1 w-full px-4 py-3 text-base font-semibold bg-gray-50 border-2 border-gray-200 rounded-2xl focus:outline-none focus:border-lavender-400"
+                />
+              </div>
+
+              {/* Age stepper */}
+              <div>
+                <label className="text-sm font-bold text-gray-600">Age</label>
+                <div className="mt-1 flex items-center gap-3">
                   <button
-                    key={c}
-                    onClick={() => setEditMascot(c)}
-                    className={`flex flex-col items-center gap-1 py-3 rounded-2xl border-2 active:scale-95 ${editMascot === c ? 'bg-lavender-100 border-lavender-400' : 'bg-white border-gray-200'}`}
-                  >
-                    <span className="text-3xl">{e}</span>
-                    <span className="text-xs font-bold text-gray-600">{n}</span>
-                  </button>
-                ))}
+                    onClick={() => setEditAge(a => Math.max(2, a - 1))}
+                    disabled={editAge <= 2}
+                    className="w-11 h-11 rounded-xl text-2xl font-extrabold bg-lavender-100 text-lavender-600 active:scale-90 disabled:opacity-30"
+                    aria-label="Younger"
+                  >−</button>
+                  <span className="text-2xl font-extrabold text-lavender-700 w-12 text-center">{editAge}</span>
+                  <button
+                    onClick={() => setEditAge(a => Math.min(15, a + 1))}
+                    disabled={editAge >= 15}
+                    className="w-11 h-11 rounded-xl text-2xl font-extrabold bg-lavender-100 text-lavender-600 active:scale-90 disabled:opacity-30"
+                    aria-label="Older"
+                  >＋</button>
+                </div>
               </div>
-            </div>
 
-            {/* Languages */}
-            <div>
-              <label className="text-sm font-bold text-gray-600">Languages</label>
-              <div className="mt-1 flex flex-wrap gap-2">
-                {([['en', 'English'], ['kn', 'Kannada'], ['hi', 'Hindi'], ['ta', 'Tamil'], ['te', 'Telugu']] as const).map(([c, l]) => {
-                  const on = editLangs.includes(c)
-                  return (
+              {/* Mascot */}
+              <div>
+                <label className="text-sm font-bold text-gray-600">Buddy</label>
+                <div className="mt-1 grid grid-cols-3 gap-2">
+                  {([['lion', '🦁', 'Leo'], ['owl', '🦉', 'Ollie'], ['bunny', '🐰', 'Benny']] as const).map(([c, e, n]) => (
                     <button
                       key={c}
-                      onClick={() => toggleEditLang(c)}
-                      disabled={c === 'en'}
-                      className={`px-3 py-2 rounded-full text-sm font-bold border-2 active:scale-95 ${on ? 'bg-mint-100 border-mint-400 text-mint-700' : 'bg-white border-gray-200 text-gray-400'} ${c === 'en' ? 'opacity-70 cursor-default' : ''}`}
+                      onClick={() => setEditMascot(c)}
+                      className={`flex flex-col items-center gap-1 py-3 rounded-2xl border-2 active:scale-95 ${editMascot === c ? 'bg-lavender-100 border-lavender-400' : 'bg-white border-gray-200'}`}
                     >
-                      {on ? '✓ ' : ''}{l}
+                      <span className="text-3xl">{e}</span>
+                      <span className="text-xs font-bold text-gray-600">{n}</span>
                     </button>
-                  )
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <button
-              onClick={() => void handleSaveProfile()}
-              disabled={isSaving}
-              className="w-full py-3 font-bold text-white bg-gradient-to-r from-lavender-500 to-lavender-700 rounded-2xl disabled:opacity-50 active:scale-95"
-            >
-              {isSaving ? 'Saving...' : 'Save Profile'}
-            </button>
-            </>)}
+              {/* Languages */}
+              <div>
+                <label className="text-sm font-bold text-gray-600">Languages</label>
+                <div className="mt-1 flex flex-wrap gap-2">
+                  {([['en', 'English'], ['kn', 'Kannada'], ['hi', 'Hindi'], ['ta', 'Tamil'], ['te', 'Telugu']] as const).map(([c, l]) => {
+                    const on = editLangs.includes(c)
+                    return (
+                      <button
+                        key={c}
+                        onClick={() => toggleEditLang(c)}
+                        disabled={c === 'en'}
+                        className={`px-3 py-2 rounded-full text-sm font-bold border-2 active:scale-95 ${on ? 'bg-mint-100 border-mint-400 text-mint-700' : 'bg-white border-gray-200 text-gray-400'} ${c === 'en' ? 'opacity-70 cursor-default' : ''}`}
+                      >
+                        {on ? '✓ ' : ''}{l}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setEditingChild(null)}
+                  className="flex-1 py-3 font-bold text-gray-600 bg-gray-100 rounded-2xl active:scale-95"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => void handleSaveProfile()}
+                  disabled={isSaving}
+                  className="flex-1 py-3 font-bold text-white bg-gradient-to-r from-lavender-500 to-lavender-700 rounded-2xl disabled:opacity-50 active:scale-95"
+                >
+                  {isSaving ? 'Saving…' : 'Save'}
+                </button>
+              </div>
+            </motion.div>
           </div>
         )}
 
