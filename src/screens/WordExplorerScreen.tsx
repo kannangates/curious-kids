@@ -16,6 +16,7 @@ import { LeoMascot } from '../components/LeoMascot'
 import { VoiceButton } from '../components/VoiceButton'
 import { XPCelebration } from '../components/XPCelebration'
 import { SafeArea } from '../components/SafeArea'
+import { logEvent } from '../lib/debugLog'
 
 // ─── Language display names ───────────────────────────────────────────────────
 
@@ -480,6 +481,9 @@ export function WordExplorerScreen() {
       const msg = "Oops! Leo couldn't find that word. Let's try again! 🦁"
       setResponseText(msg)
       speakText(msg, primaryLang)
+      // Explicit name+message — Safari's err.stack omits the header.
+      const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+      logEvent('error', `[WordExplorer] translation error: ${errMsg}`, err)
       console.error('[WordExplorer] translation error:', err)
     } finally {
       if (isMountedRef.current) {

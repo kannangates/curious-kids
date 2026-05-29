@@ -115,7 +115,15 @@ function notify(): void {
 function safeStringify(v: unknown): string {
   try {
     if (v == null) return ''
-    if (v instanceof Error) return v.stack || `${v.name}: ${v.message}`
+    if (v instanceof Error) {
+      // Safari's error.stack does NOT include the "Name: message" header,
+      // so falling back to stack alone hides the actual reason. Always emit
+      // the message + name, then append the stack if available.
+      const head = `${v.name}: ${v.message}`
+      return v.stack && !v.stack.includes(v.message)
+        ? `${head}\n${v.stack}`
+        : (v.stack || head)
+    }
     if (typeof v === 'string') return v
     return JSON.stringify(v, Object.getOwnPropertyNames(v as object).concat(Object.keys(v as object)), 2)
   } catch {

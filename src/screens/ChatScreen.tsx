@@ -10,6 +10,7 @@ import { checkInput, checkOutput, SAFE_DEFLECTION } from '../lib/safety'
 import { createIdleTimer, generateSessionSummary, initSessionTriggers, type IdleTimer } from '../lib/session'
 import { extractTopics, bumpInterest, getTopInterests } from '../lib/memory'
 import { getLocalAnswer } from '../lib/localAnswers'
+import { logEvent } from '../lib/debugLog'
 import { addXP } from '../lib/xp'
 import { buildSystemPrompt, FALLBACK_OFFLINE_RESPONSES } from '../prompts/index'
 import { useSpeech } from '../hooks/useSpeech'
@@ -209,11 +210,17 @@ export function ChatScreen() {
 
   const speakAndTrack = useCallback((text: string, language: string): Promise<void> => {
     setIsSpeaking(true)
-    const p = speak(text, language).then(() => {
+    // Defense in depth: even with voice.ts's watchdog, guarantee isSpeaking
+    // clears within 60s so a stalled TTS engine can NEVER permanently disable
+    // the mic button.
+    const safetyTimeout = window.setTimeout(() => {
       if (isMountedRef.current) setIsSpeaking(false)
-    }).catch(() => {
+    }, 60_000)
+    const clear = () => {
+      window.clearTimeout(safetyTimeout)
       if (isMountedRef.current) setIsSpeaking(false)
-    })
+    }
+    const p = speak(text, language).then(clear).catch(clear)
     pendingSpeakRef.current = p
     return p
   }, [])
@@ -380,7 +387,11 @@ export function ChatScreen() {
       }
 
     } catch (err) {
-      // Surface the real error for diagnostics (UI stays kid-friendly)
+      // Surface the real error for diagnostics (UI stays kid-friendly).
+      // Log message + name explicitly — Safari's err.stack drops the message
+      // header, so relying on console.error alone hides the actual reason.
+      const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+      logEvent('error', `[Chat] message failed: ${errMsg}`, err)
       console.error('[Chat] message failed:', err)
 
       // Invalid API key → show the dedicated key-setup screen (has Settings link)
@@ -595,10 +606,19 @@ export function ChatScreen() {
               isListening={isListening}
               onStart={() => {
                 idleTimerRef.current?.reset()
+                // Interrupt any ongoing speech so the kid can ask the next
+                // question immediately — no waiting for Leo to finish (and
+                // no risk of being permanently locked out if TTS stalls).
+                if (isSpeaking) {
+                  stopSpeaking()
+                  setIsSpeaking(false)
+                }
                 startListening()
               }}
               onStop={stopListening}
-              disabled={isLoading || isSpeaking}
+              // Only block during the AI round-trip. Speaking is interruptible
+              // (see onStart above) so the mic is always re-clickable.
+              disabled={isLoading}
             />
           )}
         </div>

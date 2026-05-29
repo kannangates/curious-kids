@@ -34,6 +34,23 @@ function getGis(): any | null {
   return g?.accounts?.oauth2 ?? null
 }
 
+/**
+ * iOS WebKit (Safari and any iOS browser, including Brave/Chrome which all
+ * use WebKit underneath) blocks GIS's "silent" iframe flow because of ITP +
+ * the third-party-cookie embargo. The token client falls back to a popup
+ * attempt, which is then blocked because no user gesture is in flight,
+ * producing a [GSI_LOGGER] error in the debug log every single mount. Skip
+ * the silent attempt entirely on iOS — the manual "Connect & Back Up"
+ * button still works because *that* IS in a user gesture.
+ */
+function isIosWebKit(): boolean {
+  if (typeof navigator === 'undefined') return false
+  const ua = navigator.userAgent
+  // iPad on iOS 13+ reports as Mac, so also probe for touch + Mac.
+  const looksLikeIpad = /Macintosh/.test(ua) && (navigator.maxTouchPoints ?? 0) > 1
+  return /iPad|iPhone|iPod/.test(ua) || looksLikeIpad
+}
+
 /** Promise-wrap GIS's callback-style requestAccessToken. */
 function requestSilentToken(clientId: string, hint?: string | null): Promise<string | null> {
   return new Promise((resolve) => {
@@ -76,6 +93,10 @@ export async function attemptSilentDriveConnect(): Promise<string | null> {
   const st = useAppStore.getState()
   if (st.googleToken) return st.googleToken  // already have one
   if (!st.googleSub) return null              // no identity to hint with
+
+  // iOS WebKit: silent flow is reliably blocked + spammy. Skip and let the
+  // manual Settings button handle it.
+  if (isIosWebKit()) return null
 
   // Respect the backoff so we don't hammer GIS after a failed attempt.
   if (lastAttemptFailed && Date.now() - lastAttemptAt < RETRY_WINDOW_MS) return null

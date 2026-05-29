@@ -189,7 +189,10 @@ interface SpeakOptions {
 }
 
 function speakWithOptions(text: string, options: SpeakOptions): Promise<void> {
-  return new Promise((resolve, reject) => {
+  // NOTE: this promise NEVER rejects — every failure path (synth error, Brave
+  // shield, watchdog timeout) resolves so the caller's UI state can't get
+  // stuck. The reason is captured to the debug log instead.
+  return new Promise((resolve) => {
     if (!isSpeechSupported()) { resolve(); return }
 
     window.speechSynthesis.cancel()
@@ -223,14 +226,46 @@ function speakWithOptions(text: string, options: SpeakOptions): Promise<void> {
         if (window.speechSynthesis.paused) window.speechSynthesis.resume()
       }, 5000)
 
-      utterance.onend = () => { clearInterval(resumeInterval); resolve() }
-      utterance.onerror = (event) => {
+      // Belt-and-braces watchdog: on iOS Brave / restrictive privacy shields
+      // utterance.onend can simply never fire (TTS silently disabled). Without
+      // a hard cap the speak() promise hangs forever, leaving isSpeaking stuck
+      // true and the mic button permanently disabled. Cap the longest plausible
+      // utterance: rough estimate 220 chars/sec at rate 1 → 8s buffer + length.
+      const estDuration = Math.min(60_000, 4_000 + Math.ceil(text.length / (options.rate ?? 1)) * 80)
+      const watchdog = setTimeout(() => {
         clearInterval(resumeInterval)
-        if (event.error === 'interrupted' || event.error === 'canceled') resolve()
-        else reject(new Error(`Speech synthesis error: ${event.error}`))
+        try { window.speechSynthesis.cancel() } catch { /* ignore */ }
+        resolve()
+      }, estDuration)
+
+      const finish = (fn: () => void) => {
+        clearInterval(resumeInterval)
+        clearTimeout(watchdog)
+        fn()
       }
 
-      window.speechSynthesis.speak(utterance)
+      utterance.onend = () => finish(resolve)
+      utterance.onerror = (event) => {
+        // Treat ALL synthesis errors as "speech is over" — never reject. The
+        // caller is always async UI plumbing where a rejection would freeze
+        // state (e.g. ChatScreen.isSpeaking sticking true and disabling mic).
+        // The actual reason is captured to the debug log for diagnostics.
+        try {
+          if (event.error && event.error !== 'interrupted' && event.error !== 'canceled') {
+            console.warn(`[voice] speech synthesis error: ${event.error}`)
+          }
+        } catch { /* ignore */ }
+        finish(resolve)
+      }
+
+      try {
+        window.speechSynthesis.speak(utterance)
+      } catch (err) {
+        // Brave's privacy shield can throw synchronously when TTS is blocked.
+        // Same treatment as onerror — fail open, log, never freeze the UI.
+        console.warn('[voice] speechSynthesis.speak threw:', err)
+        finish(resolve)
+      }
     }
 
     if (safeGetVoices().length > 0) {

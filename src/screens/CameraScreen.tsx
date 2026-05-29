@@ -13,6 +13,7 @@ import { addXP } from '../lib/xp'
 import { playTap, playOops } from '../lib/audio'
 import { XPCelebration } from '../components/XPCelebration'
 import { SafeArea } from '../components/SafeArea'
+import { logEvent } from '../lib/debugLog'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -173,11 +174,15 @@ export function CameraScreen() {
   // counter ticks on every new acquisition, guaranteeing this effect runs
   // whenever a fresh stream is available.
   useEffect(() => {
-    if (phase === 'camera' && streamRef.current && videoRef.current) {
-      videoRef.current.srcObject = streamRef.current
-      // autoPlay sometimes silently stalls; force a play() to be safe
-      videoRef.current.play().catch(() => { /* non-fatal */ })
-    }
+    if (phase !== 'camera' || !streamRef.current || !videoRef.current) return
+    const video = videoRef.current
+    video.srcObject = streamRef.current
+    // Defer play() until the metadata is ready — on iOS WebKit autoPlay can
+    // silently stall otherwise, leaving a black preview.
+    const tryPlay = () => { video.play().catch(() => { /* non-fatal */ }) }
+    if (video.readyState >= 1) tryPlay()
+    else video.addEventListener('loadedmetadata', tryPlay, { once: true })
+    return () => video.removeEventListener('loadedmetadata', tryPlay)
   }, [phase, streamVersion])
 
   // ── Init Gemini client ────────────────────────────────────────────────────
@@ -223,6 +228,18 @@ export function CameraScreen() {
     setPhase('camera')
     setErrorMsg('')
 
+    // Fully release any prior stream BEFORE asking for a new one. On iOS
+    // WebKit (Safari/Brave), getUserMedia after a partial teardown can
+    // return a "live" stream whose tracks never produce frames — leaving a
+    // black <video>. Detaching srcObject and stopping every track first
+    // forces a clean re-acquisition.
+    if (videoRef.current) {
+      try { videoRef.current.pause() } catch { /* ignore */ }
+      videoRef.current.srcObject = null
+    }
+    releaseStream(streamRef.current)
+    streamRef.current = null
+
     const constraints: MediaStreamConstraints = retry
       ? { video: true }
       : { video: { facingMode: 'environment' } }
@@ -240,7 +257,13 @@ export function CameraScreen() {
       setStreamVersion(v => v + 1)
       if (videoRef.current) {
         videoRef.current.srcObject = stream
-        videoRef.current.play().catch(() => { /* non-fatal */ })
+        // iOS Safari won't actually start the camera feed until metadata is
+        // ready; calling .play() too early silently rejects. Wait for
+        // loadedmetadata (or a short timeout) before starting playback.
+        const video = videoRef.current
+        const tryPlay = () => { video.play().catch(() => { /* non-fatal */ }) }
+        if (video.readyState >= 1) tryPlay()
+        else video.addEventListener('loadedmetadata', tryPlay, { once: true })
       }
     } catch (err) {
       if (!isMountedRef.current) return
@@ -483,7 +506,10 @@ export function CameraScreen() {
         setPhase('result')
       }
     } catch (err) {
-      // Log the full error for parents/devs — the UI shows a friendly summary
+      // Log the full error for parents/devs — the UI shows a friendly summary.
+      // Explicit name+message because Safari's stack omits the header.
+      const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+      logEvent('error', `[Camera] analyzeImage failed: ${errMsg}`, err)
       console.error('[Camera] analyzeImage failed:', err)
       if (!isMountedRef.current) return
       releaseStream(streamRef.current)
