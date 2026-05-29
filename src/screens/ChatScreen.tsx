@@ -11,6 +11,8 @@ import { createIdleTimer, generateSessionSummary, initSessionTriggers, type Idle
 import { extractTopics, bumpInterest, getTopInterests } from '../lib/memory'
 import { getLocalAnswer } from '../lib/localAnswers'
 import { detectIntent, type Intent } from '../lib/intents'
+import { detectLanguageOr } from '../lib/languageDetect'
+import { LANG_NAME, isAppLang, type AppLang } from '../lib/langs'
 import { logEvent } from '../lib/debugLog'
 import { addXP } from '../lib/xp'
 import { buildSystemPrompt, FALLBACK_OFFLINE_RESPONSES } from '../prompts/index'
@@ -55,9 +57,18 @@ export function ChatScreen() {
   const pendingSpeakRef = useRef<Promise<void> | null>(null)
   const qParamHandledRef = useRef(false)
   const handleUserMessageRef = useRef<(text: string) => Promise<void> | void>()
-  const lang = profile?.preferredLanguages[0] ?? 'en'
+  // Profile's "home" language — used as the default and as a fallback when
+  // the child writes pure punctuation / single letters.
+  const homeLangRaw = profile?.preferredLanguages[0] ?? 'en'
+  const homeLang: AppLang = isAppLang(homeLangRaw) ? homeLangRaw : 'en'
+  // Active spoken/heard language — updates per utterance via detectLanguage.
+  // Drives TTS, STT, and the runtime hint to Gemini, so a kid switching to
+  // Kannada or Hindi mid-conversation gets Leo back in that language.
+  const [activeLang, setActiveLang] = useState<AppLang>(homeLang)
+  // Memoised "lang" name — keeps useEffect deps stable for downstream consumers.
+  const lang = activeLang  // kept as a local alias so existing call sites need no rename
 
-  const { transcript, interimTranscript, isListening, startListening, stopListening, error: speechError, isSupported } = useSpeech(lang)
+  const { transcript, interimTranscript, isListening, startListening, stopListening, error: speechError, isSupported } = useSpeech(activeLang)
 
   // ── Scroll to bottom ────────────────────────────────────────────────────────
 
@@ -249,6 +260,18 @@ export function ChatScreen() {
 
     idleTimerRef.current?.reset()
 
+    // Detect the kid's spoken/written language for THIS message FIRST so
+    // every branch below (safety deflect, intent, local answer, Gemini)
+    // speaks back in the matching language. Falls back to the previous
+    // active language for pure punctuation. Drives the voice picked by
+    // selectVoice, the next STT pass, and the hint we attach to Gemini.
+    const detected = detectLanguageOr(text, activeLang)
+    if (detected !== activeLang) {
+      setActiveLang(detected)
+      logEvent('info', `[Chat] language switched → ${detected}`)
+    }
+    const replyLang: AppLang = detected
+
     // Safety check on input
     if (!checkInput(text)) {
       const deflectMsg: ChatMessage = {
@@ -260,7 +283,7 @@ export function ChatScreen() {
       if (!isMountedRef.current) return
       setMessages(prev => [...prev.slice(-9), deflectMsg])
       setLeoMood('happy')
-      await speakAndTrack(SAFE_DEFLECTION, lang)
+      await speakAndTrack(SAFE_DEFLECTION, replyLang)
       return
     }
 
@@ -292,7 +315,7 @@ export function ChatScreen() {
       setMessages(prev => [...prev.slice(-9), intentMsg])
       setPendingIntent(intent)
       setLeoMood('excited')
-      await speakAndTrack(intent.prompt, lang)
+      await speakAndTrack(intent.prompt, replyLang)
       return
     }
 
@@ -309,7 +332,7 @@ export function ChatScreen() {
       if (!isMountedRef.current) return
       setMessages(prev => [...prev.slice(-9), localMsg])
       setLeoMood('happy')
-      await speakAndTrack(local, lang)
+      await speakAndTrack(local, replyLang)
       return
     }
 
@@ -325,7 +348,7 @@ export function ChatScreen() {
       }
       if (!isMountedRef.current) return
       setMessages(prev => [...prev.slice(-9), fallbackMsg])
-      await speakAndTrack(fallback, lang)
+      await speakAndTrack(fallback, replyLang)
       return
     }
 
@@ -344,10 +367,19 @@ export function ChatScreen() {
       { id: assistantMsgId, role: 'assistant', text: '', timestamp: Date.now() }
     ])
 
+    // Tell Gemini which language to reply in. We attach it as a short
+    // [hint] line on the USER message rather than mutating the system
+    // prompt — keeps the system prompt cacheable and lets the language
+    // change message-to-message.
+    const langHint = replyLang === 'en'
+      ? ''  // English is the default; no hint needed (saves a few tokens)
+      : `[Reply in ${LANG_NAME[replyLang]} — the child wrote in ${LANG_NAME[replyLang]} script. Keep words simple and natural for a ${profile?.age ?? 5}-year-old.]\n`
+    const userMessageWithHint = langHint + text
+
     try {
       await geminiClient.streamChat(
         systemPrompt,
-        text,
+        userMessageWithHint,
         (chunk) => {
           if (!isMountedRef.current) return
           fullResponse += chunk
@@ -360,18 +392,21 @@ export function ChatScreen() {
             )
           )
 
-          // Speak complete sentences as they arrive
+          // Speak complete sentences as they arrive — use replyLang (the
+          // detected language for THIS turn). The activeLang state setter
+          // is async, so reading `lang` here would speak the *previous*
+          // language for the first message after a switch.
           const sentenceMatch = sentenceBuffer.match(/^(.+?[.!?])\s*/)
           if (sentenceMatch) {
             const sentence = sentenceMatch[1]
             sentenceBuffer = sentenceBuffer.slice(sentenceMatch[0].length)
             setLeoMood('excited')
-            void speakAndTrack(sentence, lang).then(() => {
+            void speakAndTrack(sentence, replyLang).then(() => {
               if (isMountedRef.current) setLeoMood('happy')
             })
           } else if (sentenceBuffer.length > 200) {
             // Fix 7: fallback for long buffers with no punctuation
-            void speakAndTrack(sentenceBuffer.trim(), lang)
+            void speakAndTrack(sentenceBuffer.trim(), replyLang)
             sentenceBuffer = ''
           }
         }
@@ -380,7 +415,7 @@ export function ChatScreen() {
       // Speak any remaining buffer
       if (sentenceBuffer.trim()) {
         if (isMountedRef.current) {
-          await speakAndTrack(sentenceBuffer.trim(), lang)
+          await speakAndTrack(sentenceBuffer.trim(), replyLang)
         }
       }
 
@@ -391,7 +426,7 @@ export function ChatScreen() {
       if (!fullResponse.trim()) {
         const emptyMsg = "Hmm, I didn't quite catch that! Can you ask me again? 🦁"
         setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, text: emptyMsg } : m))
-        await speakAndTrack(emptyMsg, lang)
+        await speakAndTrack(emptyMsg, replyLang)
         return
       }
 
@@ -404,7 +439,7 @@ export function ChatScreen() {
           )
         )
         stopSpeaking()
-        await speakAndTrack(safeMsg, lang)
+        await speakAndTrack(safeMsg, replyLang)
         if (!isMountedRef.current) return
         return // Don't bump interests for unsafe responses
       }
@@ -455,7 +490,7 @@ export function ChatScreen() {
           m.id === assistantMsgId ? { ...m, text: errorMsg } : m
         )
       )
-      await speakAndTrack(errorMsg, lang)
+      await speakAndTrack(errorMsg, replyLang)
       if (isMountedRef.current) setLeoMood('happy')
     } finally {
       if (isMountedRef.current) {
@@ -523,9 +558,20 @@ export function ChatScreen() {
           </button>
           <LeoMascot size="sm" mood={leoMood} speaking={isSpeaking} />
           <div className="flex-1">
-            <p className="font-extrabold text-lavender-700">
-              {profile?.mascotChoice === 'lion' ? 'Leo' : profile?.mascotChoice === 'owl' ? 'Ollie' : 'Benny'}
-            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-extrabold text-lavender-700">
+                {profile?.mascotChoice === 'lion' ? 'Leo' : profile?.mascotChoice === 'owl' ? 'Ollie' : 'Benny'}
+              </p>
+              {/* Live language indicator — shows what Leo is currently
+                  hearing/speaking. Updates the moment the kid switches to
+                  Hindi / Tamil / Kannada / Telugu / English. */}
+              <span
+                className="text-[10px] font-extrabold text-mint-700 bg-mint-50 border border-mint-200 px-1.5 py-0.5 rounded-full uppercase tracking-wider"
+                aria-label={`Speaking ${LANG_NAME[activeLang]}`}
+              >
+                🌐 {activeLang}
+              </span>
+            </div>
             <p className="text-xs text-lavender-400 font-medium">
               {isLoading ? 'Thinking...' : isSpeaking ? 'Speaking...' : isListening ? 'Listening...' : 'Ready to chat!'}
             </p>
