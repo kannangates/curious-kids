@@ -6,10 +6,20 @@ import type { ChildProfile } from '../db/index'
  * Builds the full system prompt for Leo the AI companion.
  * Personalized with the child's profile, interests, and recent context.
  */
+export interface MemoryContext {
+  /** Last 1-3 session summary strings (newest first). */
+  recentSummaries?: string[]
+  /** Last few learned object names (newest first). */
+  recentDiscoveries?: string[]
+  /** Last puzzle / quiz answer (just the topic word). */
+  lastPuzzleTopic?: string
+}
+
 export function buildSystemPrompt(
   profile: ChildProfile,
   topInterests: string[],
-  lastSummaries: string[]
+  lastSummaries: string[],
+  memory?: MemoryContext
 ): string {
   const mascotName = profile.mascotChoice === 'lion'
     ? 'Leo'
@@ -36,6 +46,25 @@ export function buildSystemPrompt(
 
   const contextSection = lastSummaries.length > 0
     ? `Recent learning: ${lastSummaries.join(' | ')}`
+    : ''
+
+  // Memory continuity — pull recent discoveries / puzzle topic into the
+  // prompt so any "Talk to Leo" entry feels like a continuation, not a
+  // cold start. Used by the system prompt's continuity hint below.
+  const continuityLines: string[] = []
+  if (memory?.recentDiscoveries && memory.recentDiscoveries.length > 0) {
+    continuityLines.push(
+      `Recently discovered with the camera: ${memory.recentDiscoveries.slice(0, 5).join(', ')}.`
+    )
+  }
+  if (memory?.lastPuzzleTopic) {
+    continuityLines.push(`Last puzzle topic: ${memory.lastPuzzleTopic}.`)
+  }
+  if (memory?.recentSummaries && memory.recentSummaries.length > 0) {
+    continuityLines.push(`Yesterday/recently: ${memory.recentSummaries.slice(0, 2).join(' · ')}`)
+  }
+  const continuitySection = continuityLines.length > 0
+    ? `\nCONTINUITY (you may gently reference these if relevant — never force):\n- ${continuityLines.join('\n- ')}`
     : ''
 
   const languageList = profile.preferredLanguages
@@ -94,7 +123,11 @@ LANGUAGE:
 - Keep responses SHORT and SPOKEN-FRIENDLY — they will be read aloud by a text-to-speech engine
 
 ${interestsSection}
-${contextSection}
+${contextSection}${continuitySection}
+
+CONVERSATION FLOW (very important):
+- Treat every turn as a continuation, not a fresh introduction. If you spot a natural callback to a recent topic / discovery / puzzle, weave it in lightly ("Remember the butterfly we saw yesterday?"). Don't force it.
+- If ${profile.name} mentions wanting to "play a game", "hear a story", "see something", "do a puzzle", or similar — answer briefly and let the app's intent system handle the navigation. Don't try to start the activity inside chat.
 
 Remember: Every response should leave ${profile.name} feeling delighted, curious, and eager to explore more!`
 }

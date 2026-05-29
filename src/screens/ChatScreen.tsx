@@ -10,6 +10,7 @@ import { checkInput, checkOutput, SAFE_DEFLECTION } from '../lib/safety'
 import { createIdleTimer, generateSessionSummary, initSessionTriggers, type IdleTimer } from '../lib/session'
 import { extractTopics, bumpInterest, getTopInterests } from '../lib/memory'
 import { getLocalAnswer } from '../lib/localAnswers'
+import { detectIntent, type Intent } from '../lib/intents'
 import { logEvent } from '../lib/debugLog'
 import { addXP } from '../lib/xp'
 import { buildSystemPrompt, FALLBACK_OFFLINE_RESPONSES } from '../prompts/index'
@@ -42,6 +43,10 @@ export function ChatScreen() {
   const [geminiClient, setGeminiClient] = useState<GeminiClient | null>(null)
   const [systemPrompt, setSystemPrompt] = useState('')
   const [leoMood, setLeoMood] = useState<'happy' | 'thinking' | 'excited' | 'sleeping'>('happy')
+  // Pending intent suggestion — when the kid says "play a game" / "tell me a
+  // story" etc., Leo offers to navigate via a confirm chip (tap-only, never
+  // automatic) so accidental keyword matches don't yank the kid out of chat.
+  const [pendingIntent, setPendingIntent] = useState<Intent | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const idleTimerRef = useRef<IdleTimer | null>(null)
@@ -133,13 +138,22 @@ export function ChatScreen() {
         })
         setGeminiClient(client)
 
-        // Build system prompt using top interests from memory module
+        // Build system prompt using top interests from memory module +
+        // recent discoveries so chat feels like a continuation, not cold.
         const topInterests = await getTopInterests(profile.id, 3)
         const recentSummaries = await getRecentSummaries(profile.id, 2)
+        const recentLearned = await db.learnedObjects
+          .where('profileId').equals(profile.id)
+          .toArray()
+        const recentDiscoveries = recentLearned
+          .sort((a, b) => new Date(b.learnedAt).getTime() - new Date(a.learnedAt).getTime())
+          .slice(0, 5)
+          .map(o => o.objectName)
         const prompt = buildSystemPrompt(
           profile,
           topInterests.map(t => t.tag),
-          recentSummaries.map(s => s.summary)
+          recentSummaries.map(s => s.summary),
+          { recentDiscoveries, recentSummaries: recentSummaries.map(s => s.summary) }
         )
         if (cancelled) return
         setSystemPrompt(prompt)
@@ -263,6 +277,24 @@ export function ChatScreen() {
     // Extract topics for session tracking and interest bump
     const keywords = extractTopics(text)
     keywords.forEach(k => addSessionTopic(k))
+
+    // Voice intent detection — kid says "play a game" / "tell me a story"
+    // → Leo offers to open the right mode. Confirm chip; never auto-navs.
+    const intent = detectIntent(text)
+    if (intent) {
+      const intentMsg: ChatMessage = {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        text: intent.prompt,
+        timestamp: Date.now()
+      }
+      if (!isMountedRef.current) return
+      setMessages(prev => [...prev.slice(-9), intentMsg])
+      setPendingIntent(intent)
+      setLeoMood('excited')
+      await speakAndTrack(intent.prompt, lang)
+      return
+    }
 
     // Answer time/date questions locally — the AI has no clock, and these
     // should be instant + correct (works offline too).
@@ -595,6 +627,35 @@ export function ChatScreen() {
 
         {/* Bottom controls */}
         <div className="px-4 pb-safe flex flex-col items-center gap-2 bg-white/80 backdrop-blur-sm pt-3 border-t border-lavender-100">
+          {/* Intent confirm chip — appears when Leo detected a navigation
+              intent ("play a game", "tell me a story", etc). One tap to
+              confirm, one to dismiss; nothing happens automatically. */}
+          {pendingIntent && (
+            <motion.div
+              initial={{ opacity: 0, y: 10, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 10, scale: 0.92 }}
+              className="flex gap-2 w-full"
+            >
+              <button
+                onClick={() => {
+                  const path = pendingIntent.path
+                  setPendingIntent(null)
+                  stopSpeaking()
+                  navigate(path)
+                }}
+                className="flex-1 py-3 px-4 rounded-2xl bg-gradient-to-r from-lavender-500 to-lavender-700 text-white font-extrabold text-base shadow-md active:scale-95"
+              >
+                {pendingIntent.confirmLabel}
+              </button>
+              <button
+                onClick={() => setPendingIntent(null)}
+                className="px-4 py-3 rounded-2xl bg-gray-100 text-gray-600 font-bold text-sm active:scale-95"
+              >
+                Not now
+              </button>
+            </motion.div>
+          )}
           {!isSupported ? (
             <div className="py-4 text-center">
               <p className="text-sm text-gray-500 font-medium">

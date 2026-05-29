@@ -247,23 +247,16 @@ export function HomeScreen() {
           </motion.p>
         </div>
 
-        {/* Navigation grid */}
+        {/* Six explicit-mode cards. Talk-to-Leo lives in its own hero row
+            below so the conversational entry is unmistakable. */}
         <div className="grid grid-cols-2 gap-3">
-          <NavCard
-            emoji="🎙️"
-            label="Talk to Leo"
-            sublabel="Ask anything!"
-            gradient="bg-gradient-to-br from-lavender-500 to-lavender-700"
-            onClick={() => navigate('/chat')}
-            delay={0.1}
-          />
           <NavCard
             emoji="📷"
             label="What Is This?"
             sublabel="Point & learn!"
             gradient="bg-gradient-to-br from-sky-400 to-sky-600"
             onClick={() => navigate('/camera')}
-            delay={0.2}
+            delay={0.1}
           />
           <NavCard
             emoji="📚"
@@ -271,7 +264,7 @@ export function HomeScreen() {
             sublabel="Learn new words!"
             gradient="bg-gradient-to-br from-coral-400 to-coral-600"
             onClick={() => navigate('/words')}
-            delay={0.3}
+            delay={0.15}
           />
           <NavCard
             emoji="✨"
@@ -279,7 +272,7 @@ export function HomeScreen() {
             sublabel="All I've learned!"
             gradient="bg-gradient-to-br from-mint-500 to-mint-700"
             onClick={() => navigate('/discoveries')}
-            delay={0.4}
+            delay={0.2}
           />
           <NavCard
             emoji="🎮"
@@ -287,7 +280,7 @@ export function HomeScreen() {
             sublabel="Play & guess!"
             gradient="bg-gradient-to-br from-leo-400 to-leo-600"
             onClick={() => navigate('/wordgame')}
-            delay={0.5}
+            delay={0.25}
           />
           <NavCard
             emoji="🧩"
@@ -295,7 +288,7 @@ export function HomeScreen() {
             sublabel="Solve riddles!"
             gradient="bg-gradient-to-br from-lavender-400 to-sky-500"
             onClick={() => navigate('/puzzle')}
-            delay={0.6}
+            delay={0.3}
           />
           <NavCard
             emoji="🌙"
@@ -303,9 +296,55 @@ export function HomeScreen() {
             sublabel="A tale for you!"
             gradient="bg-gradient-to-br from-indigo-400 to-violet-600"
             onClick={() => navigate('/bedtime')}
-            delay={0.7}
+            delay={0.35}
           />
         </div>
+
+        {/* Hero "Talk to Leo" card — full width, animated, the primary
+            conversational entry. Leo's chat now interprets intents like
+            "play a game" / "tell me a story" and routes to the right mode. */}
+        <motion.button
+          onClick={() => navigate('/chat')}
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.45, type: 'spring', stiffness: 220, damping: 22 }}
+          whileTap={{ scale: 0.97 }}
+          className="
+            relative mt-3 w-full overflow-hidden rounded-3xl shadow-xl
+            bg-gradient-to-r from-lavender-500 via-lavender-600 to-lavender-700
+            px-5 py-4 flex items-center gap-4 text-left
+            active:shadow-lg
+          "
+          aria-label="Talk to Leo — open the conversation"
+        >
+          {/* Soft animated glow behind the mic */}
+          <motion.span
+            aria-hidden
+            className="absolute -left-6 -top-6 w-32 h-32 rounded-full bg-white/20 blur-2xl"
+            animate={{ scale: [1, 1.2, 1], opacity: [0.6, 0.3, 0.6] }}
+            transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+          />
+          <motion.span
+            className="text-5xl leading-none relative z-10"
+            animate={{ rotate: [0, -8, 8, -4, 4, 0] }}
+            transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', repeatDelay: 1.2 }}
+          >
+            🎙️
+          </motion.span>
+          <div className="relative z-10 flex-1 min-w-0">
+            <p className="text-white font-extrabold text-xl leading-tight">Talk to Leo</p>
+            <p className="text-white/85 font-semibold text-sm leading-tight">
+              Ask anything — say "play a game" or "tell me a story" 🌟
+            </p>
+          </div>
+          <motion.span
+            className="text-2xl text-white/90 relative z-10"
+            animate={{ x: [0, 4, 0] }}
+            transition={{ duration: 1.2, repeat: Infinity, ease: 'easeInOut' }}
+          >
+            →
+          </motion.span>
+        </motion.button>
 
         {/* Today's topic strip */}
         {topInterests.length > 0 && (

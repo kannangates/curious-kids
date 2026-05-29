@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useGoogleLogin } from '@react-oauth/google'
 import { motion } from 'motion/react'
@@ -571,16 +571,44 @@ export function ParentSettingsScreen() {
     }
   }, [showError])
 
-  // Auto-backup the debug log to Drive when the page is hidden (closing tab,
-  // switching apps on mobile) — but only when debug is ON and a token exists.
+  // Auto-backup the debug log to Drive in the background:
+  //  - when the page is hidden (closing tab, switching apps on mobile)
+  //  - when Settings unmounts (parent leaves the screen)
+  // Plus a 60s heartbeat while Settings is open so long debugging sessions
+  // don't lose entries if the device dies. All silent — no UI.
   useEffect(() => {
     if (!debugOn || !googleToken) return
     function onHide(): void {
       if (document.hidden) void syncDebugLogToDrive(true)
     }
     document.addEventListener('visibilitychange', onHide)
-    return () => document.removeEventListener('visibilitychange', onHide)
+    const heartbeat = window.setInterval(() => {
+      void syncDebugLogToDrive(true)
+    }, 60_000)
+    return () => {
+      document.removeEventListener('visibilitychange', onHide)
+      window.clearInterval(heartbeat)
+      // One final push on unmount so the most recent entries make it.
+      void syncDebugLogToDrive(true)
+    }
   }, [debugOn, googleToken, syncDebugLogToDrive])
+
+  // Auto-fire the Drive connect ONCE when Settings opens without a token.
+  // The mount event itself isn't a user gesture, but the popup is typically
+  // allowed for the foreground tab right after navigation. If it gets
+  // blocked, the small "Connect Drive" link is still there as a fallback.
+  const autoConnectFiredRef = useRef(false)
+  useEffect(() => {
+    if (autoConnectFiredRef.current) return
+    if (googleToken) return
+    if (!googleSub) return  // no identity yet
+    autoConnectFiredRef.current = true
+    // Small delay so React finishes painting Settings before the popup opens
+    const t = window.setTimeout(() => {
+      try { connectGoogle() } catch { /* popup blocked — manual fallback shows */ }
+    }, 400)
+    return () => window.clearTimeout(t)
+  }, [googleToken, googleSub, connectGoogle])
 
   // ── Reset memory (interests, sessions, discoveries) within a window ─────
 
@@ -1172,42 +1200,25 @@ export function ParentSettingsScreen() {
           )}
         </div>
 
-        {/* Drive sync */}
-        <div className="bg-white rounded-3xl p-4 shadow-sm border border-lavender-100 flex flex-col gap-3">
-          <p className="text-xs text-gray-400 font-bold uppercase tracking-wider">Google Drive Backup</p>
-          {settings?.lastSyncedAt && (
-            <p className="text-sm text-gray-400">
-              Last synced: {new Date(settings.lastSyncedAt).toLocaleDateString()}
-            </p>
+        {/* Drive sync — collapsed footer.
+            When connected: a tiny "✓ Backed up" status line, no button.
+            When not connected: a single small button. We also auto-fire
+            it once per Settings visit (see initial-load effect) so the
+            parent only sees the tap chrome the very first time. */}
+        <div className="flex items-center justify-center gap-2 text-xs font-semibold text-gray-400 pt-1">
+          {googleToken ? (
+            <span className="text-mint-500">
+              ☁️ ✓ Backed up to Drive{settings?.lastSyncedAt ? ` · ${new Date(settings.lastSyncedAt).toLocaleDateString()}` : ''}
+            </span>
+          ) : (
+            <button
+              onClick={() => handleDriveSync()}
+              disabled={syncStatus === 'syncing'}
+              className="underline text-sky-500 active:opacity-70 disabled:opacity-50"
+            >
+              {syncStatus === 'syncing' ? 'Connecting…' : '☁️ Connect Drive to back up'}
+            </button>
           )}
-          {!googleToken && (
-            <p className="text-sm text-gray-500 font-medium -mt-1">
-              You'll be asked to connect Google once, then it backs up instantly.
-            </p>
-          )}
-          <button
-            onClick={() => handleDriveSync()}
-            disabled={syncStatus === 'syncing'}
-            className="
-              w-full py-3 font-bold text-white
-              bg-gradient-to-r from-sky-400 to-sky-600
-              rounded-2xl disabled:opacity-50 active:scale-95
-              flex items-center justify-center gap-2
-            "
-          >
-            {syncStatus === 'syncing' ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                {googleToken ? 'Syncing...' : 'Connecting...'}
-              </>
-            ) : syncStatus === 'done' ? (
-              '✅ Synced!'
-            ) : googleToken ? (
-              '☁️ Sync Now'
-            ) : (
-              '☁️ Connect & Back Up'
-            )}
-          </button>
         </div>
 
         {/* Debug mode — captures actions + errors, exports / auto-backs-up the log */}
@@ -1233,36 +1244,30 @@ export function ParentSettingsScreen() {
 
             {debugOn && (
               <>
-                <button
-                  onClick={() => void handleExportLog()}
-                  className="w-full py-3 font-bold text-white bg-gradient-to-r from-lavender-500 to-lavender-700 rounded-2xl active:scale-95"
-                >
-                  {exportLabel || '📤 Export Log (Share / Save)'}
-                </button>
-
-                <button
-                  onClick={() => void syncDebugLogToDrive(false)}
-                  disabled={driveLogStatus === 'syncing' || !googleToken}
-                  className="w-full py-3 font-bold text-sky-700 bg-sky-50 border-2 border-sky-200 rounded-2xl active:scale-95 disabled:opacity-50"
-                >
-                  {driveLogStatus === 'syncing' ? 'Syncing to Drive…'
-                    : driveLogStatus === 'done' ? '✅ Backed up to Drive'
-                    : !googleToken ? '☁️ Back up to Drive (connect Google first)'
-                    : '☁️ Back up this device to Drive'}
-                </button>
-
-                <button
-                  onClick={() => void handleFetchDebugFromDrive()}
-                  disabled={driveLogStatus === 'syncing' || !googleToken}
-                  className="w-full py-3 font-bold text-mint-700 bg-mint-50 border-2 border-mint-200 rounded-2xl active:scale-95 disabled:opacity-50"
-                >
-                  📥 Fetch log from Drive (from another device)
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => void handleExportLog()}
+                    className="py-3 font-bold text-white bg-gradient-to-r from-lavender-500 to-lavender-700 rounded-2xl active:scale-95"
+                  >
+                    {exportLabel || '📤 Export'}
+                  </button>
+                  <button
+                    onClick={() => void handleFetchDebugFromDrive()}
+                    disabled={driveLogStatus === 'syncing' || !googleToken}
+                    className="py-3 font-bold text-mint-700 bg-mint-50 border-2 border-mint-200 rounded-2xl active:scale-95 disabled:opacity-50"
+                  >
+                    📥 Fetch from Drive
+                  </button>
+                </div>
 
                 <p className="text-xs text-gray-400 font-medium text-center">
-                  {lastDebugSync
-                    ? `Last Drive backup: ${new Date(lastDebugSync).toLocaleString()}`
-                    : 'Auto-backs up when the app is closed/hidden.'}
+                  {!googleToken
+                    ? 'Connect Drive above to enable cross-device backup.'
+                    : driveLogStatus === 'syncing'
+                      ? 'Backing up to Drive…'
+                      : lastDebugSync
+                        ? `Auto-backed up · ${new Date(lastDebugSync).toLocaleString()}`
+                        : 'Auto-backs up to Drive in the background.'}
                 </p>
               </>
             )}
