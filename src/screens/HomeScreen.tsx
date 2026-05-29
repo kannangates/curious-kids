@@ -216,8 +216,11 @@ export function HomeScreen() {
             onClick={() => {
               const text = lastGreetingRef.current
                 || `${greeting} ${speechBubble}`.replace(/[\p{Extended_Pictographic}]/gu, '').replace(/\s+/g, ' ').trim()
-              if (text) void speak(text, lang)
+              if (!text) return
               setNeedsTapToHear(false)
+              // If speak() rejects (e.g. iOS thinks the gesture is stale), put
+              // the 🔊 hint back so the child can try again.
+              void speak(text, lang).catch(() => setNeedsTapToHear(true))
             }}
             className="relative bg-transparent border-0 p-0 rounded-full"
             aria-label="Tap to hear greeting"

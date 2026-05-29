@@ -20,10 +20,11 @@ Requires Node 20+. Needs a `.env` with `VITE_GOOGLE_CLIENT_ID=...apps.googleuser
 
 A **zero-backend, local-first PWA**. Everything runs in the browser: the parent supplies their own Gemini API key, data lives in IndexedDB, and Google Drive (`appDataFolder` scope) is the only remote — used purely as per-child backup. There is no server to deploy beyond static hosting. Voice (STT/TTS) uses the free Web Speech API.
 
-### Auth + crypto chain (read `crypto.ts`, `store/app.ts`, `App.tsx`, `WelcomeBackScreen.tsx` together)
+### Auth + crypto chain (read `crypto.ts`, `store/app.ts`, `App.tsx`, `WelcomeBackScreen.tsx`, `lib/driveAuth.ts` together)
 - Google Sign-In uses `useGoogleLogin({ flow: 'implicit' })` → an **access token** (for Drive) plus the user's **`sub`** (fetched from the userinfo endpoint).
 - The Gemini API key is **AES-GCM encrypted with a key derived from the Google `sub`** (PBKDF2, salt `curiouskie-v1`). It is never stored in plaintext; the ciphertext lives in IndexedDB and syncs to Drive inside `curiouskie-settings.json`.
-- The `sub` is the decryption key material. It is persisted in `localStorage` (`ck_google_sub`) and restored into the store on load so refreshes don't force re-login. The Drive **access token is NOT persisted** (expires ~1h) — Drive sync therefore requires an interactive connect (the Settings "Connect & Back Up" button triggers `useGoogleLogin` on demand).
+- The `sub` is the decryption key material. It is persisted in `localStorage` (`ck_google_sub`) and restored into the store on load so refreshes don't force re-login. The Drive **access token is NOT persisted** (expires ~1h).
+- **Silent Drive token refresh** (`lib/driveAuth.ts`): on every App mount, `useAutoDriveConnect` fires `attemptSilentDriveConnect()` — uses GIS's `initTokenClient({prompt:''})` to refresh the access token via an *iframe* (no popup, no gesture) as long as the parent's Google session is still alive. Failure is silent (5-min backoff) and the "Connect & Back Up" button in Settings remains the manual fallback for Safari ITP / signed-out / blocked-cookie cases. `pushSettingsToDrive` in `ParentSettingsScreen` also tries the silent refresh before giving up.
 - `WelcomeBackScreen` is the fallback gate shown only when there is no `sub` at all (new device / cleared data), not on normal refreshes. **Both Onboarding step 1 and WelcomeBack pull the parent's global settings from Drive immediately after sign-in** (in parallel with the child-profile list), so a fresh device gets the API key + models + PIN + time limit before any screen renders.
 
 ### Cross-device sync via Drive (`appDataFolder` scope)
@@ -65,7 +66,9 @@ Several things deliberately live in `localStorage` to avoid schema migrations an
 
 ### Voice pipeline (`lib/voice.ts`, `hooks/useSpeech.ts`)
 - `selectVoice` **scores** voices for naturalness (big bonus for Natural/Neural/Online/Google, penalty for Desktop/eSpeak) and honors the parent-chosen `ck_voice_uri`. This is the main lever for "human-sounding" output. `speak()` must set `utterance.voice` *before* `speechSynthesis.speak()`, deferring until `voiceschanged` if voices aren't loaded yet.
-- **Mobile TTS priming**: iOS/some Android browsers block `speechSynthesis.speak()` until a user gesture happens. `primeSpeechOnGesture` (called from `main.tsx`) listens for the first touch/click/keydown and fires a near-silent utterance to unlock the audio for the session.
+- **Defensive against browser voice shims** (Brave's anti-fingerprint `makeFakeVoiceFromVoice`, ad-blockers, Safari's voice-list race): every read of `speechSynthesis.getVoices()` goes through `safeGetVoices()` — wraps the call in try/catch + filters out objects with missing/throwing `.name`/`.lang`. `scoreVoice` is fully wrapped in try/catch and returns `-1000` for unusable rows. A single bad voice can no longer crash the greeting / picker.
+- **Mobile TTS priming**: iOS/some Android browsers block `speechSynthesis.speak()` until a user gesture happens. `primeSpeechOnGesture` (called from `main.tsx`) listens for the first touch/click/keydown and speaks a real but inaudible utterance (volume 0.001, rate 2) that is **allowed to finish naturally** — iOS WebKit needs the full lifecycle to unlock the audio session. `isSpeechPrimed()` is exported so screens can detect the un-primed case.
+- **Tap-to-hear fallback** (`HomeScreen.tsx`): when the home greeting fires before any gesture has happened (rare first-nav case on mobile), `needsTapToHear` flips on and a `🔊 tap` badge appears on the mascot. The mascot is itself a button — tapping plays/replays the greeting. The `.catch()` on `speak()` re-arms the badge if iOS still considers the gesture stale, so the child can try again.
 - **Kid-patient STT**: `useSpeech` waits up to 8s for the kid to *start* speaking and 4s between phrases (vs a flat 2s previously). The `hasSpokenRef` flips after the first transcript and the silence timer shortens.
 - `ChatScreen` streams Gemini and speaks **sentence-by-sentence** as chunks arrive (buffer flushed on `.!?` or >200 chars).
 - Time/date questions are answered locally via `lib/localAnswers.ts` **before** hitting the AI (LLMs have no clock); checked in `ChatScreen.handleUserMessage`.
@@ -79,6 +82,8 @@ Several things deliberately live in `localStorage` to avoid schema migrations an
 
 ### Multi-child model
 All children belong to one signed-in Google account and **share the single encrypted API key**. Each child is a separate profile row and a separate `curiouskie-<childName>.json` on Drive. Switching child only changes the store's `profile`. "Add another child" re-enters onboarding via `/onboarding?add=1`, which skips sign-in and the API-key step. A successful sign-in shows a **Restore-from-Drive chooser** if any children are found there — one tap brings all of them into IndexedDB and sets the picked one active.
+
+**Per-child edit modal** (`ParentSettingsScreen`): each row in the Children list has a ✎ button that opens a centred modal overlay with name / age / buddy / languages. Any child can be edited (not just the active one). `editingChild` holds the target row; `openEditModal(child)` seeds the form fields. `handleSaveProfile` writes to `db.childProfiles.update(editingChild.id, …)` and only syncs `enabledLanguages` to global `appSettings` when editing the active child — editing a non-active sibling no longer overwrites the parent's global lang list.
 
 ## Conventions
 - Tailwind only (kid palette: `leo`/`lavender`/`coral`/`mint`/`sky`); chunky buttons, **`motion/react`** (Framer Motion's successor — same API surface), big emoji.

@@ -204,10 +204,13 @@ function speakWithOptions(text: string, options: SpeakOptions): Promise<void> {
       utterance.pitch = options.pitch ?? 1.1
       utterance.volume = 1.0
 
-      // Honour an explicit voiceURI (preview), else pick the best voice
+      // Honour an explicit voiceURI (preview), else pick the best voice.
+      // Route through safeGetVoices so a malformed shim voice can't throw here.
       let voice: SpeechSynthesisVoice | null = null
       if (options.voiceURI) {
-        voice = window.speechSynthesis.getVoices().find(v => v.voiceURI === options.voiceURI) ?? null
+        voice = safeGetVoices().find(v => {
+          try { return v.voiceURI === options.voiceURI } catch { return false }
+        }) ?? null
       }
       if (!voice) voice = selectVoice(options.lang ?? 'en')
       if (voice) {
@@ -230,7 +233,7 @@ function speakWithOptions(text: string, options: SpeakOptions): Promise<void> {
       window.speechSynthesis.speak(utterance)
     }
 
-    if (window.speechSynthesis.getVoices().length > 0) {
+    if (safeGetVoices().length > 0) {
       doSpeak()
     } else {
       // Voices haven't loaded yet (common on first call). Defer speak() until

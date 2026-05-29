@@ -21,7 +21,7 @@ A zero-cost, voice-first educational PWA for young children. Leo the mascot chat
 - Parent-selectable **TTS voice** (with preview) and **Gemini model** for chat & vision
 
 **Parent controls** (in Settings, behind an optional PIN)
-- **Multi-child profiles** — add, switch, edit (name/age/buddy/languages), and delete children (Drive snapshot is removed too, so the child won't reappear on another device)
+- **Multi-child profiles** — add, switch, **edit any child via a per-row ✎ modal** (name/age/buddy/languages), and delete children (Drive snapshot is removed too, so the child won't reappear on another device)
 - Optional **4-digit Parent PIN** lock on Settings & Dashboard (physical keyboard works too)
 - **Daily time limit** with a gentle "time's up" screen + parent bonus-minutes override
 - Camera on/off, sound effects on/off
@@ -33,12 +33,14 @@ A zero-cost, voice-first educational PWA for young children. Leo the mascot chat
 **Cross-device sync** (Google Drive `appDataFolder`)
 - Settings (encrypted API key, PIN hash, models, time limit, etc.) **auto-pull on every sign-in** and **auto-push on every change** — switch devices and your setup follows you, no re-entry.
 - Children sync per-child as `curiouskie-<name>.json`; a **Restore-from-Drive chooser** appears right after sign-in on a fresh device so you can pick which child to load.
+- **Silent Drive token refresh** — once you've signed in once, returning to the app refreshes the Drive token in the background (no "Connect & Back Up" tap unless your Google session has actually expired or third-party cookies are blocked).
 - Welcome-back re-auth on refresh is a single tap (the Google `sub` used to decrypt the key is the only thing not persisted by default).
 
 **Platform**
 - PWA — installable, works offline with warm fallback responses
 - Google Sign-In for the parent; Google Drive (`appDataFolder` scope) used as the only remote — invisible to the user, no extra storage cost
-- Free voice via the Web Speech API (STT + TTS); kid-patient mic timing (8s to start, 4s between phrases); mobile TTS auto-unlocked on first tap
+- Free voice via the Web Speech API (STT + TTS); kid-patient mic timing (8s to start, 4s between phrases); mobile TTS auto-unlocked on first tap; **mascot doubles as a 🔊 tap-to-hear button** as a fallback when the browser blocks the very first auto-greeting
+- Hardened against browser voice shims (Brave's anti-fingerprint, ad-blockers, Safari's voice-list race) — a malformed voice can never crash speech
 - Custom SVG mascot faces (not platform emoji) so Leo/Ollie/Benny look identically happy on every device
 
 ## Setup
@@ -86,7 +88,7 @@ src/
   db/         — Dexie IndexedDB schema (childProfiles, interestTags, sessionSummaries, learnedObjects, appSettings)
   store/      — Zustand global state (auth, profile, session)
   lib/        — crypto, gemini, geminiClient, voice, safety, drive, session, memory,
-                xp, usage, profiles, audio, localAnswers, debugLog, theme
+                xp, usage, profiles, audio, localAnswers, debugLog, theme, driveAuth
   prompts/    — Gemini prompt builders (system, translation, camera, bedtime, puzzle, weekly report)
   hooks/      — useSpeech, useSessionLimit
   components/ — LeoMascot, VoiceButton, SafeArea, XPCelebration, TimeUpScreen, WelcomeBackScreen,
