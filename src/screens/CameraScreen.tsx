@@ -176,13 +176,26 @@ export function CameraScreen() {
   useEffect(() => {
     if (phase !== 'camera' || !streamRef.current || !videoRef.current) return
     const video = videoRef.current
-    video.srcObject = streamRef.current
-    // Defer play() until the metadata is ready — on iOS WebKit autoPlay can
+    const stream = streamRef.current
+    // Sole owner of <video>.srcObject + play. startCamera only acquires
+    // streams; this effect attaches them.
+    video.srcObject = stream
+    // Defer play() until metadata is ready — on iOS WebKit autoPlay can
     // silently stall otherwise, leaving a black preview.
-    const tryPlay = () => { video.play().catch(() => { /* non-fatal */ }) }
+    const tryPlay = () => {
+      const p = video.play()
+      if (p && typeof p.catch === 'function') p.catch(() => { /* non-fatal */ })
+    }
     if (video.readyState >= 1) tryPlay()
     else video.addEventListener('loadedmetadata', tryPlay, { once: true })
-    return () => video.removeEventListener('loadedmetadata', tryPlay)
+    // Belt-and-braces: also retry play() ~250ms later. iOS sometimes drops
+    // the first play() if the gesture chain is borderline (e.g. after the
+    // permission prompt). The second call is a no-op if already playing.
+    const retry = window.setTimeout(tryPlay, 250)
+    return () => {
+      video.removeEventListener('loadedmetadata', tryPlay)
+      window.clearTimeout(retry)
+    }
   }, [phase, streamVersion])
 
   // ── Init Gemini client ────────────────────────────────────────────────────
@@ -228,17 +241,20 @@ export function CameraScreen() {
     setPhase('camera')
     setErrorMsg('')
 
-    // Fully release any prior stream BEFORE asking for a new one. On iOS
-    // WebKit (Safari/Brave), getUserMedia after a partial teardown can
-    // return a "live" stream whose tracks never produce frames — leaving a
-    // black <video>. Detaching srcObject and stopping every track first
-    // forces a clean re-acquisition.
-    if (videoRef.current) {
-      try { videoRef.current.pause() } catch { /* ignore */ }
-      videoRef.current.srcObject = null
+    // Release any PRIOR live stream before re-acquiring (second-open path).
+    // On first launch there's nothing to release — we deliberately don't
+    // touch the <video> element here, or the attach effect's srcObject set
+    // races with our null assignment and iOS shows a black preview.
+    if (streamRef.current) {
+      releaseStream(streamRef.current)
+      streamRef.current = null
+      // Only detach srcObject if we actually had a stream to detach — and
+      // do it BEFORE getUserMedia so iOS WebKit sees a clean element.
+      if (videoRef.current) {
+        try { videoRef.current.pause() } catch { /* ignore */ }
+        videoRef.current.srcObject = null
+      }
     }
-    releaseStream(streamRef.current)
-    streamRef.current = null
 
     const constraints: MediaStreamConstraints = retry
       ? { video: true }
@@ -251,20 +267,9 @@ export function CameraScreen() {
         return
       }
       streamRef.current = stream
-      // Bump the version — this guarantees the attach effect re-runs even if
-      // <video> hadn't mounted yet when getUserMedia resolved, and it fires
-      // again on retakes (re-attach after release without manual reset).
+      // Bump the version — sole trigger for the attach effect, which owns
+      // srcObject + play(). One source of truth = no race.
       setStreamVersion(v => v + 1)
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream
-        // iOS Safari won't actually start the camera feed until metadata is
-        // ready; calling .play() too early silently rejects. Wait for
-        // loadedmetadata (or a short timeout) before starting playback.
-        const video = videoRef.current
-        const tryPlay = () => { video.play().catch(() => { /* non-fatal */ }) }
-        if (video.readyState >= 1) tryPlay()
-        else video.addEventListener('loadedmetadata', tryPlay, { once: true })
-      }
     } catch (err) {
       if (!isMountedRef.current) return
       const name = (err as Error)?.name ?? ''
