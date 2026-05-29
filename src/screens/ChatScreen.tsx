@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'motion/react'
 import { db, getRecentSummaries } from '../db/index'
 import { useAppStore } from '../store/app'
 import { decryptApiKey } from '../lib/crypto'
-import { createGeminiClient, SafetyError, NetworkError, ApiKeyError, type GeminiClient } from '../lib/gemini'
+import { createGeminiClient, SafetyError, NetworkError, ApiKeyError, ModelDeprecatedError, type GeminiClient } from '../lib/gemini'
 import { speak, stopSpeaking } from '../lib/voice'
 import { checkInput, checkOutput, SAFE_DEFLECTION } from '../lib/safety'
 import { createIdleTimer, generateSessionSummary, initSessionTriggers, type IdleTimer } from '../lib/session'
@@ -428,6 +428,14 @@ export function ChatScreen() {
 
       // Invalid API key → show the dedicated key-setup screen (has Settings link)
       if (err instanceof ApiKeyError) {
+        if (isMountedRef.current) setApiKeyError(err.message)
+        return
+      }
+
+      // Google retired the model → route to a Settings link (the App-mount
+      // migration also flips the persisted model, so this should only fire
+      // for someone who pinned a now-dead alias).
+      if (err instanceof ModelDeprecatedError) {
         if (isMountedRef.current) setApiKeyError(err.message)
         return
       }

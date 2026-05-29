@@ -5,7 +5,7 @@ import { db, safeDbWrite } from '../db/index'
 import type { LearnedObject } from '../db/index'
 import { useAppStore } from '../store/app'
 import { decryptApiKey } from '../lib/crypto'
-import { createGeminiClient, ApiKeyError, type GeminiClient } from '../lib/gemini'
+import { createGeminiClient, ApiKeyError, ModelDeprecatedError, type GeminiClient } from '../lib/gemini'
 import { checkOutput } from '../lib/safety'
 import { bumpInterest } from '../lib/memory'
 import { buildCameraPrompt } from '../prompts/index'
@@ -516,6 +516,12 @@ export function CameraScreen() {
       streamRef.current = null
       // Invalid API key → route to the dedicated key-error screen (Settings link)
       if (err instanceof ApiKeyError) {
+        setClientError(err.message)
+        setPhase('error')
+        return
+      }
+      // Deprecated model → same dedicated-error screen, different message
+      if (err instanceof ModelDeprecatedError) {
         setClientError(err.message)
         setPhase('error')
         return

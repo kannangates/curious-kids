@@ -58,8 +58,27 @@ export interface AppSettings {
 
 // Default Gemini models. New fields above are non-indexed, so adding them
 // needs NO Dexie version bump — undefined simply falls back to these.
-export const DEFAULT_CHAT_MODEL = 'gemini-2.0-flash'
-export const DEFAULT_VISION_MODEL = 'gemini-2.0-flash'
+//
+// gemini-2.0-flash is DEPRECATED for new users (Google returns 404 "no
+// longer available to new users") — live default is 2.5-flash.
+// migrateDeprecatedModels() in App.tsx flips any persisted value listed
+// in DEPRECATED_MODELS to the new default on app load.
+export const DEFAULT_CHAT_MODEL = 'gemini-2.5-flash'
+export const DEFAULT_VISION_MODEL = 'gemini-2.5-flash'
+
+/** Models Google has retired for new users — migrate persisted rows away from these. */
+export const DEPRECATED_MODELS: ReadonlySet<string> = new Set([
+  'gemini-2.0-flash',
+  'gemini-2.0-flash-001',
+  'gemini-2.0-flash-exp',
+  'gemini-1.5-flash',
+  'gemini-1.5-flash-001',
+  'gemini-1.5-flash-002',
+  'gemini-1.5-flash-latest',
+  'gemini-1.5-pro',
+  'gemini-pro',
+  'gemini-pro-vision',
+])
 
 // ─── Dexie database ───────────────────────────────────────────────────────────
 

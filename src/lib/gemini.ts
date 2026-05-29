@@ -28,12 +28,38 @@ export class ApiKeyError extends Error {
   }
 }
 
+/**
+ * Thrown when Google returns 404 "no longer available" for the configured
+ * model — a real, actionable condition that needs the parent to re-pick a
+ * model in Settings (or rely on the auto-migration on next app load).
+ */
+export class ModelDeprecatedError extends Error {
+  constructor(public readonly modelName: string) {
+    super(`The Gemini model "${modelName}" is no longer available. Please update it in Settings → Models.`)
+    this.name = 'ModelDeprecatedError'
+  }
+}
+
 /** True when an error indicates the Gemini API key itself is invalid. */
 function isInvalidKeyError(err: unknown): boolean {
   return err instanceof Error && (
     err.message.includes('API_KEY_INVALID') ||
     err.message.includes('API key not valid')
   )
+}
+
+/**
+ * True when the SDK error is Google's "model no longer available" 404.
+ * The message format is reliably: "[404 ] This model models/<NAME> is no
+ * longer available to new users." (Note: the literal "[404 ]" with a
+ * trailing space, no error code text after the bracket.)
+ */
+function isModelDeprecatedError(err: unknown): { modelName: string } | null {
+  if (!(err instanceof Error)) return null
+  const m = err.message
+  if (!m.includes('no longer available')) return null
+  const match = m.match(/models\/([\w.\-]+)/)
+  return { modelName: match?.[1] ?? 'unknown' }
 }
 
 /**
@@ -140,8 +166,11 @@ export interface GeminiModelOptions {
   visionModel?: string
 }
 
-const FALLBACK_CHAT_MODEL = 'gemini-2.0-flash'
-const FALLBACK_VISION_MODEL = 'gemini-2.0-flash'
+// Must match db/index.ts DEFAULT_CHAT_MODEL / DEFAULT_VISION_MODEL — bumped
+// from gemini-2.0-flash because Google retired it for new users (returns
+// 404 "no longer available to new users").
+const FALLBACK_CHAT_MODEL = 'gemini-2.5-flash'
+const FALLBACK_VISION_MODEL = 'gemini-2.5-flash'
 
 export function createGeminiClient(apiKey: string, opts: GeminiModelOptions = {}): GeminiClient {
   const genAI = new GoogleGenerativeAI(apiKey)
@@ -222,6 +251,8 @@ export function createGeminiClient(apiKey: string, opts: GeminiModelOptions = {}
         if (isInvalidKeyError(err)) {
           throw new ApiKeyError('The Gemini magic key is not valid. Ask a parent to update it in Settings.')
         }
+        const dep = isModelDeprecatedError(err)
+        if (dep) throw new ModelDeprecatedError(dep.modelName)
         if (isOfflineError(err)) {
           throw new NetworkError('You seem to be offline — please check your connection.')
         }
@@ -269,6 +300,8 @@ export function createGeminiClient(apiKey: string, opts: GeminiModelOptions = {}
         if (isInvalidKeyError(err)) {
           throw new ApiKeyError('The Gemini magic key is not valid. Ask a parent to update it in Settings.')
         }
+        const dep = isModelDeprecatedError(err)
+        if (dep) throw new ModelDeprecatedError(dep.modelName)
         if (isOfflineError(err)) {
           throw new NetworkError('You seem to be offline — please check your connection.')
         }

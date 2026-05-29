@@ -49,6 +49,7 @@ const WordGameScreen = lazyRetry(() => import('./screens/WordGameScreen').then(m
 const PuzzleScreen = lazyRetry(() => import('./screens/PuzzleScreen').then(m => ({ default: m.PuzzleScreen })))
 const ParentSettingsScreen = lazyRetry(() => import('./screens/ParentSettingsScreen').then(m => ({ default: m.ParentSettingsScreen })))
 const ParentDashboardScreen = lazyRetry(() => import('./screens/ParentDashboardScreen').then(m => ({ default: m.ParentDashboardScreen })))
+import { DEFAULT_CHAT_MODEL, DEFAULT_VISION_MODEL, DEPRECATED_MODELS } from './db/index'
 import { useSessionLimit } from './hooks/useSessionLimit'
 import { grantBonusMinutes } from './lib/usage'
 import { resolveActiveProfile, setActiveProfileId } from './lib/profiles'
@@ -184,6 +185,28 @@ export default function App() {
             localStorage.setItem('ck_cam_migrated', '1')
           } catch { /* ignore */ }
         }
+
+        // Model deprecation migration: Google retired gemini-2.0-flash for
+        // new users, returning 404 "no longer available to new users" on
+        // every call. Any persisted appSettings still pointing at a
+        // deprecated model gets flipped to the new default on next load.
+        // Idempotent (DEPRECATED_MODELS lookup), so safe to run every boot.
+        try {
+          const s = await db.appSettings.get('main')
+          if (s) {
+            const patch: { chatModel?: string; visionModel?: string } = {}
+            if (s.chatModel && DEPRECATED_MODELS.has(s.chatModel)) {
+              patch.chatModel = DEFAULT_CHAT_MODEL
+            }
+            if (s.visionModel && DEPRECATED_MODELS.has(s.visionModel)) {
+              patch.visionModel = DEFAULT_VISION_MODEL
+            }
+            if (patch.chatModel || patch.visionModel) {
+              await db.appSettings.update('main', patch)
+              console.warn('[migration] Upgraded deprecated Gemini model(s):', patch)
+            }
+          }
+        } catch { /* non-fatal — defaults still kick in at runtime */ }
 
         const active = await resolveActiveProfile()
         if (active) {
