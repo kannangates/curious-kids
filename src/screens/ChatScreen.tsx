@@ -13,6 +13,7 @@ import { getLocalAnswer } from '../lib/localAnswers'
 import { detectIntent, type Intent } from '../lib/intents'
 import { detectLanguageOr } from '../lib/languageDetect'
 import { LANG_NAME, isAppLang, type AppLang } from '../lib/langs'
+import { startRecording, blobToBase64, type RecorderHandle } from '../lib/audioRecorder'
 import { logEvent } from '../lib/debugLog'
 import { addXP } from '../lib/xp'
 import { buildSystemPrompt, FALLBACK_OFFLINE_RESPONSES } from '../prompts/index'
@@ -49,6 +50,11 @@ export function ChatScreen() {
   // story" etc., Leo offers to navigate via a confirm chip (tap-only, never
   // automatic) so accidental keyword matches don't yank the kid out of chat.
   const [pendingIntent, setPendingIntent] = useState<Intent | null>(null)
+  // Audio capture mode — used when the active language is non-English so we
+  // skip the browser's unreliable Indian-language STT and send the audio to
+  // Gemini directly. English keeps the Web Speech path.
+  const [isRecording, setIsRecording] = useState(false)
+  const recorderRef = useRef<RecorderHandle | null>(null)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const idleTimerRef = useRef<IdleTimer | null>(null)
@@ -84,7 +90,15 @@ export function ChatScreen() {
 
   useEffect(() => {
     isMountedRef.current = true
-    return () => { isMountedRef.current = false }
+    return () => {
+      isMountedRef.current = false
+      // Make sure any active audio recording is torn down on unmount so the
+      // mic indicator doesn't keep showing after the kid leaves the screen.
+      if (recorderRef.current) {
+        try { void recorderRef.current.stop() } catch { /* ignore */ }
+        recorderRef.current = null
+      }
+    }
   }, [])
 
   // ── Session end handler ────────────────────────────────────────────────────
@@ -505,6 +519,147 @@ export function ChatScreen() {
     handleUserMessageRef.current = handleUserMessage
   }, [handleUserMessage])
 
+  // ── Audio capture path (non-English) ────────────────────────────────────
+  //
+  // For Hindi/Tamil/Kannada/Telugu the browser's STT is unreliable, so we
+  // bypass it: record the kid's voice with MediaRecorder, send the audio
+  // blob straight to Gemini, and let it transcribe + respond in one shot.
+  // The English path (Web Speech → text → Gemini) is unchanged.
+
+  const handleUserAudio = useCallback(async (
+    base64Audio: string,
+    audioMimeType: string,
+    spokenLang: AppLang
+  ) => {
+    if (!geminiClient || !systemPrompt) return
+    if (isLoading) return
+    stopSpeaking()
+    idleTimerRef.current?.reset()
+
+    if (!isMountedRef.current) return
+    // Pseudo user message — we don't have the transcript (that's the whole
+    // point), so render a 🎙️ chip in the conversation history.
+    const userMsg: ChatMessage = {
+      id: crypto.randomUUID(),
+      role: 'user',
+      text: `🎙️ ${LANG_NAME[spokenLang]}`,
+      timestamp: Date.now()
+    }
+    setMessages(prev => [...prev.slice(-9), userMsg])
+
+    const assistantMsgId = crypto.randomUUID()
+    setMessages(prev => [
+      ...prev.slice(-9),
+      { id: assistantMsgId, role: 'assistant', text: '', timestamp: Date.now() }
+    ])
+    setIsLoading(true)
+    setLeoMood('thinking')
+
+    const instructionPrefix =
+      `The child spoke the attached audio in ${LANG_NAME[spokenLang]}. ` +
+      `Transcribe what they said internally, then answer the child in ${LANG_NAME[spokenLang]} ` +
+      `using its native script. Keep the reply short and natural for a ${profile?.age ?? 5}-year-old.`
+
+    let fullResponse = ''
+    let sentenceBuffer = ''
+    try {
+      await geminiClient.streamChatAudio(
+        systemPrompt,
+        base64Audio,
+        audioMimeType,
+        instructionPrefix,
+        (chunk) => {
+          if (!isMountedRef.current) return
+          fullResponse += chunk
+          sentenceBuffer += chunk
+          setMessages(prev =>
+            prev.map(m => m.id === assistantMsgId ? { ...m, text: fullResponse } : m)
+          )
+          const match = sentenceBuffer.match(/^(.+?[.!?])\s*/)
+          if (match) {
+            const sentence = match[1]
+            sentenceBuffer = sentenceBuffer.slice(match[0].length)
+            setLeoMood('excited')
+            void speakAndTrack(sentence, spokenLang).then(() => {
+              if (isMountedRef.current) setLeoMood('happy')
+            })
+          } else if (sentenceBuffer.length > 200) {
+            void speakAndTrack(sentenceBuffer.trim(), spokenLang)
+            sentenceBuffer = ''
+          }
+        }
+      )
+      if (sentenceBuffer.trim() && isMountedRef.current) {
+        await speakAndTrack(sentenceBuffer.trim(), spokenLang)
+      }
+      if (!isMountedRef.current) return
+      if (!fullResponse.trim()) {
+        const emptyMsg = "Hmm, I didn't quite catch that! Can you say it again? 🦁"
+        setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, text: emptyMsg } : m))
+        await speakAndTrack(emptyMsg, spokenLang)
+      }
+    } catch (err) {
+      const errMsg = err instanceof Error ? `${err.name}: ${err.message}` : String(err)
+      logEvent('error', `[Chat-audio] failed: ${errMsg}`, err)
+      console.error('[Chat-audio] failed:', err)
+      if (err instanceof ApiKeyError) {
+        if (isMountedRef.current) setApiKeyError(err.message)
+        return
+      }
+      if (err instanceof ModelDeprecatedError) {
+        if (isMountedRef.current) setApiKeyError(err.message)
+        return
+      }
+      let errorMsg = "Oops! Leo couldn't hear that clearly. Try again? 🦁"
+      if (err instanceof SafetyError) errorMsg = SAFE_DEFLECTION
+      else if (err instanceof NetworkError) {
+        errorMsg = FALLBACK_OFFLINE_RESPONSES[Math.floor(Math.random() * FALLBACK_OFFLINE_RESPONSES.length)]
+      }
+      if (!isMountedRef.current) return
+      setMessages(prev => prev.map(m => m.id === assistantMsgId ? { ...m, text: errorMsg } : m))
+      await speakAndTrack(errorMsg, spokenLang)
+    } finally {
+      if (isMountedRef.current) {
+        setIsLoading(false)
+        setLeoMood('happy')
+      }
+    }
+  }, [geminiClient, systemPrompt, isLoading, profile, speakAndTrack])
+
+  // Start/stop the audio recorder. Used by the mic button when the active
+  // language is non-English. Resolves once Gemini has answered.
+  const startAudioCapture = useCallback(async () => {
+    if (isRecording) return
+    const spokenLang = activeLang
+    try {
+      setIsRecording(true)
+      const handle = await startRecording()
+      recorderRef.current = handle
+      const clip = await handle.done   // resolves on silence/timeout/manual stop
+      recorderRef.current = null
+      if (!isMountedRef.current) return
+      setIsRecording(false)
+      // Anything shorter than half a second is almost certainly mis-tap; skip.
+      if (clip.durationMs < 500) return
+      const b64 = await blobToBase64(clip.blob)
+      await handleUserAudio(b64, clip.mimeType, spokenLang)
+    } catch (err) {
+      const name = (err as Error)?.name ?? ''
+      if (name === 'NotAllowedError') {
+        logEvent('error', '[Chat-audio] mic permission denied')
+      } else {
+        logEvent('error', `[Chat-audio] recorder failed: ${err instanceof Error ? err.message : String(err)}`, err)
+      }
+      if (isMountedRef.current) setIsRecording(false)
+    }
+  }, [isRecording, activeLang, handleUserAudio])
+
+  const stopAudioCapture = useCallback(() => {
+    if (recorderRef.current) {
+      void recorderRef.current.stop()  // .done resolves inside startAudioCapture
+    }
+  }, [])
+
   // ── Render ─────────────────────────────────────────────────────────────────
 
   // API key missing state
@@ -573,7 +728,10 @@ export function ChatScreen() {
               </span>
             </div>
             <p className="text-xs text-lavender-400 font-medium">
-              {isLoading ? 'Thinking...' : isSpeaking ? 'Speaking...' : isListening ? 'Listening...' : 'Ready to chat!'}
+              {isLoading ? 'Thinking...'
+                : isSpeaking ? 'Speaking...'
+                : (isListening || isRecording) ? 'Listening...'
+                : 'Ready to chat!'}
             </p>
           </div>
           {/* Safe Mode indicator */}
@@ -718,19 +876,27 @@ export function ChatScreen() {
             </div>
           ) : (
             <VoiceButton
-              isListening={isListening}
+              // Hybrid routing: English uses Web Speech (fast/free/accurate);
+              // Hindi/Tamil/Kannada/Telugu records audio and sends to Gemini
+              // for proper multilingual recognition. activeLang updates on
+              // every message, so the same button DTRT after a switch.
+              isListening={activeLang === 'en' ? isListening : isRecording}
               onStart={() => {
                 idleTimerRef.current?.reset()
-                // Interrupt any ongoing speech so the kid can ask the next
-                // question immediately — no waiting for Leo to finish (and
-                // no risk of being permanently locked out if TTS stalls).
                 if (isSpeaking) {
                   stopSpeaking()
                   setIsSpeaking(false)
                 }
-                startListening()
+                if (activeLang === 'en') {
+                  startListening()
+                } else {
+                  void startAudioCapture()
+                }
               }}
-              onStop={stopListening}
+              onStop={() => {
+                if (activeLang === 'en') stopListening()
+                else stopAudioCapture()
+              }}
               // Only block during the AI round-trip. Speaking is interruptible
               // (see onStart above) so the mic is always re-clickable.
               disabled={isLoading}

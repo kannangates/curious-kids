@@ -158,6 +158,19 @@ export interface GeminiClient {
     userMessage: string,
     onChunk: (text: string) => void
   ): Promise<string>
+  /**
+   * Like streamChat, but the user "message" is an audio recording. Used for
+   * non-English speech where the browser's STT is unreliable — Gemini hears
+   * the audio directly and replies with text. Audio is billed at ~32 tokens
+   * per second (Flash) so a kid utterance of <15s costs ≈ 480 tokens.
+   */
+  streamChatAudio(
+    systemPrompt: string,
+    base64Audio: string,
+    audioMimeType: string,
+    instructionPrefix: string,
+    onChunk: (text: string) => void
+  ): Promise<string>
   analyzeImage(base64Image: string, prompt: string): Promise<string>
 }
 
@@ -259,6 +272,67 @@ export function createGeminiClient(apiKey: string, opts: GeminiModelOptions = {}
         // Surface the real SDK message (includes HTTP status + reason)
         throw new Error(
           `Gemini chat error: ${err instanceof Error ? err.message : String(err)}`
+        )
+      }
+    },
+
+    /**
+     * Like streamChat, but the user input is an audio clip. Gemini transcribes
+     * + answers in one shot — much more accurate than the device STT for
+     * Hindi / Tamil / Kannada / Telugu where browser STT struggles.
+     */
+    async streamChatAudio(
+      systemPrompt: string,
+      base64Audio: string,
+      audioMimeType: string,
+      instructionPrefix: string,
+      onChunk: (text: string) => void
+    ): Promise<string> {
+      try {
+        const model = getChatModel()
+        const result = await model.generateContentStream({
+          systemInstruction: systemPrompt,
+          contents: [
+            {
+              role: 'user',
+              parts: [
+                { inlineData: { mimeType: audioMimeType, data: base64Audio } },
+                { text: instructionPrefix || 'Listen to the audio and answer the child.' },
+              ],
+            },
+          ],
+        })
+
+        let fullText = ''
+        for await (const chunk of result.stream) {
+          const candidate = chunk.candidates?.[0]
+          if (candidate?.finishReason === 'SAFETY') {
+            throw new SafetyError('Response was blocked by safety filters')
+          }
+          let chunkText = ''
+          try { chunkText = chunk.text() } catch { chunkText = '' }
+          if (chunkText) {
+            fullText += chunkText
+            onChunk(chunkText)
+          }
+        }
+        const response = await result.response
+        if (response.candidates?.[0]?.finishReason === 'SAFETY') {
+          throw new SafetyError('Response was blocked by safety filters')
+        }
+        return fullText
+      } catch (err) {
+        if (err instanceof SafetyError) throw err
+        if (isInvalidKeyError(err)) {
+          throw new ApiKeyError('The Gemini magic key is not valid. Ask a parent to update it in Settings.')
+        }
+        const dep = isModelDeprecatedError(err)
+        if (dep) throw new ModelDeprecatedError(dep.modelName)
+        if (isOfflineError(err)) {
+          throw new NetworkError('You seem to be offline — please check your connection.')
+        }
+        throw new Error(
+          `Gemini audio chat error: ${err instanceof Error ? err.message : String(err)}`
         )
       }
     },
